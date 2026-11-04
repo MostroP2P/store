@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.yadio.io https://pay.mostro.foundation wss:; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout · Mostro Store</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="designs/characters/mostro-8b.png">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/store.css">
+  <script type="module" src="src/store/checkout-page.js"></script>
+</head>
+<body>
+  <header class="store-header">
+    <div class="store-header-inner">
+      <a class="store-brand" href="index.html">
+        <img src="designs/characters/mostro-8b.png" alt="" width="30" height="33">
+        <span>Mostro <strong>Store</strong></span>
+      </a>
+      <nav class="store-nav" aria-label="Tienda">
+        <a class="nav-link" href="index.html">Colección</a>
+        <button type="button" class="cart-button" id="cart-button" hidden>
+          <span data-icon="cart"></span>
+          <span class="cart-count" id="cart-count">0</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="store-main checkout">
+    <h1 class="page-title">Checkout</h1>
+
+    <section class="store-message" id="checkout-empty" hidden>
+      <p>Tu carrito está vacío. Elegí una remera para empezar.</p>
+      <a class="button-primary" href="index.html">Ver la colección</a>
+    </section>
+
+    <div id="checkout-content">
+      <section class="panel summary" aria-labelledby="summary-title">
+        <h2 class="panel-title" id="summary-title">Resumen de tu pedido</h2>
+        <ul class="summary-lines" id="summary-lines"></ul>
+        <dl class="summary-totals">
+          <div><dt>Subtotal</dt><dd class="price-mono" id="summary-subtotal"></dd></div>
+          <div><dt>Envío</dt><dd class="muted">A coordinar</dd></div>
+          <div class="summary-total">
+            <dt>Total</dt>
+            <dd><span class="price-mono" id="summary-total"></span> <span class="sats" id="summary-sats"></span></dd>
+          </div>
+        </dl>
+      </section>
+
+      <div class="checkout-columns">
+        <div class="checkout-form-column">
+          <form class="checkout-form" id="checkout-form" novalidate></form>
+          <button type="button" class="link-button" id="clear-saved"><span data-icon="trash"></span> Limpiar datos guardados</button>
+        </div>
+
+        <aside class="panel payment" aria-labelledby="payment-title">
+          <h2 class="panel-title" id="payment-title"><span data-icon="card"></span> Método de pago</h2>
+          <div id="payment-body"><p class="muted">Cargando…</p></div>
+          <p class="visually-hidden" id="payment-status" aria-live="polite"></p>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <footer class="store-footer">
+    <p>Pagos con Lightning · Pedidos cifrados por Nostr · <a href="https://mostro.network">mostro.network</a></p>
+  </footer>
+</body>
+</html>

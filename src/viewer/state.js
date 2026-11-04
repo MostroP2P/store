@@ -1,6 +1,6 @@
 // View state <-> URL hash (pure). Example: #color=red&filter=mostro-quotes&shirt=mostro-invaders
 
-import { ALL_GROUP_ID } from './catalog.js';
+import { ALL_GROUP_ID } from '../catalog.js';
 
 export const DEFAULT_FILTER = ALL_GROUP_ID;
 

@@ -74,6 +74,9 @@ test('designs become image products in the designs group', () => {
     text: null,
     style: null,
     colors: ['black'],
+    status: 'draft',
+    price: null,
+    description: null,
   });
 });
 
@@ -269,4 +272,45 @@ test('two font files with the same name keep the first one and warn', () => {
   const { catalog, problems } = normalizeCatalog(raw);
   assert.deepEqual(catalog.fonts, [{ family: 'LuckiestGuy-Regular', file: LUCKIEST }]);
   assert.match(messages(problems, 'warning')[0], /other\/LuckiestGuy-Regular\.ttf/);
+});
+
+test('store fields: designs and series items are drafts without price by default', () => {
+  const { catalog, problems } = normalizeCatalog(validRaw());
+  catalog.products.forEach((p) => {
+    assert.equal(p.status, 'draft');
+    assert.equal(p.price, null);
+    assert.equal(p.description, null);
+  });
+  assert.deepEqual(problems, []);
+});
+
+test('store fields: a design can be published with its own price and description', () => {
+  const raw = validRaw();
+  Object.assign(raw.designs[0], { status: 'published', price: 35000, description: 'Arcade P2P' });
+  const invaders = product(normalizeCatalog(raw).catalog, 'invaders');
+  assert.equal(invaders.status, 'published');
+  assert.equal(invaders.price, 35000);
+  assert.equal(invaders.description, 'Arcade P2P');
+});
+
+test('store fields: series items inherit status, price and description, and can override them', () => {
+  const raw = validRaw();
+  Object.assign(raw.series[0], { status: 'published', price: 30000, description: 'Frases Mostro' });
+  Object.assign(raw.series[0].items[1], { status: 'draft', price: 32000, description: 'Buen día' });
+  const { catalog } = normalizeCatalog(raw);
+  const love = product(catalog, 'quotes-love-at-first-sat');
+  const gm = product(catalog, 'quotes-gm');
+  assert.deepEqual([love.status, love.price, love.description], ['published', 30000, 'Frases Mostro']);
+  assert.deepEqual([gm.status, gm.price, gm.description], ['draft', 32000, 'Buen día']);
+});
+
+test('store fields: invalid status or price fall back with a warning', () => {
+  const raw = validRaw();
+  Object.assign(raw.designs[0], { status: 'live', price: -1 });
+  Object.assign(raw.series[0].items[0], { price: '30000' });
+  const { catalog, problems } = normalizeCatalog(raw);
+  assert.equal(product(catalog, 'invaders').status, 'draft');
+  assert.equal(product(catalog, 'invaders').price, null);
+  assert.equal(product(catalog, 'quotes-love-at-first-sat').price, null);
+  assert.equal(messages(problems, 'warning').length, 3);
 });

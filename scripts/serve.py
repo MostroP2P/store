@@ -1,4 +1,4 @@
-"""Local server for the viewer.
+"""Local server for the store and the viewer.
 
 Same as `python3 -m http.server`, but it tells the browser to revalidate every file
 (Cache-Control: no-cache), so edits to catalog.json, stickers or designs show up
@@ -28,7 +28,10 @@ def main():
     port = int(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_PORT
     handler = partial(NoCacheHandler, directory=str(PROJECT_ROOT))
     with ThreadingHTTPServer((HOST, port), handler) as server:
-        print(f"Visor de remeras en http://localhost:{port}  (Ctrl+C para cortar)", flush=True)
+        print(
+            f"Tienda: http://localhost:{port}   Visor: http://localhost:{port}/visor.html   (Ctrl+C para cortar)",
+            flush=True,
+        )
         try:
             server.serve_forever()
         except KeyboardInterrupt:

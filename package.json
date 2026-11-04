@@ -6,6 +6,6 @@
   "scripts": {
     "start": "python3 scripts/serve.py 8000",
     "test": "node --test",
-    "coverage": "node --test --experimental-test-coverage --test-coverage-include=src/**/*.js --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=80"
+    "coverage": "node --test --experimental-test-coverage --test-coverage-include=src/**/*.js --test-coverage-exclude=src/vendor/** --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=80"
   }
 }

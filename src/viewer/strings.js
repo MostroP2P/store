@@ -6,6 +6,7 @@ export const STRINGS = Object.freeze({
   filterDesigns: 'Diseños',
   empty: 'No hay remeras en el catálogo.',
   notRecommended: 'No recomendado en este color',
+  draft: 'Borrador: no está en la tienda',
   textTooLong: 'Texto muy largo',
   problemsTitle: 'Problemas en catalog.json',
   imageNotFound: (path) => `Imagen no encontrada: ${path}`,

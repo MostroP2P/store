@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseHash, toHash, resolveColor, DEFAULT_FILTER } from '../src/state.js';
+import { parseHash, toHash, resolveColor, DEFAULT_FILTER } from '../../src/viewer/state.js';
 
 const COLORS = [
   { id: 'black', name: 'Negro', hex: '#1a1a1a' },

@@ -1,40 +1,17 @@
 // Viewer entry point: loads catalog, fonts and images, then keeps the UI in sync with the URL state.
 
-import { normalizeCatalog, DESIGNS_GROUP_ID } from './catalog.js';
+import { normalizeCatalog, DESIGNS_GROUP_ID } from '../catalog.js';
 import { parseHash, toHash, resolveColor, DEFAULT_FILTER } from './state.js';
-import { loadImage, prepareShirt } from './shirt.js';
-import { renderProduct, WARNING_TEXT_TOO_LONG } from './render.js';
+import { loadImage, prepareShirt } from '../shirt.js';
+import { renderProduct, WARNING_TEXT_TOO_LONG } from '../render.js';
+import { fetchCatalog, loadFonts, loadProductImages } from '../loader.js';
 import { STRINGS } from './strings.js';
 import * as ui from './ui.js';
 
-const CATALOG_URL = 'catalog.json';
 const THUMB_SCALE = 0.45;
 const DEBUG = new URLSearchParams(window.location.search).has('debug');
 
 const $ = (selector) => document.querySelector(selector);
-
-async function fetchCatalog() {
-  const response = await fetch(CATALOG_URL, { cache: 'no-cache' });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return response.json();
-}
-
-async function loadFonts(fonts) {
-  const results = await Promise.allSettled(fonts.map(async ({ family, file }) => {
-    const face = await new FontFace(family, `url("${encodeURI(file)}")`).load();
-    document.fonts.add(face);
-  }));
-  return results.flatMap((result, i) => (result.status === 'rejected'
-    ? [{ level: 'warning', message: STRINGS.fontNotLoaded(fonts[i].file) }]
-    : []));
-}
-
-/** Map<productId, HTMLImageElement | null>; a missing image becomes null and shows as a badge. */
-async function loadProductImages(products) {
-  const entries = await Promise.all(products.map((product) => loadImage(product.image)
-    .then((image) => [product.id, image], () => [product.id, null])));
-  return new Map(entries);
-}
 
 function filterList(catalog) {
   const hasDesigns = catalog.products.some((p) => p.groupId === DESIGNS_GROUP_ID);
@@ -50,6 +27,7 @@ function productBadges(product, color, image, warnings) {
   return [
     ...(image ? [] : [{ text: STRINGS.imageNotFound(product.image), level: 'error' }]),
     ...(notRecommended ? [{ text: STRINGS.notRecommended, level: 'warning' }] : []),
+    ...(product.status === 'published' ? [] : [{ text: STRINGS.draft, level: 'info' }]),
     ...(warnings.includes(WARNING_TEXT_TOO_LONG) ? [{ text: STRINGS.textTooLong, level: 'warning' }] : []),
   ];
 }
@@ -154,11 +132,12 @@ async function boot(problemsBox) {
     return;
   }
 
-  const [baseImage, fontProblems, images] = await Promise.all([
+  const [baseImage, failedFonts, images] = await Promise.all([
     loadImage(catalog.base.image).catch(() => null),
     loadFonts(catalog.fonts),
     loadProductImages(catalog.products),
   ]);
+  const fontProblems = failedFonts.map((file) => ({ level: 'warning', message: STRINGS.fontNotLoaded(file) }));
   if (!baseImage) {
     ui.showProblems(problemsBox, [...problems, { level: 'error', message: STRINGS.baseNotLoaded(catalog.base.image) }]);
     return;

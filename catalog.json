@@ -1,4 +1,28 @@
 {
+  "store": {
+    "currency": "ARS",
+    "price": 30000,
+    "lnAddress": "store@pay.mostro.foundation",
+    "defaultColor": "black",
+    "defaultSize": "L",
+    "sizes": [
+      { "id": "S",   "width": 49, "length": 69 },
+      { "id": "M",   "width": 51, "length": 71 },
+      { "id": "L",   "width": 54, "length": 73 },
+      { "id": "XL",  "width": 56, "length": 76 },
+      { "id": "XXL", "width": 58, "length": 78 }
+    ],
+    "nostr": {
+      "npub": "npub1st0re749d5d02mwnf2c0vcj566p85y5wpnaz65llr8wt49cyp6kqe44n9m",
+      "relays": ["wss://relay.mostro.network", "wss://nos.lol", "wss://relay.damus.io"]
+    },
+    "details": [
+      { "title": "Envío", "text": "Enviamos a todo el país. Después del pago te escribimos por email para coordinar la entrega." },
+      { "title": "Pago con Lightning", "text": "Pagás en sats con cualquier wallet Lightning. El precio está en pesos y se convierte a sats con la cotización de Yadio en el momento de pagar." },
+      { "title": "Privacidad", "text": "Tus datos de envío viajan cifrados por Nostr (NIP-17): solo la tienda puede leerlos. No hace falta crear una cuenta." }
+    ]
+  },
+
   "base": {
     "image": "assets/shirts/t-shirt.png",
     "printArea": { "x": 335, "y": 195, "width": 530, "height": 700 },
@@ -22,7 +46,9 @@
       "id": "mostro-invaders",
       "name": "Mostro Invaders",
       "image": "designs/invaders-design.png",
-      "colors": ["black", "navy", "white"]
+      "colors": ["black", "navy", "white"],
+      "status": "published",
+      "description": "Los Mostro invaden la pantalla, en clave arcade."
     }
   ],
 
@@ -30,19 +56,21 @@
     {
       "id": "mostro-quotes",
       "name": "Mostro dice…",
+      "status": "published",
+      "description": "Un Mostro y una frase, para que se note de qué lado estás.",
       "style": {
         "font": "assets/fonts/LuckiestGuy-Regular.ttf",
         "textColor": "auto"
       },
       "items": [
-        { "image": "designs/stickers/mostro-love-512.png", "text": "Love at first sat" },
-        { "image": "designs/stickers/mostro-lightning-512.png", "text": "My node, my rules" },
-        { "image": "designs/stickers/mostro-fire-512.png", "text": "Sovereign at first sat" },
-        { "image": "designs/stickers/mostro-escrow-512.png", "text": "Hold my invoice" },
-        { "image": "designs/stickers/mostro-laugh-512.png", "text": "Somewhere, a bank is crying" },
-        { "image": "designs/stickers/mostro-p2p-512.png", "text": "I buy sats from strangers on the internet", "style": { "maxLines": 3 } },
-        { "image": "designs/stickers/mostro-money-512.png", "text": "The Mostro made me do it" },
-        { "image": "designs/stickers/mostro-cool-512.png", "text": "Mostro do it better!" }
+        { "id": "mostro-quotes-love-at-first-sat", "image": "designs/stickers/mostro-love-512.png", "text": "Love at first sat" },
+        { "id": "mostro-quotes-my-node-my-rules", "image": "designs/stickers/mostro-lightning-512.png", "text": "My node, my rules" },
+        { "id": "mostro-quotes-sovereign-at-first-sat", "image": "designs/stickers/mostro-fire-512.png", "text": "Sovereign at first sat" },
+        { "id": "mostro-quotes-hold-my-invoice", "image": "designs/stickers/mostro-escrow-512.png", "text": "Hold my invoice" },
+        { "id": "mostro-quotes-somewhere-a-bank-is-crying", "image": "designs/stickers/mostro-laugh-512.png", "text": "Somewhere, a bank is crying" },
+        { "id": "mostro-quotes-i-buy-sats-from-strangers-on-the-internet", "image": "designs/stickers/mostro-p2p-512.png", "text": "I buy sats from strangers on the internet", "style": { "maxLines": 3 } },
+        { "id": "mostro-quotes-the-mostro-made-me-do-it", "image": "designs/stickers/mostro-money-512.png", "text": "The Mostro made me do it" },
+        { "id": "mostro-quotes-mostro-do-it-better", "image": "designs/stickers/mostro-cool-512.png", "text": "Mostro do it better!" }
       ]
     }
   ]

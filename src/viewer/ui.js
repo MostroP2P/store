@@ -1,21 +1,10 @@
 // DOM building blocks for the viewer. Text always goes through textContent (no innerHTML).
 
+import { el } from '../dom.js';
 import { STRINGS } from './strings.js';
 
 const DEFAULT_PICKER_COLOR = '#888888';
 const REVOKE_URL_DELAY_MS = 1000;
-
-export function el(tag, props = {}, children = []) {
-  const node = document.createElement(tag);
-  Object.entries(props).forEach(([key, value]) => {
-    if (key === 'dataset') Object.assign(node.dataset, value);
-    else if (key.startsWith('on')) node.addEventListener(key.slice(2), value);
-    else if (key in node) node[key] = value;
-    else node.setAttribute(key, value);
-  });
-  node.append(...children);
-  return node;
-}
 
 /** Color buttons + free color picker. Built once; use syncSwatches to reflect the state. */
 export function createSwatches(container, colors, onPick) {
@@ -84,10 +73,12 @@ export function createCards(container, products, onOpen) {
   return cards;
 }
 
-/** badges: [{ text, level: 'warning' | 'error' }] */
+const BADGE_CLASSES = Object.freeze({ error: 'badge badge-error', info: 'badge badge-info', warning: 'badge' });
+
+/** badges: [{ text, level: 'warning' | 'error' | 'info' }] */
 export function setBadges(container, badges) {
   container.replaceChildren(...badges.map(({ text, level }) => el('span', {
-    className: level === 'error' ? 'badge badge-error' : 'badge',
+    className: BADGE_CLASSES[level] ?? BADGE_CLASSES.warning,
     textContent: text,
   })));
 }
