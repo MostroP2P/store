@@ -1,0 +1,49 @@
+{
+  "base": {
+    "image": "assets/shirts/t-shirt.png",
+    "printArea": { "x": 335, "y": 195, "width": 530, "height": 700 },
+    "shading": { "blur": 7, "shadowFloor": 0.66, "highlight": 0.16 }
+  },
+
+  "colors": [
+    { "id": "black",  "name": "Negro",       "hex": "#1a1a1a" },
+    { "id": "white",  "name": "Blanco",      "hex": "#f0f0ec" },
+    { "id": "gray",   "name": "Gris",        "hex": "#8a8a8a" },
+    { "id": "navy",   "name": "Azul marino", "hex": "#1b2340" },
+    { "id": "blue",   "name": "Azul",        "hex": "#1e3ca0" },
+    { "id": "red",    "name": "Rojo",        "hex": "#c81e28" },
+    { "id": "orange", "name": "Naranja",     "hex": "#f7931a" },
+    { "id": "yellow", "name": "Amarillo",    "hex": "#f5cd28" },
+    { "id": "green",  "name": "Verde",       "hex": "#28783c" }
+  ],
+
+  "designs": [
+    {
+      "id": "mostro-invaders",
+      "name": "Mostro Invaders",
+      "image": "designs/invaders-design.png",
+      "colors": ["black", "navy", "white"]
+    }
+  ],
+
+  "series": [
+    {
+      "id": "mostro-quotes",
+      "name": "Mostro dice…",
+      "style": {
+        "font": "assets/fonts/LuckiestGuy-Regular.ttf",
+        "textColor": "auto"
+      },
+      "items": [
+        { "image": "designs/stickers/mostro-love-512.png", "text": "Love at first sat" },
+        { "image": "designs/stickers/mostro-lightning-512.png", "text": "My node, my rules" },
+        { "image": "designs/stickers/mostro-fire-512.png", "text": "Sovereign at first sat" },
+        { "image": "designs/stickers/mostro-escrow-512.png", "text": "Hold my invoice" },
+        { "image": "designs/stickers/mostro-laugh-512.png", "text": "Somewhere, a bank is crying" },
+        { "image": "designs/stickers/mostro-p2p-512.png", "text": "I buy sats from strangers on the internet", "style": { "maxLines": 3 } },
+        { "image": "designs/stickers/mostro-money-512.png", "text": "The Mostro made me do it" },
+        { "image": "designs/stickers/mostro-cool-512.png", "text": "Mostro do it better!" }
+      ]
+    }
+  ]
+}
