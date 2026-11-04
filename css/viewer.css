@@ -1,35 +1,4 @@
-:root {
-  color-scheme: dark;
-  --bg: #0e130c;
-  --surface: #161d13;
-  --surface-2: #1e2719;
-  --border: #2c3826;
-  --text: #e8eee4;
-  --muted: #9aa894;
-  --accent: #8cc63f;
-  --accent-strong: #4a9a26;
-  --accent-hover: #57b02e;
-  --stage: #d9dcd5;
-  --warning: #f5cd28;
-  --error: #ff6b6b;
-  --radius: 14px;
-  --gutter: 16px;
-}
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-
-button:focus-visible,
-input:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
+/* Viewer (visor.html): gallery of every catalog shirt in any color. Tokens and buttons are in base.css. */
 
 /* Header */
 .topbar {
@@ -194,19 +163,6 @@ input:focus-visible {
 
 .badges:empty { display: none; }
 
-.badge {
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--warning) 18%, transparent);
-  color: var(--warning);
-  font-size: 0.75rem;
-}
-
-.badge-error {
-  background: color-mix(in srgb, var(--error) 18%, transparent);
-  color: var(--error);
-}
-
 .status { color: var(--muted); }
 
 /* Detail */
@@ -249,30 +205,6 @@ input:focus-visible {
   gap: 12px;
   margin-top: 12px;
 }
-
-.icon-button {
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  background: var(--surface-2);
-  color: var(--text);
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.button-primary {
-  padding: 10px 18px;
-  border: none;
-  border-radius: 10px;
-  background: var(--accent-strong);
-  color: #fff;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.button-primary:hover { background: var(--accent-hover); }
 
 @media (max-width: 560px) {
   .grid {

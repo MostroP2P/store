@@ -1,0 +1,10 @@
+{
+  "name": "mostro-store-vendor",
+  "private": true,
+  "description": "Reproducible build of src/vendor/: run scripts/vendor/build.sh",
+  "devDependencies": {
+    "esbuild": "0.25.10",
+    "nostr-tools": "2.25.2",
+    "qrcode-generator": "2.0.4"
+  }
+}

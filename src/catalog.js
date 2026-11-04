@@ -40,6 +40,11 @@ const SHADING_NUMBER_RULES = Object.freeze({
 const TEXT_POSITIONS = ['below', 'above'];
 const FONT_FILE = /([^/\\]+)\.(ttf|otf|woff2?)$/i;
 
+// Store fields: only "published" products are on sale; a draft is only seen in the viewer
+export const PRODUCT_STATUSES = Object.freeze(['draft', 'published']);
+const DEFAULT_STATUS = 'draft';
+const NO_STORE_FIELDS = Object.freeze({ status: DEFAULT_STATUS, price: null, description: null });
+
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const isText = (value) => typeof value === 'string' && value.trim() !== '';
 const isFiniteNumber = (value) => typeof value === 'number' && Number.isFinite(value);
@@ -146,10 +151,35 @@ function validateStyle(style, owner) {
   return { style: inverted ? { ...valid, minFontSize: max } : valid, problems };
 }
 
+/**
+ * status / price / description of a design, series or series item.
+ * `inherited` holds the already valid values of the series (or NO_STORE_FIELDS).
+ */
+function storeFields(entry, inherited, owner) {
+  const problems = [];
+  const status = entry.status ?? inherited.status;
+  const validStatus = PRODUCT_STATUSES.includes(status);
+  if (!validStatus) problems.push(warning(`${owner}: "status" inválido "${status}" (usá "draft" o "published"); queda como borrador.`));
+  const price = entry.price ?? inherited.price;
+  const validPrice = price === null || (isFiniteNumber(price) && price > 0);
+  if (!validPrice) problems.push(warning(`${owner}: "price" inválido "${price}" (número mayor a 0); se usa el precio de la tienda.`));
+  const description = isText(entry.description) ? entry.description.trim() : inherited.description;
+  return {
+    fields: {
+      status: validStatus ? status : DEFAULT_STATUS,
+      price: validPrice ? price : null,
+      description,
+    },
+    problems,
+  };
+}
+
 function normalizeDesign(design, index, colorIds) {
   if (!isObject(design) || !isText(design.id)) return { problems: [error(`Diseño #${index + 1}: falta "id".`)] };
   if (!isText(design.image)) return { problems: [error(`Diseño "${design.id}": falta "image".`)] };
-  const recommended = normalizeRecommended(design.colors, colorIds, `Diseño "${design.id}"`);
+  const owner = `Diseño "${design.id}"`;
+  const recommended = normalizeRecommended(design.colors, colorIds, owner);
+  const store = storeFields(design, NO_STORE_FIELDS, owner);
   return {
     product: {
       id: design.id,
@@ -160,12 +190,13 @@ function normalizeDesign(design, index, colorIds) {
       text: null,
       style: null,
       colors: recommended.colors,
+      ...store.fields,
     },
-    problems: recommended.problems,
+    problems: [...recommended.problems, ...store.problems],
   };
 }
 
-function normalizeItem(item, index, series, seriesStyle, colorIds) {
+function normalizeItem(item, index, series, seriesStyle, seriesStore, colorIds) {
   const owner = `Serie "${series.id}", ítem #${index + 1}`;
   if (!isObject(item) || !isText(item.image)) return { problems: [error(`${owner}: falta "image".`)] };
 
@@ -173,6 +204,7 @@ function normalizeItem(item, index, series, seriesStyle, colorIds) {
   const itemStyle = validateStyle(item.style, owner);
   const merged = { ...DEFAULT_SERIES_STYLE, ...seriesStyle, ...itemStyle.style };
   const recommended = normalizeRecommended(item.colors ?? series.colors, colorIds, owner);
+  const store = storeFields(item, seriesStore, owner);
   const slug = slugify(text ?? baseName(item.image)) || String(index + 1);
 
   return {
@@ -185,8 +217,9 @@ function normalizeItem(item, index, series, seriesStyle, colorIds) {
       text,
       style: { ...merged, fontFamily: fontFamilyFromFile(merged.font) ?? merged.font },
       colors: recommended.colors,
+      ...store.fields,
     },
-    problems: [...itemStyle.problems, ...recommended.problems],
+    problems: [...itemStyle.problems, ...recommended.problems, ...store.problems],
   };
 }
 
@@ -197,11 +230,12 @@ function normalizeOneSeries(series, index, colorIds) {
   }
   if (!Array.isArray(series.items)) return { problems: [error(`Serie "${series.id}": falta la lista "items".`)] };
   const seriesStyle = validateStyle(series.style, `Serie "${series.id}"`);
-  const items = series.items.map((item, i) => normalizeItem(item, i, series, seriesStyle.style, colorIds));
+  const seriesStore = storeFields(series, NO_STORE_FIELDS, `Serie "${series.id}"`);
+  const items = series.items.map((item, i) => normalizeItem(item, i, series, seriesStyle.style, seriesStore.fields, colorIds));
   return {
     group: { id: series.id, name: isText(series.name) ? series.name : series.id },
     products: items.filter((r) => r.product).map((r) => r.product),
-    problems: [...seriesStyle.problems, ...items.flatMap((r) => r.problems)],
+    problems: [...seriesStyle.problems, ...seriesStore.problems, ...items.flatMap((r) => r.problems)],
   };
 }
 

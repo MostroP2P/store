@@ -1,10 +1,10 @@
-# Visor de remeras: spec
+# Remeras Mostro: spec (visor + tienda)
 
-Sistema web mínimo para ver cómo queda cada diseño sobre una remera, eligiendo el color de la remera desde la página.
-Sin base de datos, sin build y sin dependencias de runtime. Todo el catálogo vive en un único `catalog.json`.
+Sistema web mínimo para ver cómo queda cada diseño sobre una remera, eligiendo el color de la remera desde la página, y venderlas.
+Sin base de datos, sin build y sin backend. Todo el catálogo vive en un único `catalog.json`.
 
-**Hoy** sirve para decidir qué remeras mandar a hacer.
-**Mañana** será la base de la tienda en `store.mostro.network`, con pago en bitcoin por Lightning (ver §10).
+- **Visor** (`visor.html`): sirve para decidir qué remeras mandar a hacer.
+- **Tienda** (`index.html`, en `store.mostro.network`): colección, producto, carrito y checkout con pago Lightning (ver §10).
 
 ---
 
@@ -18,7 +18,8 @@ Sin base de datos, sin build y sin dependencias de runtime. Todo el catálogo vi
 
 ### Fuera de alcance (por ahora)
 
-- La tienda en sí: precios visibles, carrito, pago y envíos. Está diseñada en §10, pero no se implementa todavía.
+- Costo de envío calculado en la página: se coordina por email después del pago.
+- Stock, cupones y panel de administración de pedidos.
 - Espalda de la remera, mangas, varios modelos de remera.
 - Editar el catálogo desde la web (el JSON se edita a mano).
 - Base de datos, login, backend y bundler.
@@ -29,7 +30,7 @@ Sin base de datos, sin build y sin dependencias de runtime. Todo el catálogo vi
 
 ```bash
 cd /disco/dev/tshirts
-npm start              # servidor local sin caché → http://localhost:8000
+npm start              # servidor local sin caché → tienda en http://localhost:8000, visor en /visor.html
 npm test               # tests unitarios (node --test, sin dependencias)
 npm run coverage       # tests + cobertura
 ```
@@ -37,7 +38,7 @@ npm run coverage       # tests + cobertura
 > Hace falta un servidor HTTP porque el navegador no permite hacer `fetch('catalog.json')` desde `file://`.
 > `npm start` usa `scripts/serve.py`: igual que `python3 -m http.server`, pero sin caché, así los cambios en stickers o en el catálogo se ven con solo recargar. `package.json` existe solo para tener estos atajos: no hay dependencias, no hace falta `npm install`.
 
-Con `?debug` en la URL (`http://localhost:8000/?debug`) se dibuja el área de impresión en rojo, para calibrarla.
+Con `?debug` en la URL del visor (`http://localhost:8000/visor.html?debug`) se dibuja el área de impresión en rojo, para calibrarla.
 
 ### Agregar una remera a una serie
 
@@ -69,13 +70,14 @@ La fuente se carga sola a partir del archivo; no hay que declararla en otro lado
 
 ```
 tshirts/
-├── index.html
-├── styles.css
-├── catalog.json                ← lo único que se edita para sumar remeras
+├── index.html                  tienda: colección
+├── producto.html               tienda: una remera (color, talle, carrito, comprar)
+├── checkout.html               tienda: resumen, datos de envío y pago Lightning
+├── visor.html                  visor: todas las remeras, en cualquier color
+├── css/                        base.css (colores y botones), store.css, viewer.css
+├── catalog.json                ← lo único que se edita: remeras, precios, talles, pago
 ├── package.json                atajos npm start / test / coverage (sin dependencias)
 ├── src/
-│   ├── app.js                  arranque: carga catálogo, fuentes e imágenes; estado
-│   ├── ui.js                   DOM: colores, filtros, galería, detalle, avisos
 │   ├── render.js               compone una remera: color + diseño + texto
 │   ├── shirt.js                prepara la base y la pinta de un color (canvas)
 │   ├── shading.js              mapas de sombras y brillos (puro)
@@ -83,9 +85,15 @@ tshirts/
 │   ├── layouts.js              posición de imagen y texto (puro)
 │   ├── text.js                 corte de líneas y tamaño de letra (puro)
 │   ├── color.js                hex, luminancia, color de texto automático (puro)
-│   ├── state.js                estado ↔ hash de la URL (puro)
-│   └── strings.js              textos de la interfaz (listo para i18n)
-├── tests/                      un *.test.js por cada módulo puro
+│   ├── loader.js               carga catálogo, fuentes e imágenes (visor y tienda)
+│   ├── dom.js                  el() / svgEl(): DOM sin innerHTML
+│   ├── viewer/                 visor: app.js, ui.js, state.js, strings.js
+│   ├── store/                  tienda (ver §10.2)
+│   └── vendor/                 nostr-tools y qrcode-generator ya armados (ver README ahí)
+├── scripts/
+│   ├── serve.py                servidor local sin caché
+│   └── vendor/                 receta reproducible de src/vendor/
+├── tests/                      un *.test.js por cada módulo puro (tests/store/, tests/viewer/)
 ├── assets/
 │   ├── shirts/t-shirt.png      remera base (negra, fondo transparente)
 │   └── fonts/                  fuentes de los mensajes + su licencia
@@ -263,67 +271,137 @@ La imagen se escala con *contain* dentro de `printArea`, centrada horizontalment
 
 ---
 
-## 10. Camino a la tienda (`store.mostro.network`)
+## 10. La tienda (`store.mostro.network`)
 
-Nada de esto se implementa ahora. Son las decisiones que se toman **hoy** para que el paso a tienda no obligue a rehacer nada.
+Mismo catálogo y mismo render que el visor. Todo corre en el navegador: no hay backend.
 
-### 10.1 Qué ya queda listo
+### 10.1 Recorrido
 
-- **Catálogo = productos.** Cada remera normalizada (diseño o ítem de serie) ya es un producto con `id`, `name`, `image` y colores. La tienda lee el mismo `catalog.json`.
-- **Variante = producto + color + talle.** Los `id` de colores ya son estables (`black`, `navy`, …) y sirven como código de variante.
-- **Render reusable.** `catalog`, `shirt`, `render`, `layouts`, `text` y `color` no saben nada de la UI de este visor. La tienda los importa tal cual.
-- **Campos nuevos sin romper nada.** El normalizador ignora los campos que no conoce, así que se puede agregar `price` antes de que exista la tienda.
-- **Textos centralizados** en `strings.js`, listos para agregar inglés.
-- **Sitio estático.** Se publica igual que MostroP2P.github.io, en GitHub Pages con dominio propio, sin servidor.
+| Página | Qué hace |
+|---|---|
+| `index.html` | Colección, una sección por serie. Cada tarjeta muestra la remera en su color por defecto, el nombre, el precio y los colores disponibles. |
+| `producto.html?id=…&color=…&talle=…` | Igual que kinoto.com.ar/item/…: color (círculos), talle (lista) más **Guía de talles** (tabla de `store.sizes`) y precio. **Agregar al carrito** muestra cuántas hay de esa variante, por ejemplo "(1)". **Comprar** la agrega y va al checkout. Debajo, los acordeones de `store.details` y "Te puede interesar". La URL guarda color y talle. |
+| Carrito | El botón aparece arriba a la derecha cuando hay algo, con la cantidad. El panel "Tu carrito" muestra cada línea con color, talle, − cantidad +, precio, total de la línea (si hay más de una) y **Sacar del carrito**. Abajo: subtotal, envío (a coordinar), total, **Checkout** y **Vaciar carrito**. Se guarda en `localStorage` (`mostro-store:cart`) y se sincroniza entre pestañas. |
+| `checkout.html` | Resumen del pedido, **¿Dónde querés recibir tu pedido?** (calle, número, piso, depto, código postal, localidad, provincia), instrucciones (hasta 500 caracteres) e información personal (nombre, apellido, email, teléfono). Los datos quedan guardados en este navegador (`mostro-store:checkout`) hasta tocar **Limpiar datos guardados**. A la derecha, el método de pago: Lightning. |
 
-### 10.2 Campos que se agregarán al catálogo
+### 10.2 Módulos (`src/store/`)
+
+| Puros (con tests) | Para qué |
+|---|---|
+| `config.js` | Valida la sección `store` de `catalog.json`. |
+| `products.js` | Remeras publicadas, precio final, colores, relacionadas, secciones. |
+| `cart.js`, `cart-store.js`, `persist.js` | Carrito inmutable, guardado y sincronización; `localStorage` sin excepciones. |
+| `money.js` | Formato `$30.000` y sats, conversión ARS → sats, cotización de Yadio. |
+| `bolt11.js` | Decodifica facturas: monto, payment hash, vencimiento (con checksum). |
+| `lnurl.js` | LNURL-pay (LUD-06/12/16): pide la factura y verifica el monto exacto. |
+| `payment.js` | Espera el pago (polling), cuenta regresiva, prueba de pago con preimage. |
+| `order.js` | Número de pedido `MS-XXXXXX`, comentario del pago y textos del DM. |
+| `checkout-form.js` | Campos, validación, provincias, datos guardados. |
+| `query.js` | URL de la página de producto. |
+| `qr.js` | QR con módulos redondeados y el logo de Mostro, basado en el de donate. Tiene ajustes para que decodifique en todas las versiones. |
+| `nostr-order.js` | DM NIP-17 a la tienda: relays de la tienda (kind 10050) y publicación. |
+
+Los módulos de DOM son `boot.js`, `cart-ui.js`, `product-card.js`, `home-page.js`, `product-page.js`, `size-guide.js`, `checkout-fields.js`, `checkout-page.js`, `payment-ui.js` e `icons.js`. Los textos están en `strings.js`.
+
+### 10.3 Campos del catálogo
 
 ```json
 {
   "store": {
-    "lnAddress": "store@pay.mostro.foundation",
-    "currency": "USD",
-    "sizes": ["S", "M", "L", "XL", "XXL"]
+    "currency": "ARS",
+    "price": 30000,
+    "lnAddress": "dev@pay.mostro.foundation",
+    "defaultColor": "black",
+    "defaultSize": "L",
+    "sizes": [{ "id": "S", "width": 49, "length": 69 }],
+    "nostr": { "npub": "npub1…", "relays": ["wss://relay.mostro.network", "wss://nos.lol", "wss://relay.damus.io"] },
+    "details": [{ "title": "Envío", "text": "…" }]
   },
-  "designs": [
-    {
-      "id": "mostro-invaders",
-      "status": "published",
-      "price": 25,
-      "description": "…"
-    }
-  ]
+  "designs": [{ "id": "mostro-invaders", "status": "published", "price": 35000, "description": "…" }]
 }
 ```
 
-- `status`: `draft` (default: solo se ve en el visor) o `published` (aparece en la tienda). Hoy te sirve para marcar qué remeras mandaste a hacer.
-- `price`: en la moneda de `store.currency`. Si es `SAT`, el precio es fijo en sats. Si es fiat, se convierte a sats al momento de pagar con una API de cotización (por ejemplo yadio.io).
-- `sizes`: global en `store`, con override opcional por producto.
+- **`status`** puede ser `draft` (el default: solo se ve en el visor, con la etiqueta "Borrador") o `published` (está a la venta). Una serie se lo pasa a sus ítems, y cada ítem puede cambiarlo.
+- **`price`** es opcional por remera; si falta se usa `store.price`. La moneda es `store.currency`, y se convierte a sats al pagar.
+- **`sizes`** lleva `width` (ancho de axila a axila) y `length` (largo de hombro a ruedo), en cm, para la guía de talles. Si falta una medida, se muestra "—".
+- **`details`** son los acordeones de la página de producto.
+- Si `lnAddress` o `nostr` son inválidos, las remeras se ven igual pero el checkout queda cerrado.
 
-> ⚠️ **Al publicar, fijar el `id` a mano.** El ID automático depende del texto: si cambiás "Love at first sat" por otro mensaje, el ID cambia y se rompen los links y los pedidos viejos que lo referencian.
+> ⚠️ Los ítems publicados tienen el `id` fijo (`mostro-quotes-love-at-first-sat`, …). Si cambiás un texto, el ID no cambia y los links y los carritos guardados siguen funcionando.
 
-### 10.3 Pago con Lightning
+### 10.4 Pago y pedido
 
-Se reusa el flujo de `src/components/Donate.astro` y `src/utils/lightningQr.ts` de MostroP2P.github.io. Todo corre en el navegador:
+1. **Cotización.** Se consulta `https://api.yadio.io/exrates/BTC` para el precio de 1 BTC en ARS. Los sats se calculan como `⌈ARS × 10⁸ / cotización⌉`.
+2. **Número de pedido.** `MS-` más 6 caracteres en base32 Crockford, sin I, L, O ni U.
+3. **Factura (LNURL-pay).** `GET https://pay.mostro.foundation/.well-known/lnurlp/dev`, después `callback?amount=<msat>&comment=Pedido MS-… · store.mostro.network`. El comentario lleva solo el número de pedido, nunca datos personales. La factura se verifica:
+   - el callback tiene que estar en el mismo host que la LN address;
+   - la factura es de mainnet y por **exactamente** el monto pedido;
+   - su fecha tiene una diferencia de 10 minutos como máximo con la hora actual, y vence entre 1 minuto y 24 horas después;
+   - `verify` solo se acepta si está en el mismo origen que el callback.
+4. **Pedido cifrado (NIP-17).** El texto completo (remeras, total, cotización, payment hash, dirección y contacto) va como gift wrap (kind 1059) a `store.nostr.npub`.
+   - Lo firma una clave descartable creada para este checkout: el comprador no necesita Nostr.
+   - Se publica en los relays de DM de la tienda (su kind 10050, si existe) más `store.nostr.relays`.
+   - Hacen falta al menos 2 relays que lo acepten (o 1, si solo hay uno configurado). Si no, no se muestra la factura y el comprador puede reintentar.
+5. **QR.** Mismo estilo que donate, con botones para copiar, abrir la wallet y pagar con WebLN si hay extensión. Muestra la cuenta regresiva del vencimiento.
+6. **Confirmación.** Cada 3 s el navegador consulta `verify` (LUD-21) o, en LNbits, `GET /api/v1/payments/<hash>`. Con WebLN alcanza con `sha256(preimage) == payment hash`.
+   - Si las 3 primeras consultas fallan (hoy pasa siempre, ver §10.5), la página avisa que no puede confirmar el pago y ofrece **"Ya pagué"**.
+   - Al tocarlo, se cierra el pedido y la tienda recibe "⚠️ … el comprador dice que ya pagó, verificá el pago en la billetera".
+7. **Pagado.** Se vacía el carrito, se borran los datos de envío guardados, se muestra el número de pedido y se manda un segundo DM, "✅ Pedido … pagado", en la misma conversación.
 
-1. `GET https://pay.mostro.foundation/.well-known/lnurlp/store` → parámetros LNURL-pay (LUD-06/LUD-16).
-2. `GET callback?amount=<msat>&comment=<pedido>` → factura `pr` + URL `verify` (LUD-21).
-3. Se valida que el monto de la factura sea exactamente el pedido y se muestra el QR estilizado con el logo de Mostro (el mismo `buildStyledQr`), más los botones copiar, abrir wallet y WebLN.
-4. Se consulta `verify` cada 3 s hasta que `settled: true` → "¡Pago recibido!".
+Casos borde:
 
-### 10.4 Pendiente de decidir: datos de envío
+- **Factura vencida.** El comprador genera otra, que es un pedido nuevo. Si la página nunca pudo consultar el estado, no dice "venció": le pide que no vuelva a pagar si ya pagó.
+- **"Cambiar mis datos".** Cancela la factura. Antes de descartarla se consulta su estado una última vez, por si se pagó justo antes.
+- **Cambio de carrito.** Si cambia el contenido mientras se prepara o se muestra la factura (también desde otra pestaña), se cancela. Cada paso del armado verifica que el intento siga vigente, así nunca se arma una factura para un carrito viejo.
 
-Un LN address solo recibe el pago y un comentario de ≤ 255 caracteres. Una remera necesita **talle, nombre y dirección de envío**, y hay que poder vincular cada pedido con su pago.
+> La pantalla "¡Pago recibido!" es informativa. La fuente de verdad es la billetera: solo se despachan los pedidos cuyo pago aparece en LNbits con el comentario `Pedido MS-…`.
 
-| Opción | Cómo funciona | A favor | En contra |
-|---|---|---|---|
-| A. Nostr DM | Se genera un ID de pedido en el navegador y va en el `comment` de la factura. Los datos de envío se mandan cifrados (NIP-17) a la npub de la tienda. | Sin backend, privado, coherente con Mostro. | El cliente necesita Nostr, o firmamos con una clave efímera. |
-| B. Backend de cobro (BTCPay / LNbits) | Un servidor crea la factura con los datos del pedido como metadata y guarda las órdenes. | Pedidos y pagos quedan vinculados; hay panel de administración. | Hay que operar un servidor y guardar direcciones (datos sensibles). |
-| C. Formulario + ID de pedido | El pago lleva el ID de pedido en el `comment` y los datos van por un formulario (email o servicio externo). | Lo más simple. | Dos pasos para el cliente y conciliación manual. |
+### 10.5 Pendiente en el servidor de pagos (confirmación automática)
 
-Se decide cuando se empiece la tienda. En los tres casos el catálogo y el render no cambian.
+LNbits ya responde `GET /api/v1/payments/<payment_hash>` **sin clave**, y solo devuelve `{"paid": true|false}`. Su extensión LNURLp no ofrece LUD-21. Hoy el Caddy de `pay.mostro.foundation` solo expone las rutas de LNURL, así que esa consulta da 404 y el navegador sigue esperando. El pago igual llega; lo que falta es el aviso automático. Alcanza con agregar esta ruta:
 
-### 10.5 Mockups para la tienda
+```caddy
+pay.mostro.foundation {
+	@paymentStatus {
+		method GET
+		path_regexp ^/api/v1/payments/[0-9a-f]{64}$
+	}
+	handle @paymentStatus {
+		reverse_proxy localhost:5000   # el mismo upstream de LNbits que ya usan las rutas /lnurlp
+	}
+	# … resto de la configuración actual
+}
+```
 
-- La tienda puede renderizar en el navegador (igual que ahora) o usar PNGs pre-generados, mejores para SEO y para las vistas previas al compartir en redes.
-- Para pre-generarlos se puede agregar un botón "Exportar todo" en el visor que baje todos los productos en todos sus colores recomendados.
+No hace falta una API propia ni un macaroon: el navegador no maneja ninguna clave.
+
+### 10.6 Leer los pedidos
+
+- **Desarrollo:** `.secrets/store-nostr-dev.txt` (en `.gitignore`) tiene la clave de la npub de prueba que está en `catalog.json`. Importala en un cliente con NIP-17 (0xchat, Amethyst, Coracle…) para ver los pedidos de prueba.
+- **Producción:** poné la npub real de la tienda en `store.nostr.npub` y sus relays de DM. Lo ideal es que esa npub publique su kind 10050.
+- **Conciliar:** el DM "Pedido MS-XXXXXX" con el pago en LNbits que tiene el mismo comentario y el mismo payment hash.
+
+### 10.7 Seguridad y privacidad
+
+- **Sin HTML inyectado.** Todo el DOM se arma con `textContent`. Cada página tiene CSP (`script-src 'self'`, sin inline) y `referrer: no-referrer`.
+- **`connect-src` permite solo** `api.yadio.io`, `pay.mostro.foundation` y relays `wss:`. **Si cambia el dominio de la LN address, hay que agregarlo al CSP** de `index.html`, `producto.html` y `checkout.html`.
+- **Pedidos de red acotados.** Todos los pedidos a APIs tienen un timeout de 10 s y no mandan cookies ni referrer. Los relays de la tienda (kind 10050) se limitan a 6, y nunca son `localhost` ni IPs.
+- **Datos de envío.** Quedan en `localStorage` mientras el comprador completa el formulario, con un vencimiento de 7 días. Se borran al terminar el pedido o con "Limpiar datos guardados".
+- **Texto del DM.** Cada campo va en una sola línea, sin caracteres de control ni de dirección (bidi). Así el comprador no puede falsificar líneas como "✅ pagado".
+- **La billetera manda.** Un DM se puede falsificar, porque cualquiera puede escribirle a la npub. Antes de despachar:
+  1. buscá en LNbits el pago con ese payment hash (y el comentario `Pedido MS-…`);
+  2. verificá que esté cobrado;
+  3. verificá que el monto alcance para las remeras al precio del catálogo, con la cotización de ese momento.
+- **`src/vendor/`.** CI vuelve a armarlo con `scripts/vendor/build.sh` y falla si difiere de lo commiteado.
+
+### 10.8 Pendientes
+
+- Medidas reales de cada talle: las de `catalog.json` son aproximadas.
+- Política y costo de envío (hoy dice "a coordinar").
+- npub real y LN address definitiva (por ejemplo `store@pay.mostro.foundation`).
+- La ruta de Caddy de §10.5.
+- Mockups pre-generados para SEO y vistas previas al compartir.
+- Endurecimiento opcional:
+  - una segunda fuente de cotización, para detectar un precio de Yadio anómalo;
+  - fijar la pubkey del nodo de la tienda y verificar la firma de la factura;
+  - fijar las GitHub Actions por SHA.

@@ -1,7 +1,7 @@
 # Tests + publish to GitHub Pages (store.mostro.network).
 # Every commit pushed to main runs the tests and, if they pass, deploys.
 # Pull requests only run the tests.
-# Only the files the site needs are published (no docs/, tests/ or scripts/).
+# Only the files the site needs are published (no docs/, tests/, scripts/ or .secrets/).
 
 name: Pages
 
@@ -11,11 +11,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Least privilege: only the deploy job can publish
 permissions:
   contents: read
-  actions: read
-  pages: write
-  id-token: write
 
 # A deploy in progress is never cancelled: if several commits land on main,
 # the running deploy finishes and the newest pending commit deploys next.
@@ -38,11 +36,17 @@ jobs:
       - name: Tests and coverage (≥ 80 %)
         run: npm run coverage
 
+      # The minified bundles in src/vendor/ must be exactly what the pinned recipe builds
+      - name: Vendored libraries match scripts/vendor
+        run: |
+          sh scripts/vendor/build.sh
+          git diff --exit-code -- src/vendor
+
       # Pages deploys from Actions do not run Jekyll, so no .nojekyll is needed
       - name: Collect site files
         run: |
           mkdir _site
-          cp -r index.html styles.css catalog.json src assets designs _site/
+          cp -r *.html css catalog.json src assets designs _site/
 
       - uses: actions/upload-pages-artifact@v5
         with:
@@ -52,6 +56,10 @@ jobs:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

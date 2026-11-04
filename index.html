@@ -2,43 +2,45 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.yadio.io https://pay.mostro.foundation wss:; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Remeras Mostro</title>
+  <title>Mostro Store · Remeras</title>
+  <meta name="description" content="Remeras de Mostro. Pagás con Lightning y tus datos viajan cifrados por Nostr.">
   <link rel="icon" href="designs/characters/mostro-8b.png">
-  <link rel="stylesheet" href="styles.css">
-  <script type="module" src="src/app.js"></script>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/store.css">
+  <script type="module" src="src/store/home-page.js"></script>
 </head>
 <body>
-  <header class="topbar">
-    <h1 class="brand">
-      <img src="designs/characters/mostro-8b.png" alt="" width="26" height="29">
-      Remeras Mostro
-    </h1>
-    <div class="swatches" id="swatches" role="group" aria-label="Color de remera"></div>
+  <header class="store-header">
+    <div class="store-header-inner">
+      <a class="store-brand" href="index.html">
+        <img src="designs/characters/mostro-8b.png" alt="" width="30" height="33">
+        <span>Mostro <strong>Store</strong></span>
+      </a>
+      <nav class="store-nav" aria-label="Tienda">
+        <a class="nav-link" href="index.html" aria-current="page">Colección</a>
+        <button type="button" class="cart-button" id="cart-button" hidden>
+          <span data-icon="cart"></span>
+          <span class="cart-count" id="cart-count">0</span>
+        </button>
+      </nav>
+    </div>
   </header>
 
-  <nav class="filters" id="filters" aria-label="Filtrar remeras"></nav>
-  <section class="problems" id="problems" aria-live="polite"></section>
-
-  <main class="grid" id="grid">
-    <p class="status">Cargando remeras…</p>
+  <main class="store-main">
+    <section class="hero">
+      <h1>Remeras Mostro</h1>
+      <p>Elegí tu remera, pagá con Lightning <span aria-hidden="true">⚡</span> y te la mandamos a tu casa.</p>
+    </section>
+    <div id="collection">
+      <p class="muted">Cargando remeras…</p>
+    </div>
   </main>
 
-  <dialog class="detail" id="detail" aria-labelledby="detail-title">
-    <div class="detail-head">
-      <h2 id="detail-title"></h2>
-      <form method="dialog">
-        <button class="icon-button" aria-label="Cerrar">✕</button>
-      </form>
-    </div>
-    <div class="stage detail-stage">
-      <canvas id="detail-canvas"></canvas>
-    </div>
-    <p class="badges" id="detail-badges"></p>
-    <div class="detail-actions">
-      <div class="swatches" id="detail-swatches" role="group" aria-label="Color de remera"></div>
-      <button class="button-primary" id="detail-download" type="button">Descargar PNG</button>
-    </div>
-  </dialog>
+  <footer class="store-footer">
+    <p>Pagos con Lightning · Pedidos cifrados por Nostr · <a href="https://mostro.network">mostro.network</a></p>
+  </footer>
 </body>
 </html>
