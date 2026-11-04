@@ -389,7 +389,7 @@ No hace falta una API propia ni un macaroon: el navegador no maneja ninguna clav
 - **Sin HTML inyectado.** Todo el DOM se arma con `textContent`. Cada página tiene CSP (`script-src 'self'`, sin inline) y `referrer: no-referrer`.
 - **`connect-src` permite solo** `api.yadio.io`, `pay.mostro.foundation` y relays `wss:`. **Si cambia el dominio de la LN address, hay que agregarlo al CSP** de `index.html`, `producto.html` y `checkout.html`.
 - **Pedidos de red acotados.** Todos los pedidos a APIs tienen un timeout de 10 s y no mandan cookies ni referrer. Los relays de la tienda (kind 10050) se limitan a 6, y nunca son `localhost` ni IPs.
-- **Datos de envío.** Se guardan solo en la pestaña (`sessionStorage`), para no perderlos si se recarga la página. Se borran al cerrar la pestaña, al terminar el pedido o con "Limpiar datos guardados". También tienen un tope de 7 días por si la pestaña queda abierta. Nunca quedan en `localStorage`.
+- **Datos de envío.** Se guardan solo en la pestaña (`sessionStorage`), para no perderlos si se recarga la página. Se borran al cerrar la pestaña, al terminar el pedido o con "Limpiar datos guardados". Si la pestaña queda abierta más de 7 días, al recargar no se restauran y se borran. Nunca quedan en `localStorage`.
 - **Texto del DM.** Cada campo va en una sola línea, sin caracteres de control ni de dirección (bidi). Así el comprador no puede falsificar líneas como "✅ pagado".
 - **La billetera manda.** Un DM se puede falsificar, porque cualquiera puede escribirle a la npub. Antes de despachar:
   1. buscá en LNbits el pago con ese payment hash (y el comentario `Pedido MS-…`);

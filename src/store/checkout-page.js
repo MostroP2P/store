@@ -68,19 +68,27 @@ function showReady(view, subtotal, quote) {
   view.payment.ready({ subtotal, quote, hint: view.notice ?? firstProblem(validateCheckout(readForm(view))) });
 }
 
+/** Either the checkout (summary, form, payment) or the "empty cart" message. */
+function showCheckout(isEmpty) {
+  $('checkout-empty').hidden = !isEmpty;
+  $('checkout-content').hidden = isEmpty;
+}
+
+function fillSummary(view, lines, subtotal, satsText) {
+  $('summary-lines').replaceChildren(...lines.map((line) => summaryLine(view.store, line)));
+  $('summary-subtotal').textContent = formatPrice(subtotal);
+  $('summary-total').textContent = formatPrice(subtotal);
+  $('summary-sats').textContent = satsText;
+}
+
 /** Summary and, when nothing else is on screen (invoice, result), the payment button. */
 function renderSummary(view) {
   if (view.paid) return;
   const { lines, subtotal } = cartTotals(view);
-  const empty = lines.length === 0;
-  $('checkout-empty').hidden = !empty;
-  $('checkout-content').hidden = empty;
-  if (empty) return;
-  $('summary-lines').replaceChildren(...lines.map((line) => summaryLine(view.store, line)));
-  $('summary-subtotal').textContent = formatPrice(subtotal);
-  $('summary-total').textContent = formatPrice(subtotal);
+  showCheckout(lines.length === 0);
+  if (lines.length === 0) return;
   const quote = quoteFor(view, subtotal);
-  $('summary-sats').textContent = quote?.sats ? STRINGS.approxSats(formatSats(quote.sats)) : '';
+  fillSummary(view, lines, subtotal, quote?.sats ? STRINGS.approxSats(formatSats(quote.sats)) : '');
   if (!view.active && !view.busy && !view.result) showReady(view, subtotal, quote);
 }
 
@@ -302,6 +310,11 @@ function completeOrder(view, ctx, kind) {
   view.session += 1;
   view.active = null;
   view.paid = true;
+  // The cart may have changed, even emptied, since this order was made (e.g. confirmed after a cancel):
+  // always show the confirmation, with what this order bought
+  const bought = resolveCart({ items: ctx.items }, { products: view.store.products, colors: view.store.catalog.colors });
+  showCheckout(false);
+  fillSummary(view, bought.lines, ctx.order.subtotal, formatSats(ctx.order.sats));
   document.querySelector('main').classList.add('is-paid');
   completion.show(view.payment, { order: ctx.order, email: emailOf(ctx) });
   // Not clear(): an older invoice confirmed late must keep items added afterwards (e.g. from another tab)
