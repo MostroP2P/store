@@ -13,7 +13,7 @@
       { "id": "XXL", "width": 58, "length": 78 }
     ],
     "nostr": {
-      "npub": "npub1sz665tdlu26fzytd26chkyqm2k86cwnjya8t6xdq0akupas8wd4s007y8y",
+      "npub": "npub1st0re749d5d02mwnf2c0vcj566p85y5wpnaz65llr8wt49cyp6kqe44n9m",
       "relays": ["wss://relay.mostro.network", "wss://nos.lol", "wss://relay.damus.io"]
     },
     "details": [

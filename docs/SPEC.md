@@ -381,7 +381,9 @@ No hace falta una API propia ni un macaroon: el navegador no maneja ninguna clav
   - Para tener la tuya, corré `node scripts/dev-nostr-key.mjs`. Guarda la clave en `.secrets/store-nostr-dev.txt` e imprime la npub.
   - Poné esa npub en `store.nostr.npub`, solo en tu branch de pruebas.
   - Importá `secret_hex` en un cliente con NIP-17 (0xchat, Amethyst, Coracle…) para leer los pedidos de prueba.
-- **Producción:** poné la npub real de la tienda en `store.nostr.npub` y sus relays de DM. Lo ideal es que esa npub publique su kind 10050.
+- **Producción:** `store.nostr.npub` es la npub de la tienda: `npub1st0re749d5d02mwnf2c0vcj566p85y5wpnaz65llr8wt49cyp6kqe44n9m`.
+  - Los pedidos se leen entrando con su nsec en un cliente con NIP-17.
+  - Conviene que esa npub publique su kind 10050 con los relays de `store.nostr.relays`. Muchos clientes buscan los DMs solo ahí, y la tienda también publica los pedidos en esa lista.
 - **Conciliar:** el DM "Pedido MS-XXXXXX" con el pago en LNbits que tiene el mismo comentario y el mismo payment hash.
 
 ### 10.7 Seguridad y privacidad
@@ -401,7 +403,8 @@ No hace falta una API propia ni un macaroon: el navegador no maneja ninguna clav
 
 - Medidas reales de cada talle: las de `catalog.json` son aproximadas.
 - Política y costo de envío (hoy dice "a coordinar").
-- npub real y LN address definitiva (por ejemplo `store@pay.mostro.foundation`).
+- LN address definitiva (por ejemplo `store@pay.mostro.foundation`). La npub de la tienda ya está configurada.
+- Publicar el kind 10050 (relays de DM) desde la npub de la tienda.
 - La ruta de Caddy de §10.5.
 - Mockups pre-generados para SEO y vistas previas al compartir.
 - Endurecimiento opcional:
