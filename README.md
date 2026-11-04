@@ -53,8 +53,8 @@ npm run coverage       # tests + cobertura (mínimo 80 %)
    3. manda el pedido cifrado a la tienda por Nostr;
    4. muestra el QR, con botones para copiar la factura, abrir la wallet o pagar con una extensión WebLN.
 5. **Confirmación**: cuando la página ve el pago, muestra "¡Pago recibido!" con el número de pedido, y saca esas remeras del carrito.
-   - Hoy la página todavía no puede ver los pagos ([§4](#4-cómo-te-llegan-los-pagos-lightning)).
-   - Por eso, a los pocos segundos ofrece **"Ya pagué"**, que cierra el pedido y le avisa a la tienda.
+   - La página consulta el estado del pago cada 3 segundos ([§4](#4-cómo-te-llegan-los-pagos-lightning)).
+   - Si esa consulta falla 3 veces seguidas, ofrece **"Ya pagué"**, que cierra el pedido y le avisa a la tienda.
 
 Si la factura vence, el comprador puede generar otra. Cada intento es un pedido nuevo, con otro número.
 
@@ -124,57 +124,47 @@ Los pagos van a la LN address de `store.lnAddress`, que es **`store@pay.mostro.f
 
 ### Confirmación automática del pago
 
-LNbits ya responde, sin pedir clave, si una factura se pagó: `GET /api/v1/payments/<payment_hash>` devuelve solo `{"paid": true|false}`. Pero el Caddy de `pay.mostro.foundation` solo deja pasar las rutas de LNURL, así que esa consulta hoy da 404.
+Está activa desde el 4/11/2026.
 
-**Mientras no se agregue la ruta:**
+- LNbits responde, sin pedir clave, si una factura se pagó: `GET /api/v1/payments/<payment_hash>` devuelve solo `{"paid": true|false}`.
+- La página lo consulta cada 3 segundos y, cuando llega el pago, muestra "¡Pago recibido!" sola.
+- Si se paga con una extensión WebLN (por ejemplo Alby), la confirmación no depende de esta consulta.
 
-- El pago se cobra igual.
-- La página no puede verlo, así que ofrece **"Ya pagué"**.
-- Con una extensión WebLN (por ejemplo Alby), la confirmación sí es automática.
-
-**Para activarla**, hay que agregar esto en la configuración de Caddy de `pay.mostro.foundation`. Paso a paso, más abajo.
+Para que funcione, el Caddy de `pay.mostro.foundation` deja pasar esa única ruta además de las de LNURL. Está en el servidor `lnbits`, en `/etc/caddy/Caddyfile`:
 
 ```caddy
-pay.mostro.foundation {
 	@paymentStatus {
 		method GET
 		path_regexp ^/api/v1/payments/[0-9a-f]{64}$
 	}
 	handle @paymentStatus {
-		reverse_proxy localhost:5000   # el mismo upstream de LNbits que ya usan las rutas /lnurlp
+		reverse_proxy 127.0.0.1:5000
 	}
-	# … resto de la configuración actual
-}
 ```
 
-No hace falta una API propia ni un macaroon: el navegador no maneja ninguna clave. Si la LN address se mueve a un servidor con LUD-21 (`verify`), la página lo usa sola.
+**Es seguro:**
 
-#### Paso a paso
+- Sin clave, LNbits solo contesta si la factura está pagada: no muestra montos, comentarios ni saldo.
+- El hash de una factura solo lo conocen el comprador y la tienda.
+- Solo pasa `GET` con exactamente 64 caracteres hexadecimales. El resto de la API de LNbits (crear facturas, pagar, ver la billetera) sigue devolviendo 404.
 
-1. **Encontrá el bloque del sitio.** Abrí el Caddyfile del servidor (normalmente `/etc/caddy/Caddyfile`, o el que monte el contenedor de Caddy) y buscá el bloque `pay.mostro.foundation { … }`.
-2. **Copiá el upstream de LNbits.** Ahí ya hay un `reverse_proxy` para las rutas `/.well-known/lnurlp/*` y `/lnurlp/*`. Usá el mismo destino (por ejemplo `localhost:5000` o `lnbits:5000`) en el bloque nuevo.
-3. **Pegá el matcher y el `handle`** dentro del bloque del sitio, **antes de la regla que hoy devuelve 404** para todo lo demás (por ejemplo `handle { respond 404 }` o un `respond 404` suelto).
-4. **Validá y recargá**, sin cortar el servicio:
-   ```bash
-   caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
-   sudo systemctl reload caddy        # con Docker: docker exec <contenedor> caddy reload --config /etc/caddy/Caddyfile
-   ```
-5. **Probá con un hash inventado:**
-   ```bash
-   curl -i -H 'Origin: https://store.mostro.network' \
-     https://pay.mostro.foundation/api/v1/payments/0000000000000000000000000000000000000000000000000000000000000000
-   ```
-   - **Antes del cambio:** `404` con el cuerpo vacío. Responde Caddy.
-   - **Después del cambio:** `404` con `{"detail":"Payment does not exist."}` y el header `access-control-allow-origin: *`. Ya responde LNbits.
-6. **Probá en la tienda.** Hacé un pedido y abrí las herramientas de desarrollo del navegador (pestaña *Network*). Cada 3 s tiene que aparecer `/api/v1/payments/<hash>` con `{"paid":false}`. Al pagar, la página tiene que mostrar "¡Pago recibido!" sola.
+**Si la consulta falla** (por Caddy, LNbits o la red), la página sigue intentando. A las 3 fallas seguidas ofrece **"Ya pagué"**: el pedido se cierra y la tienda recibe un aviso para verificar el pago en la billetera.
 
-**Si la respuesta del paso 5 no trae `access-control-allow-origin`**, agregá `header Access-Control-Allow-Origin "*"` dentro del `handle`. Hacelo solo en ese caso: LNbits ya lo manda, y si va dos veces el navegador lo rechaza.
+**Para verificar la ruta:**
 
-**¿Es seguro abrir esa ruta?**
+```bash
+curl -i -H 'Origin: https://store.mostro.network' \
+  https://pay.mostro.foundation/api/v1/payments/0000000000000000000000000000000000000000000000000000000000000000
+```
 
-- **Qué responde LNbits.** Sin clave, solo dice `{"paid": true|false}`: no muestra montos, comentarios ni saldo.
-- **Quién conoce el hash.** Solo el comprador y la tienda.
-- **Qué deja pasar el matcher.** Solo `GET` con un hash de 64 caracteres hexadecimales. El resto de `/api` de LNbits (crear facturas, pagar, ver la billetera) sigue cerrado.
+- **Funciona:** responde `404` con `{"detail":"Payment does not exist."}` y el header `access-control-allow-origin: *`. Contesta LNbits.
+- **Está bloqueada:** responde `404` con el cuerpo vacío. Contesta Caddy.
+
+**Para deshacerla**, en el servidor:
+
+```bash
+cp /etc/caddy/Caddyfile.bak-20261104-store-status /etc/caddy/Caddyfile && systemctl reload caddy
+```
 
 ## 5. Qué hacer con cada pedido
 
@@ -317,7 +307,6 @@ Configuración (una sola vez, ya hecha):
 
 ## 11. Pendientes
 
-- [ ] **Ruta de Caddy** para la confirmación automática del pago ([§4](#4-cómo-te-llegan-los-pagos-lightning)).
 - [ ] **Relays de DM de la tienda:** publicar el kind 10050 desde la npub de la tienda ([§3](#3-cómo-te-llegan-los-pedidos-nostr)).
 - [ ] **Medidas reales de cada talle** en `store.sizes`: las actuales son aproximadas.
 - [ ] **Texto y costo de envío** en `store.details`: hoy dice "a coordinar".

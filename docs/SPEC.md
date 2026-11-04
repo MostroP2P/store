@@ -344,7 +344,7 @@ Los módulos de DOM son `boot.js`, `cart-ui.js`, `product-card.js`, `home-page.j
    - Hacen falta al menos 2 relays que lo acepten (o 1, si solo hay uno configurado). Si no, no se muestra la factura y el comprador puede reintentar.
 5. **QR.** Mismo estilo que donate, con botones para copiar, abrir la wallet y pagar con WebLN si hay extensión. Muestra la cuenta regresiva del vencimiento.
 6. **Confirmación.** Cada 3 s el navegador consulta `verify` (LUD-21) o, en LNbits, `GET /api/v1/payments/<hash>`. Con WebLN alcanza con `sha256(preimage) == payment hash`.
-   - Si fallan 3 consultas seguidas (hoy pasa siempre, ver §10.5), la página avisa que no puede confirmar el pago y ofrece **"Ya pagué"**. Vale también si el endpoint respondía antes y dejó de hacerlo.
+   - Si fallan 3 consultas seguidas, la página avisa que no puede confirmar el pago y ofrece **"Ya pagué"**. Vale también si el endpoint respondía antes y dejó de hacerlo.
    - Al tocarlo, se cierra el pedido y la tienda recibe "⚠️ … el comprador dice que ya pagó, verificá el pago en la billetera".
 7. **Pagado.** Se sacan del carrito las remeras compradas (lo que se haya agregado después, por ejemplo desde otra pestaña, queda), se borran los datos de envío, se muestra el número de pedido y se manda un segundo DM, "✅ Pedido … pagado", en la misma conversación.
 
@@ -356,24 +356,30 @@ Casos borde:
 
 > La pantalla "¡Pago recibido!" es informativa. La fuente de verdad es la billetera: solo se despachan los pedidos cuyo pago aparece en LNbits con el comentario `Pedido MS-…`.
 
-### 10.5 Pendiente en el servidor de pagos (confirmación automática)
+### 10.5 Confirmación automática (ruta de Caddy)
 
-LNbits ya responde `GET /api/v1/payments/<payment_hash>` **sin clave**, y solo devuelve `{"paid": true|false}`. Su extensión LNURLp no ofrece LUD-21. Hoy el Caddy de `pay.mostro.foundation` solo expone las rutas de LNURL, así que esa consulta da 404 y el navegador sigue esperando. El pago igual llega; lo que falta es el aviso automático. Alcanza con agregar esta ruta:
+LNbits responde `GET /api/v1/payments/<payment_hash>` **sin clave**, y en ese caso solo devuelve `{"paid": true|false}`. Su extensión LNURLp no ofrece LUD-21.
+
+Desde el 4/11/2026, el Caddy de `pay.mostro.foundation` (servidor `lnbits`, `/etc/caddy/Caddyfile`) deja pasar esa única ruta además de las de LNURL. Solo acepta `GET` con un hash de 64 caracteres hexadecimales:
 
 ```caddy
-pay.mostro.foundation {
 	@paymentStatus {
 		method GET
 		path_regexp ^/api/v1/payments/[0-9a-f]{64}$
 	}
 	handle @paymentStatus {
-		reverse_proxy localhost:5000   # el mismo upstream de LNbits que ya usan las rutas /lnurlp
+		reverse_proxy 127.0.0.1:5000
 	}
-	# … resto de la configuración actual
-}
 ```
 
-No hace falta una API propia ni un macaroon: el navegador no maneja ninguna clave.
+Verificaciones del cambio:
+
+- `/.well-known/lnurlp/*` sigue respondiendo.
+- Con un hash inexistente, la ruta devuelve el 404 JSON de LNbits, con `access-control-allow-origin: *`.
+- Con una factura real impaga devuelve `{"paid":false}`, también desde una página de la tienda con su CSP.
+- El resto de `/api` sigue devolviendo el 404 de Caddy.
+
+El backup quedó en `/etc/caddy/Caddyfile.bak-20261104-store-status`. No hace falta una API propia ni un macaroon: el navegador no maneja ninguna clave.
 
 ### 10.6 Leer los pedidos
 
@@ -404,7 +410,6 @@ No hace falta una API propia ni un macaroon: el navegador no maneja ninguna clav
 - Medidas reales de cada talle: las de `catalog.json` son aproximadas.
 - Política y costo de envío (hoy dice "a coordinar").
 - Publicar el kind 10050 (relays de DM) desde la npub de la tienda.
-- La ruta de Caddy de §10.5.
 - Mockups pre-generados para SEO y vistas previas al compartir.
 - Endurecimiento opcional:
   - una segunda fuente de cotización, para detectar un precio de Yadio anómalo;
