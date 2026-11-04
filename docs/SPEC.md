@@ -310,7 +310,7 @@ Los módulos de DOM son `boot.js`, `cart-ui.js`, `product-card.js`, `home-page.j
   "store": {
     "currency": "ARS",
     "price": 30000,
-    "lnAddress": "dev@pay.mostro.foundation",
+    "lnAddress": "store@pay.mostro.foundation",
     "defaultColor": "black",
     "defaultSize": "L",
     "sizes": [{ "id": "S", "width": 49, "length": 69 }],
@@ -333,7 +333,7 @@ Los módulos de DOM son `boot.js`, `cart-ui.js`, `product-card.js`, `home-page.j
 
 1. **Cotización.** Se consulta `https://api.yadio.io/exrates/BTC` para el precio de 1 BTC en ARS. Los sats se calculan como `⌈ARS × 10⁸ / cotización⌉`.
 2. **Número de pedido.** `MS-` más 6 caracteres en base32 Crockford, sin I, L, O ni U.
-3. **Factura (LNURL-pay).** `GET https://pay.mostro.foundation/.well-known/lnurlp/dev`, después `callback?amount=<msat>&comment=Pedido MS-… · store.mostro.network`. El comentario lleva solo el número de pedido, nunca datos personales. La factura se verifica:
+3. **Factura (LNURL-pay).** `GET https://pay.mostro.foundation/.well-known/lnurlp/store`, después `callback?amount=<msat>&comment=Pedido MS-… · store.mostro.network`. El comentario lleva solo el número de pedido, nunca datos personales. La factura se verifica:
    - el callback tiene que estar en el mismo host que la LN address;
    - la factura es de mainnet y por **exactamente** el monto pedido;
    - su fecha tiene una diferencia de 10 minutos como máximo con la hora actual, y vence entre 1 minuto y 24 horas después;
@@ -403,7 +403,6 @@ No hace falta una API propia ni un macaroon: el navegador no maneja ninguna clav
 
 - Medidas reales de cada talle: las de `catalog.json` son aproximadas.
 - Política y costo de envío (hoy dice "a coordinar").
-- LN address definitiva (por ejemplo `store@pay.mostro.foundation`). La npub de la tienda ya está configurada.
 - Publicar el kind 10050 (relays de DM) desde la npub de la tienda.
 - La ruta de Caddy de §10.5.
 - Mockups pre-generados para SEO y vistas previas al compartir.

@@ -22,7 +22,7 @@ function isHttpsUrl(value) {
 const isMsat = (value) => Number.isSafeInteger(value) && value > 0;
 const sameOrigin = (a, b) => new URL(a).origin === new URL(b).origin;
 
-/** "dev@pay.mostro.foundation" → "https://pay.mostro.foundation/.well-known/lnurlp/dev" */
+/** "store@pay.mostro.foundation" → "https://pay.mostro.foundation/.well-known/lnurlp/store" */
 export function lnurlpUrl(address) {
   const match = LN_ADDRESS.exec(String(address).trim());
   if (!match) throw new Error(`LN address inválida: ${address}`);

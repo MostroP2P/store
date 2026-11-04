@@ -2,7 +2,7 @@
   "store": {
     "currency": "ARS",
     "price": 30000,
-    "lnAddress": "dev@pay.mostro.foundation",
+    "lnAddress": "store@pay.mostro.foundation",
     "defaultColor": "black",
     "defaultSize": "L",
     "sizes": [
