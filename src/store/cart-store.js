@@ -1,6 +1,6 @@
 // Cart state shared by the store pages: saved in localStorage, announced to subscribers on every change.
 
-import { EMPTY_CART, addItem, setQuantity, removeItem, sanitizeCart } from './cart.js';
+import { EMPTY_CART, addItem, setQuantity, removeItem, sanitizeCart, subtractItems } from './cart.js';
 import { readJson, writeJson } from './persist.js';
 
 export const CART_STORAGE_KEY = 'mostro-store:cart';
@@ -16,15 +16,18 @@ export function createCartStore({ storage, isValidVariant }) {
   let cart = load();
 
   const notify = () => listeners.forEach((listener) => listener(cart));
+  /** Returns false when the cart could not be saved (it then only lives in this page). */
   const commit = (next) => {
     cart = next;
-    writeJson(storage, CART_STORAGE_KEY, cart);
+    const saved = writeJson(storage, CART_STORAGE_KEY, cart);
     notify();
+    return saved;
   };
 
   return {
     get: () => cart,
     add: (variant, quantity = 1) => commit(addItem(cart, variant, quantity)),
+    subtract: (items) => commit(subtractItems(cart, items)),
     setQuantity: (key, quantity) => commit(setQuantity(cart, key, quantity)),
     remove: (key) => commit(removeItem(cart, key)),
     clear: () => commit(EMPTY_CART),

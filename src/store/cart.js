@@ -8,7 +8,8 @@ const isObject = (value) => value !== null && typeof value === 'object' && !Arra
 const isText = (value) => typeof value === 'string' && value !== '';
 const clamp = (quantity) => Math.min(MAX_QUANTITY, Math.max(0, Math.floor(quantity)));
 
-export const lineKey = ({ productId, colorId, size }) => `${productId}|${colorId}|${size}`;
+/** Unambiguous id of a product + color + size line, whatever characters the ids contain. */
+export const lineKey = ({ productId, colorId, size }) => JSON.stringify([productId, colorId, size]);
 
 export function addItem(cart, variant, quantity = 1) {
   const key = lineKey(variant);
@@ -34,6 +35,15 @@ export function setQuantity(cart, key, quantity) {
   const amount = clamp(quantity);
   if (amount === 0) return removeItem(cart, key);
   return { items: cart.items.map((item) => (lineKey(item) === key ? { ...item, quantity: amount } : item)) };
+}
+
+/** Takes away what an order bought ({ productId, colorId, size, quantity } items), keeping anything added later. */
+export function subtractItems(cart, bought) {
+  return bought.reduce((current, item) => {
+    const key = lineKey(item);
+    const line = current.items.find((entry) => lineKey(entry) === key);
+    return line ? setQuantity(current, key, line.quantity - item.quantity) : current;
+  }, cart);
 }
 
 export const cartCount = (cart) => cart.items.reduce((sum, item) => sum + item.quantity, 0);

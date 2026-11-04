@@ -25,7 +25,11 @@ Todo se configura en la sección `store` de `catalog.json`: precio, moneda, tall
 
 ### Leer los pedidos de prueba
 
-`catalog.json` apunta a una npub de **desarrollo**. Su clave está en `.secrets/store-nostr-dev.txt`, que no se sube a git. Importá ese `secret_hex` en un cliente Nostr con NIP-17 (0xchat, Amethyst, Coracle…) para leer los pedidos.
+`catalog.json` apunta a una npub de **desarrollo**. Su clave no está en el repo: `.secrets/` está en `.gitignore`, así que solo la tiene quien la generó. Para probar con una propia:
+
+1. Corré `node scripts/dev-nostr-key.mjs`. Guarda la clave en `.secrets/store-nostr-dev.txt` (nunca sobreescribe una existente) e imprime la npub.
+2. Poné esa npub en `store.nostr.npub`, solo en tu branch de pruebas.
+3. Importá el `secret_hex` en un cliente Nostr con NIP-17 (0xchat, Amethyst, Coracle…) para leer los pedidos.
 
 **Antes de vender de verdad:** cambiá `store.nostr.npub` por la npub de la tienda y `store.lnAddress` por la dirección definitiva.
 

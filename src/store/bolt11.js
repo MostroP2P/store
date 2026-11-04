@@ -1,10 +1,8 @@
 // BOLT11 invoice decoding (pure), limited to what the store checks: amount, payment hash and expiry.
 // https://github.com/lightning/bolts/blob/master/11-payment-encoding.md — the signature is not verified.
 
-const CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
-const GENERATOR = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3];
-const BECH32_CONST = 1;
-const CHECKSUM_WORDS = 6;
+import { decodeBech32 } from './bech32.js';
+
 const SIGNATURE_WORDS = 104;
 const TIMESTAMP_WORDS = 7;
 const TAG_PAYMENT_HASH = 1;
@@ -16,34 +14,6 @@ const DEFAULT_EXPIRY_SECONDS = 3600;
 const HRP = /^ln(bcrt|bc|tbs|tb|sb)(\d*)([munp]?)$/;
 const MSAT_PER_BTC = 100_000_000_000n;
 const DIVISOR = { '': 1n, m: 1_000n, u: 1_000_000n, n: 1_000_000_000n, p: 1_000_000_000_000n };
-
-function polymod(values) {
-  return values.reduce((chk, value) => {
-    const top = chk >>> 25;
-    const next = ((chk & 0x1ffffff) << 5) ^ value;
-    return GENERATOR.reduce((acc, gen, i) => (((top >>> i) & 1) ? acc ^ gen : acc), next);
-  }, 1);
-}
-
-const hrpExpand = (hrp) => [
-  ...[...hrp].map((c) => c.charCodeAt(0) >> 5),
-  0,
-  ...[...hrp].map((c) => c.charCodeAt(0) & 31),
-];
-
-/** Splits and checks a bech32 string; returns the human readable part and the data words (no checksum). */
-function bech32Words(text) {
-  const separator = text.lastIndexOf('1');
-  if (separator < 1 || text.length - separator - 1 < CHECKSUM_WORDS) throw new Error('not a bech32 string');
-  const hrp = text.slice(0, separator);
-  const words = [...text.slice(separator + 1)].map((char) => {
-    const word = CHARSET.indexOf(char);
-    if (word === -1) throw new Error(`invalid character "${char}"`);
-    return word;
-  });
-  if (polymod([...hrpExpand(hrp), ...words]) !== BECH32_CONST) throw new Error('bad checksum');
-  return { hrp, words: words.slice(0, -CHECKSUM_WORDS) };
-}
 
 const wordsToInt = (words) => words.reduce((value, word) => value * 32 + word, 0);
 
@@ -93,8 +63,8 @@ export function hrpAmountMsat(hrp) {
  */
 export function decodeInvoice(pr) {
   if (typeof pr !== 'string') throw new Error('the invoice must be a string');
-  const text = pr.trim().toLowerCase().replace(/^lightning:/, '');
-  const { hrp, words } = bech32Words(text);
+  // The URI prefix may have any case; the invoice itself must be all lower or all upper case
+  const { hrp, words } = decodeBech32(pr.trim().replace(/^lightning:/i, ''));
   const msat = hrpAmountMsat(hrp);
   if (words.length < TIMESTAMP_WORDS + SIGNATURE_WORDS) throw new Error('invoice too short');
 

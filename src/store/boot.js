@@ -11,11 +11,11 @@ import { createCartStore, CART_STORAGE_KEY } from './cart-store.js';
 import { icon } from './icons.js';
 import { STRINGS } from './strings.js';
 
-function browserStorage() {
+/** window.localStorage / window.sessionStorage, or null when the browser blocks it (privacy settings). */
+function browserStorage(name) {
   try {
-    return window.localStorage;
+    return window[name];
   } catch {
-    // Blocked storage (privacy settings): the cart lives only while the page is open
     return null;
   }
 }
@@ -55,13 +55,17 @@ export async function loadStore() {
     loadFonts(catalog.fonts),
     loadProductImages(products),
   ]);
-  const storage = browserStorage();
+  const storage = browserStorage('localStorage');
   const cart = createCartStore({ storage, isValidVariant: variantChecker(products, config) });
   // Another tab changed the cart (or cleared storage)
   window.addEventListener('storage', (event) => {
     if (event.key === CART_STORAGE_KEY || event.key === null) cart.reload();
   });
-  return { catalog, config, products, shirt: prepareShirt(baseImage, catalog.base.shading), images, cart, storage };
+  // session: delivery data lives only in this tab (cleared when it closes)
+  return {
+    catalog, config, products, shirt: prepareShirt(baseImage, catalog.base.shading), images, cart, storage,
+    session: browserStorage('sessionStorage'),
+  };
 }
 
 export const colorById = (store, colorId) => store.catalog.colors.find((c) => c.id === colorId);

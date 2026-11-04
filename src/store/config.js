@@ -1,10 +1,23 @@
 // Store settings (pure): the "store" section of catalog.json — price, sizes, Lightning address and Nostr inbox.
 
+import { decodeBech32 } from './bech32.js';
+
 const DEFAULT_CURRENCY = 'ARS';
 const CURRENCY = /^[A-Z]{3}$/;
 const LN_ADDRESS = /^[a-z0-9._+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/;
-const NPUB = /^npub1[02-9ac-hj-np-z]{58}$/;
+const NPUB_HRP = 'npub';
+const NPUB_WORDS = 52;
 const MEASURES = ['width', 'length'];
+
+/** An npub with a valid bech32 checksum and a 32-byte key (a typo would send orders nowhere). */
+function isNpub(value) {
+  try {
+    const { hrp, words } = decodeBech32(value);
+    return hrp === NPUB_HRP && words.length === NPUB_WORDS && value === value.toLowerCase();
+  } catch {
+    return false;
+  }
+}
 
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const isText = (value) => typeof value === 'string' && value.trim() !== '';
@@ -80,7 +93,7 @@ function normalizeRelays(relays) {
 
 function normalizeNostr(nostr) {
   const npub = isObject(nostr) && typeof nostr.npub === 'string' ? nostr.npub.trim() : '';
-  if (!NPUB.test(npub)) {
+  if (!isNpub(npub)) {
     return { nostr: null, problems: [error(`"store.nostr.npub" inválido "${npub}": hace falta la npub de la tienda (npub1…) para recibir pedidos.`)] };
   }
   const { relays, problems } = normalizeRelays(nostr.relays);

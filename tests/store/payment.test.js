@@ -111,3 +111,21 @@ test('isPaidNow checks the status once and never throws', async () => {
   assert.equal(await isPaidNow('https://pay/x', async () => ({ paid: false })), false);
   assert.equal(await isPaidNow('https://pay/x', async () => { throw new Error('offline'); }), false);
 });
+
+test('a status endpoint that stops answering still offers the manual fallback and ends "unconfirmed"', async () => {
+  const clock = fakeClock();
+  const { fetchJson } = answers({ paid: false }, new Error('HTTP 502'));
+  let warned = 0;
+  const result = await waitForPayment({
+    url: 'https://pay/x', fetchJson, ...clock, intervalMs: 3000, expiresAt: clock.now() + 30_000, onUnreachable: () => { warned += 1; },
+  });
+  assert.equal(result, 'unconfirmed');
+  assert.equal(warned, 1);
+});
+
+test('ends "unconfirmed" when the last check after expiry fails', async () => {
+  const clock = fakeClock();
+  const { fetchJson } = answers({ paid: false }, { paid: false }, new Error('offline'));
+  const result = await waitForPayment({ url: 'https://pay/x', fetchJson, ...clock, intervalMs: 3000, expiresAt: clock.now() + 8_000 });
+  assert.equal(result, 'unconfirmed');
+});

@@ -3,7 +3,7 @@
 import { isSettled } from './lnurl.js';
 
 export const POLL_INTERVAL_MS = 3000;
-/** Failed checks in a row, without any answer yet, before telling the buyer we can't confirm here. */
+/** Failed checks in a row before telling the buyer we can't confirm the payment here. */
 export const UNREACHABLE_AFTER = 3;
 
 const SECOND_MS = 1000;
@@ -34,9 +34,9 @@ export const isPaidNow = (url, fetchJson) => fetchJson(url).then(isSettled, () =
 /**
  * Polls `url` every `intervalMs` until the invoice is paid, expires or the caller cancels.
  * Network errors don't stop it: a failed check doesn't mean the invoice is gone.
- * onUnreachable() runs once if the first UNREACHABLE_AFTER checks all fail.
- * Resolves 'paid' | 'expired' | 'cancelled', or 'unconfirmed' when the endpoint never answered
- * (the invoice may have been paid: the page just couldn't see it).
+ * onUnreachable() runs once, the first time UNREACHABLE_AFTER checks in a row fail (even after earlier answers).
+ * Resolves 'paid' | 'expired' | 'cancelled', or 'unconfirmed' when the last check failed: the invoice may have
+ * been paid and the page just couldn't see it, so it must not be called "expired".
  */
 export async function waitForPayment({
   url,
@@ -48,18 +48,20 @@ export async function waitForPayment({
   isCancelled = () => false,
   onUnreachable = () => {},
 }) {
-  let answered = false;
   let failures = 0;
+  let warned = false;
   for (;;) {
     await sleep(intervalMs);
     if (isCancelled()) return 'cancelled';
     const status = await fetchJson(url).catch(() => null);
     if (isCancelled()) return 'cancelled';
     if (isSettled(status)) return 'paid';
-    answered ||= status !== null;
     failures = status === null ? failures + 1 : 0;
-    if (!answered && failures === UNREACHABLE_AFTER) onUnreachable();
+    if (!warned && failures >= UNREACHABLE_AFTER) {
+      warned = true;
+      onUnreachable();
+    }
     // Checked after the request: one last look past expiry catches a payment made at the very end
-    if (now() >= expiresAt) return answered ? 'expired' : 'unconfirmed';
+    if (now() >= expiresAt) return failures > 0 ? 'unconfirmed' : 'expired';
   }
 }

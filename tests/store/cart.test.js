@@ -11,6 +11,7 @@ import {
   variantQuantity,
   sanitizeCart,
   resolveCart,
+  subtractItems,
 } from '../../src/store/cart.js';
 
 const LOVE_BLACK_L = { productId: 'love', colorId: 'black', size: 'L' };
@@ -31,7 +32,15 @@ const isKnown = ({ productId, colorId, size }) => {
 };
 
 test('lineKey identifies a product, color and size', () => {
-  assert.equal(lineKey(LOVE_BLACK_L), 'love|black|L');
+  assert.equal(lineKey(LOVE_BLACK_L), lineKey({ ...LOVE_BLACK_L }));
+  assert.notEqual(lineKey(LOVE_BLACK_L), lineKey(LOVE_RED_M));
+});
+
+test('lineKey never mixes up variants whose ids contain separators', () => {
+  const a = { productId: 'tee|limited', colorId: 'black', size: 'L' };
+  const b = { productId: 'tee', colorId: 'limited|black', size: 'L' };
+  assert.notEqual(lineKey(a), lineKey(b));
+  assert.equal(addItem(addItem(EMPTY_CART, a), b).items.length, 2);
 });
 
 test('addItem appends a new line and never mutates the cart', () => {
@@ -50,17 +59,18 @@ test('addItem increases an existing line and caps it', () => {
 
 test('setQuantity changes one line, removes it at 0 and ignores invalid values', () => {
   const cart = addItem(addItem(EMPTY_CART, LOVE_BLACK_L), LOVE_RED_M);
-  assert.equal(setQuantity(cart, 'love|red|M', 4).items[1].quantity, 4);
-  assert.equal(setQuantity(cart, 'love|red|M', 999).items[1].quantity, MAX_QUANTITY);
-  assert.deepEqual(setQuantity(cart, 'love|red|M', 0).items, [{ ...LOVE_BLACK_L, quantity: 1 }]);
-  assert.equal(setQuantity(cart, 'love|red|M', 'dos'), cart);
-  assert.equal(setQuantity(cart, 'love|red|M', 2.5).items[1].quantity, 2);
-  assert.equal(setQuantity(cart, 'nope|x|S', 3), cart);
+  const red = lineKey(LOVE_RED_M);
+  assert.equal(setQuantity(cart, red, 4).items[1].quantity, 4);
+  assert.equal(setQuantity(cart, red, 999).items[1].quantity, MAX_QUANTITY);
+  assert.deepEqual(setQuantity(cart, red, 0).items, [{ ...LOVE_BLACK_L, quantity: 1 }]);
+  assert.equal(setQuantity(cart, red, 'dos'), cart);
+  assert.equal(setQuantity(cart, red, 2.5).items[1].quantity, 2);
+  assert.equal(setQuantity(cart, lineKey({ productId: 'nope', colorId: 'x', size: 'S' }), 3), cart);
 });
 
 test('removeItem drops one line', () => {
   const cart = addItem(addItem(EMPTY_CART, LOVE_BLACK_L), LOVE_RED_M);
-  assert.deepEqual(removeItem(cart, 'love|black|L').items, [{ ...LOVE_RED_M, quantity: 1 }]);
+  assert.deepEqual(removeItem(cart, lineKey(LOVE_BLACK_L)).items, [{ ...LOVE_RED_M, quantity: 1 }]);
 });
 
 test('cartCount and variantQuantity add up quantities', () => {
@@ -101,9 +111,17 @@ test('resolveCart prices every line and skips unknown products or colors', () =>
   };
   const { lines, subtotal, count } = resolveCart(cart, { products: PRODUCTS, colors: COLORS });
   assert.deepEqual(lines.map((l) => [l.key, l.product.name, l.color.name, l.size, l.quantity, l.unitPrice, l.total]), [
-    ['love|black|L', 'Love at first sat', 'Negro', 'L', 2, 30000, 60000],
-    ['hold|black|M', 'Hold my invoice', 'Negro', 'M', 1, 35000, 35000],
+    [lineKey(LOVE_BLACK_L), 'Love at first sat', 'Negro', 'L', 2, 30000, 60000],
+    [lineKey({ productId: 'hold', colorId: 'black', size: 'M' }), 'Hold my invoice', 'Negro', 'M', 1, 35000, 35000],
   ]);
   assert.equal(subtotal, 95000);
   assert.equal(count, 3);
+});
+
+test('subtractItems removes only what was bought and keeps items added later', () => {
+  const bought = addItem(EMPTY_CART, LOVE_BLACK_L, 2).items;
+  const now = addItem(addItem(EMPTY_CART, LOVE_BLACK_L, 3), LOVE_RED_M);
+  assert.deepEqual(subtractItems(now, bought).items, [{ ...LOVE_BLACK_L, quantity: 1 }, { ...LOVE_RED_M, quantity: 1 }]);
+  assert.deepEqual(subtractItems(addItem(EMPTY_CART, LOVE_BLACK_L, 2), bought).items, []);
+  assert.deepEqual(subtractItems(EMPTY_CART, bought).items, []);
 });

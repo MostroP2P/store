@@ -77,13 +77,17 @@ function bindActions(view) {
   const guide = createSizeGuide(view.store.config.sizes);
   $('size-guide-button').addEventListener('click', guide.open);
   $('size-select').addEventListener('change', (event) => sync(view, { ...view.selection, size: event.target.value }));
+  // The cart reaches the checkout page only through storage: say so instead of opening an empty checkout
+  const warnUnsaved = (saved) => {
+    $('storage-warning').hidden = saved;
+    $('storage-warning').textContent = saved ? '' : STRINGS.storageBlocked;
+    return saved;
+  };
   $('add-to-cart').addEventListener('click', () => {
-    view.store.cart.add(variant());
-    $('cart-status').textContent = STRINGS.addedToCart;
+    if (warnUnsaved(view.store.cart.add(variant()))) $('cart-status').textContent = STRINGS.addedToCart;
   });
   $('buy-now').addEventListener('click', () => {
-    view.store.cart.add(variant());
-    window.location.assign(CHECKOUT_PAGE);
+    if (warnUnsaved(view.store.cart.add(variant()))) window.location.assign(CHECKOUT_PAGE);
   });
   view.store.cart.subscribe(() => sync(view, view.selection));
 }

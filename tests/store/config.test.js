@@ -136,3 +136,11 @@ test('isRelayUrl accepts public wss:// relays only', () => {
     assert.equal(isRelayUrl(url), false, String(url));
   }
 });
+
+test('rejects an npub whose checksum is wrong (a typo would lose orders)', () => {
+  const last = NPUB.at(-1);
+  const typo = `${NPUB.slice(0, -1)}${last === 'q' ? 'p' : 'q'}`;
+  const { config, problems } = normalizeStoreConfig({ ...validRaw(), nostr: { ...validRaw().nostr, npub: typo } }, COLOR_IDS);
+  assert.equal(config.nostr, null);
+  assert.match(messages(problems, 'error')[0], /npub/);
+});

@@ -17,6 +17,7 @@ export const STRINGS = Object.freeze({
   addToCart: 'Agregar al carrito',
   addToCartCount: (count) => `Agregar al carrito (${count})`,
   addedToCart: 'Agregada al carrito',
+  storageBlocked: 'Tu navegador no deja guardar el carrito, así que no llegaría al checkout. Habilitá el almacenamiento de este sitio para comprar.',
   productImage: (name, color) => `Remera ${name} en ${color.toLowerCase()}`,
 
   // Size guide

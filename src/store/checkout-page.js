@@ -1,4 +1,4 @@
-// Checkout (checkout.html): order summary, delivery form (kept in this browser for a week) and Lightning payment.
+// Checkout (checkout.html): order summary, delivery form (kept only in this tab) and Lightning payment.
 // Flow: Yadio rate → sats → LNURL invoice whose comment is the order number → order sent to the store
 // as an encrypted Nostr DM (NIP-17) → QR → payment confirmed by polling (LUD-21 / LNbits) or by WebLN.
 // When the page can't see the payment (no status endpoint) the buyer can say "Ya pagué": the store
@@ -114,7 +114,7 @@ function showFieldError(view, name, errors) {
 
 function onFormChange(view, name) {
   const values = readForm(view);
-  writeJson(view.store.storage, FORM_STORAGE_KEY, savedFormRecord(values, Date.now()));
+  writeJson(view.store.session, FORM_STORAGE_KEY, savedFormRecord(values, Date.now()));
   const errors = validateCheckout(values);
   if (name) showFieldError(view, name, errors);
   if (name === 'notes') $('field-notes-counter').textContent = STRINGS.notesCounter(values.notes.length, FIELD_LIMITS.notes);
@@ -122,17 +122,17 @@ function onFormChange(view, name) {
 }
 
 function restoreForm(view) {
-  const record = readJson(view.store.storage, FORM_STORAGE_KEY, null);
+  const record = readJson(view.store.session, FORM_STORAGE_KEY, null);
   const saved = restoreSavedForm(record, Date.now());
   // Expired (older than a week) or unreadable: forget it
-  if (!saved && record !== null) removeKey(view.store.storage, FORM_STORAGE_KEY);
+  if (!saved && record !== null) removeKey(view.store.session, FORM_STORAGE_KEY);
   const values = saved ?? sanitizeSavedForm(null);
   FIELD_ORDER.forEach((name) => { view.form.controls.get(name).value = values[name]; });
   $('field-notes-counter').textContent = STRINGS.notesCounter(values.notes.length, FIELD_LIMITS.notes);
 }
 
 function clearSavedForm(view) {
-  removeKey(view.store.storage, FORM_STORAGE_KEY);
+  removeKey(view.store.session, FORM_STORAGE_KEY);
   FIELD_ORDER.forEach((name) => { view.form.controls.get(name).value = ''; });
   view.touched = new Set();
   const errors = validateCheckout({});
@@ -189,11 +189,13 @@ async function createOrder(view, session, pool) {
     id, subtotal, currency: config.currency, sats, rate, paymentHash: invoice.paymentHash, customer,
     lines: lines.map((l) => ({ name: l.product.name, colorName: l.color.name, size: l.size, quantity: l.quantity, total: l.total })),
   };
+  // What this order buys: only this comes off the cart when it completes
+  const items = lines.map((l) => ({ productId: l.product.id, colorId: l.color.id, size: l.size, quantity: l.quantity }));
   const senderKey = createSenderKey();
   await step(view, session, STRINGS.stepOrder, STRINGS.errorOrder, () => sendPrivateMessage({
     pool, npub: config.nostr.npub, relays: config.nostr.relays, message: orderMessage(order), subject: STRINGS.orderNumber(id), senderKey,
   }));
-  return { session, order, invoice, pool, senderKey };
+  return { session, order, items, invoice, pool, senderKey };
 }
 
 function closeActive(view) {
@@ -293,7 +295,7 @@ const COMPLETIONS = Object.freeze({
   claimed: { message: claimedMessage, show: (payment, args) => payment.claimed(args) },
 });
 
-/** Ends the checkout: confirmation on screen, empty cart, delivery data forgotten, follow-up DM to the store. */
+/** Ends the checkout: confirmation on screen, bought items off the cart, delivery data forgotten, DM to the store. */
 function completeOrder(view, ctx, kind) {
   if (view.paid) return;
   const completion = COMPLETIONS[kind];
@@ -302,8 +304,9 @@ function completeOrder(view, ctx, kind) {
   view.paid = true;
   document.querySelector('main').classList.add('is-paid');
   completion.show(view.payment, { order: ctx.order, email: emailOf(ctx) });
-  view.store.cart.clear();
-  removeKey(view.store.storage, FORM_STORAGE_KEY);
+  // Not clear(): an older invoice confirmed late must keep items added afterwards (e.g. from another tab)
+  view.store.cart.subtract(ctx.items);
+  removeKey(view.store.session, FORM_STORAGE_KEY);
   const { nostr } = view.store.config;
   // Best effort: the store matches orders against its wallet anyway (payment hash + "Pedido MS-…" comment)
   sendPrivateMessage({

@@ -282,7 +282,7 @@ Mismo catálogo y mismo render que el visor. Todo corre en el navegador: no hay 
 | `index.html` | Colección, una sección por serie. Cada tarjeta muestra la remera en su color por defecto, el nombre, el precio y los colores disponibles. |
 | `producto.html?id=…&color=…&talle=…` | Igual que kinoto.com.ar/item/…: color (círculos), talle (lista) más **Guía de talles** (tabla de `store.sizes`) y precio. **Agregar al carrito** muestra cuántas hay de esa variante, por ejemplo "(1)". **Comprar** la agrega y va al checkout. Debajo, los acordeones de `store.details` y "Te puede interesar". La URL guarda color y talle. |
 | Carrito | El botón aparece arriba a la derecha cuando hay algo, con la cantidad. El panel "Tu carrito" muestra cada línea con color, talle, − cantidad +, precio, total de la línea (si hay más de una) y **Sacar del carrito**. Abajo: subtotal, envío (a coordinar), total, **Checkout** y **Vaciar carrito**. Se guarda en `localStorage` (`mostro-store:cart`) y se sincroniza entre pestañas. |
-| `checkout.html` | Resumen del pedido, **¿Dónde querés recibir tu pedido?** (calle, número, piso, depto, código postal, localidad, provincia), instrucciones (hasta 500 caracteres) e información personal (nombre, apellido, email, teléfono). Los datos quedan guardados en este navegador (`mostro-store:checkout`) hasta tocar **Limpiar datos guardados**. A la derecha, el método de pago: Lightning. |
+| `checkout.html` | Resumen del pedido, **¿Dónde querés recibir tu pedido?** (calle, número, piso, depto, código postal, localidad, provincia), instrucciones (hasta 500 caracteres) e información personal (nombre, apellido, email, teléfono). Los datos se guardan solo en esa pestaña (`sessionStorage`, `mostro-store:checkout`), así sobreviven a una recarga. Se borran al cerrarla, al terminar el pedido o al tocar **Limpiar datos guardados**. A la derecha, el método de pago: Lightning. |
 
 ### 10.2 Módulos (`src/store/`)
 
@@ -344,13 +344,13 @@ Los módulos de DOM son `boot.js`, `cart-ui.js`, `product-card.js`, `home-page.j
    - Hacen falta al menos 2 relays que lo acepten (o 1, si solo hay uno configurado). Si no, no se muestra la factura y el comprador puede reintentar.
 5. **QR.** Mismo estilo que donate, con botones para copiar, abrir la wallet y pagar con WebLN si hay extensión. Muestra la cuenta regresiva del vencimiento.
 6. **Confirmación.** Cada 3 s el navegador consulta `verify` (LUD-21) o, en LNbits, `GET /api/v1/payments/<hash>`. Con WebLN alcanza con `sha256(preimage) == payment hash`.
-   - Si las 3 primeras consultas fallan (hoy pasa siempre, ver §10.5), la página avisa que no puede confirmar el pago y ofrece **"Ya pagué"**.
+   - Si fallan 3 consultas seguidas (hoy pasa siempre, ver §10.5), la página avisa que no puede confirmar el pago y ofrece **"Ya pagué"**. Vale también si el endpoint respondía antes y dejó de hacerlo.
    - Al tocarlo, se cierra el pedido y la tienda recibe "⚠️ … el comprador dice que ya pagó, verificá el pago en la billetera".
-7. **Pagado.** Se vacía el carrito, se borran los datos de envío guardados, se muestra el número de pedido y se manda un segundo DM, "✅ Pedido … pagado", en la misma conversación.
+7. **Pagado.** Se sacan del carrito las remeras compradas (lo que se haya agregado después, por ejemplo desde otra pestaña, queda), se borran los datos de envío, se muestra el número de pedido y se manda un segundo DM, "✅ Pedido … pagado", en la misma conversación.
 
 Casos borde:
 
-- **Factura vencida.** El comprador genera otra, que es un pedido nuevo. Si la página nunca pudo consultar el estado, no dice "venció": le pide que no vuelva a pagar si ya pagó.
+- **Factura vencida.** El comprador genera otra, que es un pedido nuevo. Si la última consulta falló, la página no dice "venció": le pide que no vuelva a pagar si ya pagó.
 - **"Cambiar mis datos".** Cancela la factura. Antes de descartarla se consulta su estado una última vez, por si se pagó justo antes.
 - **Cambio de carrito.** Si cambia el contenido mientras se prepara o se muestra la factura (también desde otra pestaña), se cancela. Cada paso del armado verifica que el intento siga vigente, así nunca se arma una factura para un carrito viejo.
 
@@ -377,7 +377,10 @@ No hace falta una API propia ni un macaroon: el navegador no maneja ninguna clav
 
 ### 10.6 Leer los pedidos
 
-- **Desarrollo:** `.secrets/store-nostr-dev.txt` (en `.gitignore`) tiene la clave de la npub de prueba que está en `catalog.json`. Importala en un cliente con NIP-17 (0xchat, Amethyst, Coracle…) para ver los pedidos de prueba.
+- **Desarrollo:** la clave de una npub de prueba vive solo en la máquina de quien la creó (`.secrets/` está en `.gitignore`).
+  - Para tener la tuya, corré `node scripts/dev-nostr-key.mjs`. Guarda la clave en `.secrets/store-nostr-dev.txt` e imprime la npub.
+  - Poné esa npub en `store.nostr.npub`, solo en tu branch de pruebas.
+  - Importá `secret_hex` en un cliente con NIP-17 (0xchat, Amethyst, Coracle…) para leer los pedidos de prueba.
 - **Producción:** poné la npub real de la tienda en `store.nostr.npub` y sus relays de DM. Lo ideal es que esa npub publique su kind 10050.
 - **Conciliar:** el DM "Pedido MS-XXXXXX" con el pago en LNbits que tiene el mismo comentario y el mismo payment hash.
 
@@ -386,7 +389,7 @@ No hace falta una API propia ni un macaroon: el navegador no maneja ninguna clav
 - **Sin HTML inyectado.** Todo el DOM se arma con `textContent`. Cada página tiene CSP (`script-src 'self'`, sin inline) y `referrer: no-referrer`.
 - **`connect-src` permite solo** `api.yadio.io`, `pay.mostro.foundation` y relays `wss:`. **Si cambia el dominio de la LN address, hay que agregarlo al CSP** de `index.html`, `producto.html` y `checkout.html`.
 - **Pedidos de red acotados.** Todos los pedidos a APIs tienen un timeout de 10 s y no mandan cookies ni referrer. Los relays de la tienda (kind 10050) se limitan a 6, y nunca son `localhost` ni IPs.
-- **Datos de envío.** Quedan en `localStorage` mientras el comprador completa el formulario, con un vencimiento de 7 días. Se borran al terminar el pedido o con "Limpiar datos guardados".
+- **Datos de envío.** Se guardan solo en la pestaña (`sessionStorage`), para no perderlos si se recarga la página. Se borran al cerrar la pestaña, al terminar el pedido o con "Limpiar datos guardados". También tienen un tope de 7 días por si la pestaña queda abierta. Nunca quedan en `localStorage`.
 - **Texto del DM.** Cada campo va en una sola línea, sin caracteres de control ni de dirección (bidi). Así el comprador no puede falsificar líneas como "✅ pagado".
 - **La billetera manda.** Un DM se puede falsificar, porque cualquiera puede escribirle a la npub. Antes de despachar:
   1. buscá en LNbits el pago con ese payment hash (y el comentario `Pedido MS-…`);

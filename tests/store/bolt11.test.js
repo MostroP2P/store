@@ -74,3 +74,10 @@ test('hrpAmountMsat rejects malformed amounts', () => {
   assert.throws(() => hrpAmountMsat('lnbc01u'), /amount/);
   assert.throws(() => hrpAmountMsat('lnxx10n'), /network/);
 });
+
+test('rejects mixed-case invoices (BIP-173) but accepts any case for the lightning: prefix', () => {
+  const mixed = `${COFFEE.slice(0, 12).toUpperCase()}${COFFEE.slice(12)}`;
+  assert.throws(() => decodeInvoice(mixed), /mixed-case/);
+  assert.equal(decodeInvoice(`lightning:${COFFEE.toUpperCase()}`).msat, 250_000_000);
+  assert.equal(decodeInvoice(`Lightning:${COFFEE}`).msat, 250_000_000);
+});

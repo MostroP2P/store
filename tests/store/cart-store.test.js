@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createCartStore, CART_STORAGE_KEY } from '../../src/store/cart-store.js';
+import { lineKey } from '../../src/store/cart.js';
 
 const memoryStorage = (initial = {}) => {
   const data = new Map(Object.entries(initial));
@@ -32,9 +33,9 @@ test('every change is saved and announced to subscribers', () => {
   assert.equal(store.get().items[0].quantity, 2);
   assert.deepEqual(JSON.parse(storage.data.get(CART_STORAGE_KEY)).items, [{ ...VARIANT, quantity: 2 }]);
 
-  store.setQuantity('love|black|L', 5);
+  store.setQuantity(lineKey(VARIANT), 5);
   assert.equal(store.get().items[0].quantity, 5);
-  store.remove('love|black|L');
+  store.remove(lineKey(VARIANT));
   assert.deepEqual(store.get().items, []);
   store.add(VARIANT);
   store.clear();
@@ -57,8 +58,17 @@ test('reload picks up a change made in another tab', () => {
   assert.deepEqual(seen, [1]);
 });
 
-test('still works in memory when storage is unavailable', () => {
+test('still works in memory when storage is unavailable, and says the change was not saved', () => {
   const store = createCartStore({ storage: null, isValidVariant });
-  store.add(VARIANT);
+  assert.equal(store.add(VARIANT), false);
   assert.equal(store.get().items[0].quantity, 1);
+  assert.equal(createCartStore({ storage: memoryStorage(), isValidVariant }).add(VARIANT), true);
+});
+
+test('subtract takes away a finished order and keeps the rest', () => {
+  const store = createCartStore({ storage: memoryStorage(), isValidVariant });
+  store.add(VARIANT, 3);
+  const bought = [{ ...VARIANT, quantity: 2 }];
+  store.subtract(bought);
+  assert.deepEqual(store.get().items, [{ ...VARIANT, quantity: 1 }]);
 });
