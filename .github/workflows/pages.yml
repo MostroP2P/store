@@ -1,5 +1,6 @@
 # Tests + publish to GitHub Pages (store.mostro.network).
-# Pull requests only run the tests; pushes to main also deploy.
+# Every commit pushed to main runs the tests and, if they pass, deploys.
+# Pull requests only run the tests.
 # Only the files the site needs are published (no docs/, tests/ or scripts/).
 
 name: Pages
@@ -12,33 +13,38 @@ on:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
+# A deploy in progress is never cancelled: if several commits land on main,
+# the running deploy finishes and the newest pending commit deploys next.
+# Superseded pull request runs are cancelled.
 concurrency:
   group: pages-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
+          package-manager-cache: false
 
       - name: Tests and coverage (≥ 80 %)
         run: npm run coverage
 
+      # Pages deploys from Actions do not run Jekyll, so no .nojekyll is needed
       - name: Collect site files
         run: |
           mkdir _site
           cp -r index.html styles.css catalog.json src assets designs _site/
-          touch _site/.nojekyll
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
@@ -51,4 +57,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
