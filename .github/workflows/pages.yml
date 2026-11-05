@@ -33,7 +33,7 @@ jobs:
           node-version: 24
           package-manager-cache: false
 
-      - name: Tests and coverage (≥ 80 %)
+      - name: Unit tests and coverage (100 % of the pure modules)
         run: npm run coverage
 
       # The minified bundles in src/vendor/ must be exactly what the pinned recipe builds
@@ -52,9 +52,30 @@ jobs:
         with:
           path: _site
 
+  # Every page in Chromium, with Yadio, the LN address, the payment status and the relays answered
+  # locally (tests/e2e/), then the line coverage of the unit and browser tests together
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Install the test dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Install Chromium
+        run: npx playwright-core install --with-deps --only-shell chromium
+
+      - name: Browser tests and combined coverage (100 % of the lines of src/)
+        run: npm run coverage:all
+
   deploy:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: build
+    needs: [build, e2e]
     runs-on: ubuntu-latest
     permissions:
       actions: read
