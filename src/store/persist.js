@@ -27,3 +27,12 @@ export function removeKey(storage, key) {
     // Blocked storage has nothing saved to remove
   }
 }
+
+/** window.localStorage / window.sessionStorage, or null when the browser blocks it (privacy settings). */
+export function browserStorage(name, scope = globalThis) {
+  try {
+    return scope[name] ?? null;
+  } catch {
+    return null;
+  }
+}

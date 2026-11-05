@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.yadio.io https://pay.mostro.foundation wss:; base-uri 'none'; form-action 'none'; object-src 'none'">
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mostro Store · Remeras</title>
-  <meta name="description" content="Remeras de Mostro. Pagás con Lightning y tus datos viajan cifrados por Nostr.">
+  <title data-i18n="homeTitle">Mostro Store · T-shirts</title>
+  <meta name="description" content="Mostro T-shirts. Pay with Lightning; your details travel encrypted over Nostr." data-i18n-attr="content:homeDescription">
   <link rel="icon" href="designs/characters/mostro-8b.png">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/store.css">
@@ -19,8 +19,9 @@
         <img src="designs/characters/mostro-8b.png" alt="" width="30" height="33">
         <span>Mostro <strong>Store</strong></span>
       </a>
-      <nav class="store-nav" aria-label="Tienda">
-        <a class="nav-link" href="index.html" aria-current="page">Colección</a>
+      <nav class="store-nav" aria-label="Store" data-i18n-attr="aria-label:storeNav">
+        <a class="nav-link" href="index.html" aria-current="page" data-i18n="collection">Collection</a>
+        <button type="button" class="nav-link lang-switch" id="lang-switch" hidden></button>
         <button type="button" class="cart-button" id="cart-button" hidden>
           <span data-icon="cart"></span>
           <span class="cart-count" id="cart-count">0</span>
@@ -31,16 +32,16 @@
 
   <main class="store-main">
     <section class="hero">
-      <h1>Remeras Mostro</h1>
-      <p>Elegí tu remera, pagá con Lightning <span aria-hidden="true">⚡</span> y te la mandamos a tu casa.</p>
+      <h1 data-i18n="heroTitle">Mostro T-shirts</h1>
+      <p><span data-i18n="heroLeadStart">Pick your T-shirt, pay with Lightning</span> <span aria-hidden="true">⚡</span> <span data-i18n="heroLeadEnd">and we’ll ship it to your door.</span></p>
     </section>
     <div id="collection">
-      <p class="muted">Cargando remeras…</p>
+      <p class="muted" data-i18n="loadingProducts">Loading T-shirts…</p>
     </div>
   </main>
 
   <footer class="store-footer">
-    <p>Pagos con Lightning · Pedidos cifrados por Nostr · <a href="https://mostro.network">mostro.network</a></p>
+    <p><span data-i18n="footerNote">Lightning payments · Orders encrypted over Nostr</span> · <a href="https://mostro.network">mostro.network</a></p>
   </footer>
 </body>
 </html>

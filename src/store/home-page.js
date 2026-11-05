@@ -5,13 +5,13 @@ import { startPage } from './boot.js';
 import { mountCart } from './cart-ui.js';
 import { productCard } from './product-card.js';
 import { groupSections } from './products.js';
-import { STRINGS } from './strings.js';
+import { T } from './lang.js';
 
 function renderCollection(store) {
   const container = document.getElementById('collection');
-  const sections = groupSections(store.products, store.catalog.groups, STRINGS.designs);
+  const sections = groupSections(store.products, store.catalog.groups, T.designs);
   if (sections.length === 0) {
-    container.replaceChildren(el('p', { className: 'muted', textContent: STRINGS.noProducts }));
+    container.replaceChildren(el('p', { className: 'muted', textContent: T.noProducts }));
     return;
   }
   container.replaceChildren(...sections.map((section) => el('section', {

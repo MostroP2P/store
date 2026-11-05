@@ -25,7 +25,7 @@ const sameOrigin = (a, b) => new URL(a).origin === new URL(b).origin;
 /** "store@pay.mostro.foundation" → "https://pay.mostro.foundation/.well-known/lnurlp/store" */
 export function lnurlpUrl(address) {
   const match = LN_ADDRESS.exec(String(address).trim());
-  if (!match) throw new Error(`LN address inválida: ${address}`);
+  if (!match) throw new Error(`invalid LN address: ${address}`);
   return `https://${match[2].toLowerCase()}/.well-known/lnurlp/${match[1].toLowerCase()}`;
 }
 
@@ -34,12 +34,12 @@ export function lnurlpUrl(address) {
  * With `host`, the callback must live on the LN address host (no requests to arbitrary servers).
  */
 export function parsePayParams(json, host = null) {
-  if (json?.status === 'ERROR') throw new Error(json.reason || 'el servidor Lightning devolvió un error');
-  if (json?.tag !== 'payRequest') throw new Error('respuesta LNURL inválida: no es un payRequest');
-  if (!isHttpsUrl(json.callback)) throw new Error('respuesta LNURL inválida: el callback no es https');
-  if (host && new URL(json.callback).hostname !== host) throw new Error('respuesta LNURL inválida: el callback apunta a otro servidor');
+  if (json?.status === 'ERROR') throw new Error(json.reason || 'the Lightning server returned an error');
+  if (json?.tag !== 'payRequest') throw new Error('invalid LNURL response: not a payRequest');
+  if (!isHttpsUrl(json.callback)) throw new Error('invalid LNURL response: the callback is not https');
+  if (host && new URL(json.callback).hostname !== host) throw new Error('invalid LNURL response: the callback points to another server');
   if (!isMsat(json.minSendable) || !isMsat(json.maxSendable) || json.minSendable > json.maxSendable) {
-    throw new Error('respuesta LNURL inválida: límites de monto');
+    throw new Error('invalid LNURL response: amount limits');
   }
   return {
     callback: json.callback,
@@ -52,7 +52,7 @@ export function parsePayParams(json, host = null) {
 /** Callback URL asking for an invoice of `msat`, with the comment cut to what the server allows (LUD-12). */
 export function callbackUrl(params, msat, comment) {
   if (!Number.isSafeInteger(msat) || msat < params.minSendable || msat > params.maxSendable) {
-    throw new Error(`monto fuera de los límites del servidor: ${msat} msat`);
+    throw new Error(`amount outside the server limits: ${msat} msat`);
   }
   const url = new URL(params.callback);
   url.searchParams.set('amount', String(msat));
@@ -63,8 +63,8 @@ export function callbackUrl(params, msat, comment) {
 
 /** Why an invoice's date or expiry can't be trusted (null when fine): a hostile server could make the page wait forever. */
 export function invoiceTimingProblem({ timestamp, expiry }, now) {
-  if (Math.abs(timestamp * MS_PER_SECOND - now) > MAX_CLOCK_SKEW_MS) return 'la factura tiene una fecha inválida';
-  if (expiry < EXPIRY_RANGE_S.min || expiry > EXPIRY_RANGE_S.max) return `la factura tiene un vencimiento inválido (${expiry} s)`;
+  if (Math.abs(timestamp * MS_PER_SECOND - now) > MAX_CLOCK_SKEW_MS) return 'the invoice has an invalid date';
+  if (expiry < EXPIRY_RANGE_S.min || expiry > EXPIRY_RANGE_S.max) return `the invoice has an invalid expiry (${expiry} s)`;
   return null;
 }
 
@@ -73,11 +73,11 @@ export function invoiceTimingProblem({ timestamp, expiry }, now) {
  * A LUD-21 verify URL is kept only on the callback's origin. Returns { pr, paymentHash, expiresAt (ms), verify }.
  */
 export function parseInvoiceResponse(json, msat, { now = Date.now(), callback }) {
-  if (json?.status === 'ERROR') throw new Error(json.reason || 'el servidor no pudo crear la factura');
-  if (typeof json?.pr !== 'string') throw new Error('el servidor no devolvió una factura');
+  if (json?.status === 'ERROR') throw new Error(json.reason || 'the server could not create the invoice');
+  if (typeof json?.pr !== 'string') throw new Error('the server did not return an invoice');
   const invoice = decodeInvoice(json.pr);
-  if (invoice.network !== MAINNET) throw new Error(`la factura no es de Bitcoin mainnet (${invoice.network})`);
-  if (invoice.msat !== msat) throw new Error(`la factura no es por el monto pedido (${invoice.msat} ≠ ${msat} msat)`);
+  if (invoice.network !== MAINNET) throw new Error(`the invoice is not for Bitcoin mainnet (${invoice.network})`);
+  if (invoice.msat !== msat) throw new Error(`the invoice is not for the requested amount (${invoice.msat} ≠ ${msat} msat)`);
   const timing = invoiceTimingProblem(invoice, now);
   if (timing) throw new Error(timing);
   return {

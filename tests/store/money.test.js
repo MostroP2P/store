@@ -1,20 +1,36 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { formatPrice, formatSats, formatNumber, satsFor, parseYadioRate } from '../../src/store/money.js';
+import { moneyFormat, satsFor, parseYadioRate } from '../../src/store/money.js';
 
-test('formatPrice writes pesos the Argentine way', () => {
-  assert.equal(formatPrice(30000), '$30.000');
-  assert.equal(formatPrice(1234567), '$1.234.567');
-  assert.equal(formatPrice(0), '$0');
+const es = moneyFormat('es', 'ARS');
+const en = moneyFormat('en', 'ARS');
+
+test('Spanish writes pesos the Argentine way', () => {
+  assert.equal(es.price(30000), '$30.000');
+  assert.equal(es.price(1234567), '$1.234.567');
+  assert.equal(es.price(0), '$0');
+  assert.equal(es.priceWithCurrency(30000), '$30.000 ARS');
 });
 
-test('formatNumber groups thousands with dots', () => {
-  assert.equal(formatNumber(134185376.71), '134.185.377');
+test('English names the currency, so pesos are not read as dollars', () => {
+  assert.equal(en.price(30000), 'ARS\u00a030,000');
+  assert.equal(en.priceWithCurrency(1234567), 'ARS\u00a01,234,567');
+  assert.equal(moneyFormat('en', 'USD').price(25), 'USD\u00a025');
 });
 
-test('formatSats uses the singular for one sat', () => {
-  assert.equal(formatSats(22358), '22.358 sats');
-  assert.equal(formatSats(1), '1 sat');
+test('numbers group thousands the local way, without decimals', () => {
+  assert.equal(es.number(134185376.71), '134.185.377');
+  assert.equal(en.number(134185376.71), '134,185,377');
+});
+
+test('sats use the singular for one sat', () => {
+  assert.equal(es.sats(22358), '22.358 sats');
+  assert.equal(en.sats(22358), '22,358 sats');
+  assert.equal(es.sats(1), '1 sat');
+});
+
+test('an unknown language formats like English', () => {
+  assert.equal(moneyFormat('pt', 'ARS').price(30000), en.price(30000));
 });
 
 test('satsFor converts a fiat amount and rounds up to a whole sat', () => {
@@ -36,8 +52,8 @@ test('parseYadioRate reads the BTC price in the store currency', () => {
 });
 
 test('parseYadioRate fails on unexpected answers', () => {
-  assert.throws(() => parseYadioRate(null, 'ARS'), /cotización/);
-  assert.throws(() => parseYadioRate({ BTC: {} }, 'ARS'), /cotización/);
-  assert.throws(() => parseYadioRate({ BTC: { ARS: 0 } }, 'ARS'), /cotización/);
-  assert.throws(() => parseYadioRate({ BTC: { ARS: '1' } }, 'ARS'), /cotización/);
+  assert.throws(() => parseYadioRate(null, 'ARS'), /rate/);
+  assert.throws(() => parseYadioRate({ BTC: {} }, 'ARS'), /rate/);
+  assert.throws(() => parseYadioRate({ BTC: { ARS: 0 } }, 'ARS'), /rate/);
+  assert.throws(() => parseYadioRate({ BTC: { ARS: '1' } }, 'ARS'), /rate/);
 });

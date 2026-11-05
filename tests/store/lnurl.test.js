@@ -46,7 +46,7 @@ test('parsePayParams keeps the fields the store needs', () => {
 
 test('parsePayParams only accepts a callback on the LN address host', () => {
   assert.equal(parsePayParams(PARAMS_JSON, 'pay.mostro.foundation').callback, PARAMS_JSON.callback);
-  assert.throws(() => parsePayParams({ ...PARAMS_JSON, callback: 'https://evil.example/cb' }, 'pay.mostro.foundation'), /servidor/);
+  assert.throws(() => parsePayParams({ ...PARAMS_JSON, callback: 'https://evil.example/cb' }, 'pay.mostro.foundation'), /another server/);
 });
 
 test('parsePayParams rejects answers that are not usable payRequests', () => {
@@ -84,9 +84,9 @@ test('callbackUrl keeps query parameters already in the callback', () => {
 
 test('callbackUrl refuses amounts outside the server limits', () => {
   const params = parsePayParams(PARAMS_JSON);
-  assert.throws(() => callbackUrl(params, 999, ''), /monto/);
-  assert.throws(() => callbackUrl(params, 5_000_000_001, ''), /monto/);
-  assert.throws(() => callbackUrl(params, 1000.5, ''), /monto/);
+  assert.throws(() => callbackUrl(params, 999, ''), /amount/);
+  assert.throws(() => callbackUrl(params, 5_000_000_001, ''), /amount/);
+  assert.throws(() => callbackUrl(params, 1000.5, ''), /amount/);
 });
 
 const CALLBACK = 'https://pay.example/cb';
@@ -110,8 +110,8 @@ test('parseInvoiceResponse keeps only an https verify URL on the callback origin
 
 test('parseInvoiceResponse rejects errors, missing invoices and wrong amounts', () => {
   assert.throws(() => parseInvoiceResponse({ status: 'ERROR', reason: 'Amount too small' }, COFFEE_MSAT, at), /Amount too small/);
-  assert.throws(() => parseInvoiceResponse({}, COFFEE_MSAT, at), /factura/);
-  assert.throws(() => parseInvoiceResponse({ pr: COFFEE }, COFFEE_MSAT + 1000, at), /monto/);
+  assert.throws(() => parseInvoiceResponse({}, COFFEE_MSAT, at), /invoice/);
+  assert.throws(() => parseInvoiceResponse({ pr: COFFEE }, COFFEE_MSAT + 1000, at), /amount/);
   assert.throws(() => parseInvoiceResponse({ pr: 'lnbc1nope' }, COFFEE_MSAT, at), Error);
 });
 
@@ -121,7 +121,7 @@ test('parseInvoiceResponse rejects invoices that are not for Bitcoin mainnet', (
 
 test('parseInvoiceResponse rejects an invoice whose date is far from now', () => {
   const later = { ...at, now: COFFEE_NOW + 11 * 60 * 1000 };
-  assert.throws(() => parseInvoiceResponse({ pr: COFFEE }, COFFEE_MSAT, later), /fecha/);
+  assert.throws(() => parseInvoiceResponse({ pr: COFFEE }, COFFEE_MSAT, later), /date/);
 });
 
 test('invoiceTimingProblem accepts a fresh invoice with a sane expiry', () => {
@@ -129,9 +129,9 @@ test('invoiceTimingProblem accepts a fresh invoice with a sane expiry', () => {
   const timestamp = now / 1000;
   assert.equal(invoiceTimingProblem({ timestamp, expiry: 3600 }, now), null);
   assert.equal(invoiceTimingProblem({ timestamp: timestamp - 300, expiry: 60 }, now), null);
-  assert.match(invoiceTimingProblem({ timestamp, expiry: 30 }, now), /vencimiento/);
-  assert.match(invoiceTimingProblem({ timestamp, expiry: 2 * 86400 }, now), /vencimiento/);
-  assert.match(invoiceTimingProblem({ timestamp: timestamp + 3600, expiry: 3600 }, now), /fecha/);
+  assert.match(invoiceTimingProblem({ timestamp, expiry: 30 }, now), /expiry/);
+  assert.match(invoiceTimingProblem({ timestamp, expiry: 2 * 86400 }, now), /expiry/);
+  assert.match(invoiceTimingProblem({ timestamp: timestamp + 3600, expiry: 3600 }, now), /date/);
 });
 
 test('statusUrl prefers LUD-21 verify and falls back to the LNbits payment endpoint', () => {

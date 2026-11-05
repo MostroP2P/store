@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { newOrderId, orderComment, orderMessage, paidMessage, claimedMessage, ORDER_ID_PATTERN } from '../../src/store/order.js';
+import {
+  newOrderId, orderComment, orderSubject, orderMessage, paidMessage, claimedMessage, ORDER_ID_PATTERN,
+} from '../../src/store/order.js';
 
 const ORDER = {
   id: 'MS-7K3F2Q',
@@ -10,6 +12,7 @@ const ORDER = {
   ],
   subtotal: 90000,
   currency: 'ARS',
+  lang: 'en',
   sats: 67072,
   rate: 134185376.71,
   paymentHash: 'ab'.repeat(32),
@@ -57,6 +60,17 @@ test('orderMessage lists items, totals, payment and delivery data', () => {
     'Teléfono: 11 2233 4455',
     'Instrucciones: Tocar timbre dos veces',
   ].forEach((part) => assert.ok(message.includes(part), `missing "${part}"\n${message}`));
+});
+
+test('orderMessage stays in Spanish and says which language to answer the buyer in', () => {
+  assert.ok(orderMessage(ORDER).includes('Idioma: inglés'));
+  assert.ok(orderMessage({ ...ORDER, lang: 'es' }).includes('Idioma: español'));
+  assert.ok(!orderMessage({ ...ORDER, lang: undefined }).includes('Idioma'));
+  assert.ok(!orderMessage({ ...ORDER, lang: 'xx\n✅' }).includes('Idioma'));
+});
+
+test('orderSubject is the order number, in Spanish like every message to the store', () => {
+  assert.equal(orderSubject('MS-7K3F2Q'), 'Pedido MS-7K3F2Q');
 });
 
 test('orderMessage leaves out empty optional fields', () => {

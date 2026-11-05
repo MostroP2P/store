@@ -9,9 +9,8 @@ import { createSizeGuide } from './size-guide.js';
 import { relatedProducts } from './products.js';
 import { parseProductQuery, productHref } from './query.js';
 import { variantQuantity } from './cart.js';
-import { formatPrice } from './money.js';
 import { icon } from './icons.js';
-import { STRINGS } from './strings.js';
+import { T } from './lang.js';
 
 const PRODUCT_SCALE = 1;
 const RELATED_COUNT = 4;
@@ -45,14 +44,14 @@ function sync(view, next) {
   const colorName = colorById(view.store, colorId).name;
   if (colorId !== view.drawnColorId) {
     drawProduct(view.store, $('product-canvas'), product, colorId, PRODUCT_SCALE);
-    $('product-canvas').setAttribute('aria-label', STRINGS.productImage(product.name, colorName));
+    $('product-canvas').setAttribute('aria-label', T.productImage(product.name, colorName));
     view.drawnColorId = colorId;
   }
   $('color-name').textContent = colorName;
   document.querySelectorAll('input[name="color"]').forEach((input) => { input.checked = input.value === colorId; });
   $('size-select').value = size;
   const inCart = variantQuantity(view.store.cart.get(), { productId: product.id, colorId, size });
-  $('add-label').textContent = inCart > 0 ? STRINGS.addToCartCount(inCart) : STRINGS.addToCart;
+  $('add-label').textContent = inCart > 0 ? T.addToCartCount(inCart) : T.addToCart;
   // Compare only the query: GitHub Pages also serves this page as /producto (without .html)
   const href = productHref({ id: product.id, color: colorId, size });
   if (window.location.search !== href.slice(href.indexOf('?'))) window.history.replaceState(null, '', href);
@@ -60,11 +59,11 @@ function sync(view, next) {
 
 function fillProduct(view) {
   const { store, selection: { product } } = view;
-  document.title = STRINGS.pageTitle(product.name);
+  document.title = T.pageTitle(product.name);
   $('product-name').textContent = product.name;
   $('product-lead').textContent = product.description ?? '';
   $('product-lead').hidden = !product.description;
-  $('product-price').textContent = formatPrice(product.price);
+  $('product-price').textContent = store.money.price(product.price);
   $('color-options').replaceChildren(...colorOptions(store, product, (colorId) => sync(view, { ...view.selection, colorId })));
   $('size-select').replaceChildren(...store.config.sizes.map((s) => el('option', { value: s.id, textContent: s.id })));
   $('product-details').replaceChildren(...details(store));
@@ -80,11 +79,11 @@ function bindActions(view) {
   // The cart reaches the checkout page only through storage: say so instead of opening an empty checkout
   const warnUnsaved = (saved) => {
     $('storage-warning').hidden = saved;
-    $('storage-warning').textContent = saved ? '' : STRINGS.storageBlocked;
+    $('storage-warning').textContent = saved ? '' : T.storageBlocked;
     return saved;
   };
   $('add-to-cart').addEventListener('click', () => {
-    if (warnUnsaved(view.store.cart.add(variant()))) $('cart-status').textContent = STRINGS.addedToCart;
+    if (warnUnsaved(view.store.cart.add(variant()))) $('cart-status').textContent = T.addedToCart;
   });
   $('buy-now').addEventListener('click', () => {
     if (warnUnsaved(view.store.cart.add(variant()))) window.location.assign(CHECKOUT_PAGE);
@@ -94,8 +93,8 @@ function bindActions(view) {
 
 function showNotFound() {
   document.querySelector('main').replaceChildren(el('section', { className: 'store-message' }, [
-    el('h1', { textContent: STRINGS.productNotFound }),
-    el('a', { className: 'button-primary', href: 'index.html' }, [icon('arrowLeft'), STRINGS.seeCollection]),
+    el('h1', { textContent: T.productNotFound }),
+    el('a', { className: 'button-primary', href: 'index.html' }, [icon('arrowLeft'), T.seeCollection]),
   ]));
 }
 

@@ -17,9 +17,27 @@
       "relays": ["wss://relay.mostro.network", "wss://nos.lol", "wss://relay.damus.io"]
     },
     "details": [
-      { "title": "Envío", "text": "Enviamos a todo el país. Después del pago te escribimos por email para coordinar la entrega." },
-      { "title": "Pago con Lightning", "text": "Pagás en sats con cualquier wallet Lightning. El precio está en pesos y se convierte a sats con la cotización de Yadio en el momento de pagar." },
-      { "title": "Privacidad", "text": "Tus datos de envío viajan cifrados por Nostr (NIP-17): solo la tienda puede leerlos. No hace falta crear una cuenta." }
+      {
+        "title": { "en": "Shipping", "es": "Envío" },
+        "text": {
+          "en": "We ship anywhere in Argentina. After you pay, we email you to arrange the delivery.",
+          "es": "Enviamos a todo el país. Después del pago te escribimos por email para coordinar la entrega."
+        }
+      },
+      {
+        "title": { "en": "Paying with Lightning", "es": "Pago con Lightning" },
+        "text": {
+          "en": "Pay in sats with any Lightning wallet. The price is set in Argentine pesos and converted to sats at the Yadio rate when you pay.",
+          "es": "Pagás en sats con cualquier wallet Lightning. El precio está en pesos y se convierte a sats con la cotización de Yadio en el momento de pagar."
+        }
+      },
+      {
+        "title": { "en": "Privacy", "es": "Privacidad" },
+        "text": {
+          "en": "Your shipping details travel encrypted over Nostr (NIP-17): only the store can read them. No account needed.",
+          "es": "Tus datos de envío viajan cifrados por Nostr (NIP-17): solo la tienda puede leerlos. No hace falta crear una cuenta."
+        }
+      }
     ]
   },
 
@@ -30,15 +48,15 @@
   },
 
   "colors": [
-    { "id": "black",  "name": "Negro",       "hex": "#1a1a1a" },
-    { "id": "white",  "name": "Blanco",      "hex": "#f0f0ec" },
-    { "id": "gray",   "name": "Gris",        "hex": "#8a8a8a" },
-    { "id": "navy",   "name": "Azul marino", "hex": "#1b2340" },
-    { "id": "blue",   "name": "Azul",        "hex": "#1e3ca0" },
-    { "id": "red",    "name": "Rojo",        "hex": "#c81e28" },
-    { "id": "orange", "name": "Naranja",     "hex": "#f7931a" },
-    { "id": "yellow", "name": "Amarillo",    "hex": "#f5cd28" },
-    { "id": "green",  "name": "Verde",       "hex": "#28783c" }
+    { "id": "black",  "name": { "en": "Black", "es": "Negro" },             "hex": "#1a1a1a" },
+    { "id": "white",  "name": { "en": "White", "es": "Blanco" },            "hex": "#f0f0ec" },
+    { "id": "gray",   "name": { "en": "Gray", "es": "Gris" },               "hex": "#8a8a8a" },
+    { "id": "navy",   "name": { "en": "Navy blue", "es": "Azul marino" },   "hex": "#1b2340" },
+    { "id": "blue",   "name": { "en": "Blue", "es": "Azul" },               "hex": "#1e3ca0" },
+    { "id": "red",    "name": { "en": "Red", "es": "Rojo" },                "hex": "#c81e28" },
+    { "id": "orange", "name": { "en": "Orange", "es": "Naranja" },          "hex": "#f7931a" },
+    { "id": "yellow", "name": { "en": "Yellow", "es": "Amarillo" },         "hex": "#f5cd28" },
+    { "id": "green",  "name": { "en": "Green", "es": "Verde" },             "hex": "#28783c" }
   ],
 
   "designs": [
@@ -48,16 +66,22 @@
       "image": "designs/invaders-design.png",
       "colors": ["black", "navy", "white"],
       "status": "published",
-      "description": "Los Mostro invaden la pantalla, en clave arcade."
+      "description": {
+        "en": "The Mostros invade the screen, arcade style.",
+        "es": "Los Mostro invaden la pantalla, en clave arcade."
+      }
     }
   ],
 
   "series": [
     {
       "id": "mostro-quotes",
-      "name": "Mostro dice…",
+      "name": { "en": "Mostro says…", "es": "Mostro dice…" },
       "status": "published",
-      "description": "Un Mostro y una frase, para que se note de qué lado estás.",
+      "description": {
+        "en": "A Mostro and a quote, so everyone knows whose side you’re on.",
+        "es": "Un Mostro y una frase, para que se note de qué lado estás."
+      },
       "style": {
         "font": "assets/fonts/LuckiestGuy-Regular.ttf",
         "textColor": "auto"

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readJson, writeJson, removeKey } from '../../src/store/persist.js';
+import { readJson, writeJson, removeKey, browserStorage } from '../../src/store/persist.js';
 
 const memoryStorage = (initial = {}) => {
   const data = new Map(Object.entries(initial));
@@ -43,4 +43,12 @@ test('removeKey deletes a key and never throws', () => {
   assert.equal(storage.data.has('k'), false);
   assert.doesNotThrow(() => removeKey(brokenStorage, 'k'));
   assert.doesNotThrow(() => removeKey(null, 'k'));
+});
+
+test('browserStorage returns the storage, or null when the browser blocks it', () => {
+  const storage = memoryStorage();
+  assert.equal(browserStorage('localStorage', { localStorage: storage }), storage);
+  assert.equal(browserStorage('localStorage', {}), null);
+  const blocked = { get localStorage() { throw new Error('SecurityError'); } };
+  assert.equal(browserStorage('localStorage', blocked), null);
 });

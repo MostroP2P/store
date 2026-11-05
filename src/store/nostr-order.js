@@ -20,7 +20,7 @@ export function npubToHex(npub) {
   } catch {
     // reported below
   }
-  if (decoded?.type !== 'npub') throw new Error(`npub inválida: ${npub}`);
+  if (decoded?.type !== 'npub') throw new Error(`invalid npub: ${npub}`);
   return decoded.data;
 }
 
@@ -66,7 +66,7 @@ export async function publishEvent({ pool, relays, event, timeoutMs = PUBLISH_TI
   const results = await Promise.allSettled(pool.publish(relays, event).map((p) => withTimeout(p, timeoutMs)));
   const accepted = relays.filter((_, i) => results[i].status === 'fulfilled');
   if (accepted.length < Math.min(MIN_ACCEPTED, relays.length)) {
-    throw new Error(`Solo ${accepted.length} relay(s) aceptaron el pedido.`);
+    throw new Error(`Only ${accepted.length} relay(s) accepted the order.`);
   }
   return { accepted, rejected: relays.filter((_, i) => results[i].status === 'rejected') };
 }
