@@ -1,5 +1,5 @@
-// The store pages in a real browser: language, collection, product page, size guide, cart panel and old
-// links. Run with `npm run test:e2e`.
+// The store pages in a real browser: language, collection, product page, size guide and cart panel.
+// Run with `npm run test:e2e`.
 
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -190,13 +190,3 @@ test('the collection says so when nothing is for sale', async () => {
     assert.equal(await page.textContent('#collection .muted'), 'No T-shirts for sale yet.');
   });
 });
-
-test('old links (producto.html?talle=, visor.html) land on the new pages', () => withShop({}, async (shop) => {
-  const page = await shop.page(`producto.html?id=${INVADERS}&color=navy&talle=M`);
-  await page.waitForURL(/product\.html\?id=mostro-invaders&color=navy&size=M$/);
-  await page.waitForSelector('#product:not([hidden])');
-  assert.equal(await page.inputValue('#size-select'), 'M');
-  await page.goto(`${shop.url}/visor.html?debug#shirt=${INVADERS}`);
-  await page.waitForURL(/viewer\.html\?debug#/);
-  await page.waitForSelector('dialog.detail[open]');
-}));

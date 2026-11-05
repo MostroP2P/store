@@ -280,7 +280,6 @@ The full catalog format is in [docs/SPEC.md](docs/SPEC.md) (§4 and §10).
 ```
 index.html, product.html, checkout.html    store
 viewer.html                                viewer
-producto.html, visor.html                  old addresses: redirect to product.html and viewer.html
 catalog.json                               T-shirts, prices, sizes, payment and npub
 css/                                       base.css (colors, buttons), store.css, viewer.css
 src/                                       T-shirt rendering, shared by viewer and store
