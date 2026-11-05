@@ -1,4 +1,4 @@
-// Product page (producto.html?id=…&color=…&talle=…), like kinoto.com.ar/item/…: color and size,
+// Product page (product.html?id=…&color=…&size=…), like kinoto.com.ar/item/…: color and size,
 // size guide, price, "Agregar al carrito" and "Comprar" (adds to the cart and goes to checkout).
 
 import { el } from '../dom.js';
@@ -52,7 +52,7 @@ function sync(view, next) {
   $('size-select').value = size;
   const inCart = variantQuantity(view.store.cart.get(), { productId: product.id, colorId, size });
   $('add-label').textContent = inCart > 0 ? T.addToCartCount(inCart) : T.addToCart;
-  // Compare only the query: GitHub Pages also serves this page as /producto (without .html)
+  // Compare only the query: GitHub Pages also serves this page as /product (without .html)
   const href = productHref({ id: product.id, color: colorId, size });
   if (window.location.search !== href.slice(href.indexOf('?'))) window.history.replaceState(null, '', href);
 }

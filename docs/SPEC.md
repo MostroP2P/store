@@ -3,7 +3,7 @@
 A minimal web system to see how each design looks on a T-shirt, choosing the T-shirt color from the page, and to sell them.
 No database, no build and no backend. The whole catalogue lives in a single `catalog.json`.
 
-- **Viewer** (`visor.html`): used to decide which T-shirts to produce.
+- **Viewer** (`viewer.html`): used to decide which T-shirts to produce.
 - **Store** (`index.html`, at `store.mostro.network`): collection, product, cart and checkout with Lightning payment (see §10).
 
 ---
@@ -30,7 +30,7 @@ No database, no build and no backend. The whole catalogue lives in a single `cat
 
 ```bash
 cd /disco/dev/tshirts
-npm start              # local server without cache → store at http://localhost:8000, viewer at /visor.html
+npm start              # local server without cache → store at http://localhost:8000, viewer at /viewer.html
 npm test               # unit tests (node --test, no dependencies)
 npm run coverage       # tests + coverage
 ```
@@ -38,7 +38,7 @@ npm run coverage       # tests + coverage
 > An HTTP server is needed because the browser does not allow `fetch('catalog.json')` from `file://`.
 > `npm start` uses `scripts/serve.py`: the same as `python3 -m http.server`, but without cache, so changes to stickers or to the catalogue show up with just a reload. `package.json` exists only to provide these shortcuts: there are no dependencies, so `npm install` is not needed.
 
-With `?debug` in the viewer URL (`http://localhost:8000/visor.html?debug`) the print area is drawn in red, to calibrate it.
+With `?debug` in the viewer URL (`http://localhost:8000/viewer.html?debug`) the print area is drawn in red, to calibrate it.
 
 ### Add a T-shirt to a series
 
@@ -71,9 +71,10 @@ The font loads by itself from the file; it does not have to be declared anywhere
 ```
 tshirts/
 ├── index.html                  store: collection
-├── producto.html               store: one T-shirt (color, size, cart, buy)
+├── product.html                store: one T-shirt (color, size, cart, buy)
 ├── checkout.html               store: summary, shipping details and Lightning payment
-├── visor.html                  viewer: all the T-shirts, in any color
+├── viewer.html                 viewer: all the T-shirts, in any color
+├── producto.html, visor.html   old addresses: redirect to product.html and viewer.html
 ├── css/                        base.css (colors and buttons), store.css, viewer.css
 ├── catalog.json                ← the only file you edit: T-shirts, prices, sizes, payment
 ├── package.json                npm shortcuts start / test / coverage (no dependencies)
@@ -88,6 +89,8 @@ tshirts/
 │   ├── loader.js               loads catalogue, fonts and images (viewer and store)
 │   ├── dom.js                  el() / svgEl(): DOM without innerHTML
 │   ├── i18n.js                 page language and catalog.json translations (pure)
+│   ├── redirect.js             new address of an old page, query and hash kept (pure)
+│   ├── legacy-page.js          runs that redirect in producto.html and visor.html
 │   ├── viewer/                 viewer: app.js, ui.js, state.js, strings.js
 │   ├── store/                  store (see §10.2)
 │   └── vendor/                 prebuilt nostr-tools and qrcode-generator (see the README there)
@@ -283,7 +286,8 @@ Same catalogue and same render as the viewer. Everything runs in the browser: th
 | Page | What it does |
 |---|---|
 | `index.html` | Collection, one section per series. Each card shows the T-shirt in its default color, the name, the price and the available colors. |
-| `producto.html?id=…&color=…&talle=…` | Like kinoto.com.ar/item/…: color (circles), size (list) plus **Size guide** (table from `store.sizes`) and price. **Add to cart** shows how many of that variant are in the cart, for example "(1)". **Buy now** adds it and goes to checkout. Below, the accordions from `store.details` and "You may also like". The URL stores color and size. |
+| `product.html?id=…&color=…&size=…` | Like kinoto.com.ar/item/…: color (circles), size (list) plus **Size guide** (table from `store.sizes`) and price. **Add to cart** shows how many of that variant are in the cart, for example "(1)". **Buy now** adds it and goes to checkout. Below, the accordions from `store.details` and "You may also like". The URL stores color and size. |
+| `producto.html`, `visor.html` | The old addresses, kept because links to them are out there. They redirect to `product.html` and `viewer.html`, keeping the query and the hash; `?talle=` becomes `?size=`, and `product.html` still reads `?talle=` too. |
 | Cart | The button appears at the top right when the cart is not empty, with the quantity. The "Your cart" panel shows each line with color, size, − quantity +, price, line total (if there is more than one) and **Remove from cart**. At the bottom: subtotal, shipping (to be arranged), total, **Checkout** and **Empty cart**. It is saved in `localStorage` (`mostro-store:cart`) and synchronized between tabs. |
 | `checkout.html` | Order summary, **Where should we deliver your order?** (street, number, floor, apartment, postal code, city, province), instructions (up to 500 characters) and personal information (first name, last name, email, phone). The data is saved only in that tab (`sessionStorage`, `mostro-store:checkout`), so it survives a reload. It is deleted when the tab is closed, when the order is finished or when **Clear saved details** is tapped. On the right, the payment method: Lightning. |
 
@@ -401,7 +405,7 @@ The backup is at `/etc/caddy/Caddyfile.bak-20261104-store-status`. No API of our
 ### 10.7 Security and privacy
 
 - **No injected HTML.** The whole DOM is built with `textContent`. Every page has a CSP (`script-src 'self'`, no inline) and `referrer: no-referrer`.
-- **`connect-src` allows only** `api.yadio.io`, `pay.mostro.foundation` and `wss:` relays. **If the domain of the LN address changes, it must be added to the CSP** of `index.html`, `producto.html` and `checkout.html`.
+- **`connect-src` allows only** `api.yadio.io`, `pay.mostro.foundation` and `wss:` relays. **If the domain of the LN address changes, it must be added to the CSP** of `index.html`, `product.html` and `checkout.html`.
 - **Bounded network requests.** All requests to APIs have a 10 s timeout and send no cookies or referrer. The store's relays (kind 10050) are limited to 6, and are never `localhost` or IPs.
 - **Shipping details.** They are saved only in the tab (`sessionStorage`), so they are not lost if the page is reloaded. They are deleted when the tab is closed, when the order is finished or with "Clear saved details". If the tab stays open for more than 7 days, they are not restored on reload and are deleted. They are never left in `localStorage`.
 - **DM text.** Each field goes on a single line, without control or direction (bidi) characters. This way the buyer cannot forge lines such as "✅ pagado" ("paid").

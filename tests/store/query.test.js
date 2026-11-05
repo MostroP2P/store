@@ -9,15 +9,20 @@ const PRODUCTS = [
 const CONFIG = { sizes: [{ id: 'S' }, { id: 'M' }, { id: 'L' }], defaultSize: 'L', defaultColor: 'black' };
 
 test('reads a product, color and size from the query string', () => {
-  const { product, colorId, size } = parseProductQuery('?id=love&color=red&talle=M', PRODUCTS, CONFIG);
+  const { product, colorId, size } = parseProductQuery('?id=love&color=red&size=M', PRODUCTS, CONFIG);
   assert.equal(product.id, 'love');
   assert.equal(colorId, 'red');
   assert.equal(size, 'M');
 });
 
+test('old links with ?talle= still pick the size; ?size= wins when both are there', () => {
+  assert.equal(parseProductQuery('?id=love&talle=M', PRODUCTS, CONFIG).size, 'M');
+  assert.equal(parseProductQuery('?id=love&talle=M&size=S', PRODUCTS, CONFIG).size, 'S');
+});
+
 test('falls back to defaults for unknown colors or sizes', () => {
   assert.deepEqual(
-    parseProductQuery('?id=love&color=pink&talle=XXL', PRODUCTS, CONFIG),
+    parseProductQuery('?id=love&color=pink&size=XXL', PRODUCTS, CONFIG),
     { product: PRODUCTS[0], colorId: 'black', size: 'L' },
   );
   assert.equal(parseProductQuery('?id=invaders', PRODUCTS, CONFIG).colorId, 'navy');
@@ -29,6 +34,6 @@ test('returns no product for a missing or unknown id', () => {
 });
 
 test('productHref builds an encoded product link', () => {
-  assert.equal(productHref({ id: 'love', color: 'red', size: 'M' }), 'producto.html?id=love&color=red&talle=M');
-  assert.equal(productHref({ id: 'a b&c' }), 'producto.html?id=a+b%26c');
+  assert.equal(productHref({ id: 'love', color: 'red', size: 'M' }), 'product.html?id=love&color=red&size=M');
+  assert.equal(productHref({ id: 'a b&c' }), 'product.html?id=a+b%26c');
 });

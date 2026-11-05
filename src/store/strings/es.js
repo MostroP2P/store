@@ -27,7 +27,7 @@ export const ES = {
   pageTitle: (name) => `${name} · Mostro Store`,
   designs: 'Diseños',
   storeUnavailable: 'La tienda no está disponible en este momento.',
-  catalogInvalid: 'catalog.json tiene errores: revisalo en visor.html.',
+  catalogInvalid: 'catalog.json tiene errores: revisalo en viewer.html.',
   storeNotConfigured: 'falta la sección "store" de catalog.json (precio y talles).',
   noProducts: 'Todavía no hay remeras a la venta.',
   productNotFound: 'No encontramos esa remera.',

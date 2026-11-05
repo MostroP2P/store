@@ -30,7 +30,7 @@ It is a static site: no database, server, user accounts or build. Everything is 
 You need Python 3 for the local server and Node 24 for the tests. There are no dependencies, so there is no need to run `npm install`.
 
 ```bash
-npm start              # store: http://localhost:8000 · viewer: http://localhost:8000/visor.html
+npm start              # store: http://localhost:8000 · viewer: http://localhost:8000/viewer.html
 npm test               # unit tests
 npm run coverage       # tests + coverage (80 % minimum)
 ```
@@ -44,7 +44,7 @@ npm run coverage       # tests + coverage (80 % minimum)
 The store shows in **English**, or in **Spanish** if the buyer's browser is in Spanish (the first language in its list that is English or Spanish counts). The **EN/ES** button in the header switches the language and remembers it in that browser. While an invoice is in progress the button is disabled, so a reload does not lose it.
 
 1. **Collection** (`index.html`): the buyer sees all the T-shirts for sale, grouped by series.
-2. **Product** (`producto.html`): the buyer picks the color and the size. "Size guide" shows the measurements table.
+2. **Product** (`product.html`): the buyer picks the color and the size. "Size guide" shows the measurements table.
    - **Add to cart** adds the T-shirt. The button shows how many of that variant are in the cart, for example "Add to cart (1)".
    - **Buy now** adds it and goes straight to the checkout.
 3. **Cart**: the button at the top right shows the number of T-shirts.
@@ -223,7 +223,7 @@ cp /etc/caddy/Caddyfile.bak-20261104-store-status /etc/caddy/Caddyfile && system
 
 If `lnAddress` or `nostr` are invalid, the T-shirts still show, but nobody can pay.
 
-**If the LN address changes domain**, add it to the `connect-src` of the `Content-Security-Policy` in `index.html`, `producto.html` and `checkout.html`. Otherwise the browser blocks the invoice request.
+**If the LN address changes domain**, add it to the `connect-src` of the `Content-Security-Policy` in `index.html`, `product.html` and `checkout.html`. Otherwise the browser blocks the invoice request.
 
 ### Texts in English and Spanish
 
@@ -252,13 +252,13 @@ Every text the buyer sees in `catalog.json` can be given in both languages, as a
 
 ## 7. Add or change T-shirts
 
-The viewer (`visor.html`) shows all the T-shirts in the catalog, drafts included, in any color, and lets you download the PNG. Use it to decide what to publish.
+The viewer (`viewer.html`) shows all the T-shirts in the catalog, drafts included, in any color, and lets you download the PNG. Use it to decide what to publish.
 
 - **Add a T-shirt to a series:** add `{ "id": "mostro-quotes-…", "image": "designs/stickers/…png", "text": "Tu mensaje" }` to `items`.
 - **Add a whole design:** put the transparent PNG in `designs/` and add it to `designs`.
 - **Put it on sale:** add `"status": "published"` to it.
 - **Change the font of a series:** copy the file to `assets/fonts/` and change `"font"` in the series `style`.
-- **Calibrate the print area:** open `/visor.html?debug`.
+- **Calibrate the print area:** open `/viewer.html?debug`.
 
 The full catalog format is in [docs/SPEC.md](docs/SPEC.md) (§4 and §10).
 
@@ -275,8 +275,9 @@ The full catalog format is in [docs/SPEC.md](docs/SPEC.md) (§4 and §10).
 ## 9. Development
 
 ```
-index.html, producto.html, checkout.html   store
-visor.html                                 viewer
+index.html, product.html, checkout.html    store
+viewer.html                                viewer
+producto.html, visor.html                  old addresses: redirect to product.html and viewer.html
 catalog.json                               T-shirts, prices, sizes, payment and npub
 css/                                       base.css (colors, buttons), store.css, viewer.css
 src/                                       T-shirt rendering, shared by viewer and store
