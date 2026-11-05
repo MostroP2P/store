@@ -76,6 +76,10 @@ test('ids that would take the name of a store page, or are not plain, are refuse
   const withId = (id) => ({ ...raw, designs: [{ ...raw.designs[0], id }], series: [] });
   assert.throws(() => publishedProducts(withId('checkout')), /cannot name a page: checkout/);
   assert.throws(() => publishedProducts(withId('Mostro Invaders')), /cannot name a page/);
+  // store.jpg is the store's preview image
+  assert.throws(() => publishedProducts(withId('store')), /cannot name a page: store/);
+  // "-shirt.html" would read as an option to the shell commands that copy the pages
+  assert.throws(() => publishedProducts(withId('-shirt')), /cannot name a page: -shirt/);
   assert.throws(() => publishedProducts({}), /catalog\.json has errors/);
   assert.throws(() => publishedProducts({ ...raw, store: null }), /no usable "store" section/);
 });

@@ -13,14 +13,18 @@ const STORE_SHIRTS = Object.freeze([
 ]);
 
 /**
- * The shirts of the store card, [{ slot, product, colorId }]: each listed shirt while it is on sale, else the
- * product on sale at that position, in its default color. A catalog with fewer products fills fewer slots.
+ * The shirts of the store card, [{ slot, product, colorId }]: each listed shirt while it is on sale; the slot of
+ * one that is not goes to the next product on sale that is not listed, in its default color, so no shirt shows
+ * twice. A catalog with fewer products fills fewer slots.
  */
 export function storeShirts(products, config) {
-  return STORE_SHIRTS.flatMap(([id, colorId], slot) => {
-    const listed = products.find((product) => product.id === id);
+  const listedIds = STORE_SHIRTS.map(([id]) => id);
+  const standIns = products.filter((product) => !listedIds.includes(product.id));
+  const slots = STORE_SHIRTS.map(([id, colorId], slot) => ({ slot, colorId, listed: products.find((product) => product.id === id) }));
+  const empty = slots.filter(({ listed }) => !listed).map(({ slot }) => slot);
+  return slots.flatMap(({ slot, colorId, listed }) => {
     if (listed) return [{ slot, product: listed, colorId: listed.colors.includes(colorId) ? colorId : defaultColorFor(listed, config) }];
-    const stand = products[slot];
+    const stand = standIns[empty.indexOf(slot)];
     return stand ? [{ slot, product: stand, colorId: defaultColorFor(stand, config) }] : [];
   });
 }
