@@ -101,7 +101,7 @@ export function downloadCanvas(canvas, fileName) {
     // toBlob throws synchronously on a tainted canvas: the Promise turns that into a rejection
     canvas.toBlob((blob) => {
       if (!blob) {
-        reject(new Error('el canvas está vacío'));
+        reject(new Error('the canvas is empty'));
         return;
       }
       const url = URL.createObjectURL(blob);

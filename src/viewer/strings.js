@@ -1,18 +1,18 @@
-// UI strings in one place, ready to add more languages for the store.
+// Viewer texts in one place. The viewer is the team's tool and speaks English.
 
 export const STRINGS = Object.freeze({
-  customColor: 'Color libre',
-  filterAll: 'Todas',
-  filterDesigns: 'Diseños',
-  empty: 'No hay remeras en el catálogo.',
-  notRecommended: 'No recomendado en este color',
-  draft: 'Borrador: no está en la tienda',
-  textTooLong: 'Texto muy largo',
-  problemsTitle: 'Problemas en catalog.json',
-  imageNotFound: (path) => `Imagen no encontrada: ${path}`,
-  fontNotLoaded: (file) => `No se pudo cargar la fuente: ${file}`,
-  catalogNotLoaded: (reason) => `No se pudo leer catalog.json: ${reason}`,
-  baseNotLoaded: (path) => `No se pudo cargar la remera base: ${path}`,
-  downloadFailed: (reason) => `No se pudo descargar el PNG: ${reason}`,
-  unexpectedError: (reason) => `Error inesperado al preparar las remeras: ${reason}`,
+  customColor: 'Custom color',
+  filterAll: 'All',
+  filterDesigns: 'Designs',
+  empty: 'There are no shirts in the catalog.',
+  notRecommended: 'Not recommended in this color',
+  draft: 'Draft: not in the store',
+  textTooLong: 'Text too long',
+  problemsTitle: 'Problems in catalog.json',
+  imageNotFound: (path) => `Image not found: ${path}`,
+  fontNotLoaded: (file) => `Could not load the font: ${file}`,
+  catalogNotLoaded: (reason) => `Could not read catalog.json: ${reason}`,
+  baseNotLoaded: (path) => `Could not load the base shirt: ${path}`,
+  downloadFailed: (reason) => `Could not download the PNG: ${reason}`,
+  unexpectedError: (reason) => `Unexpected error while preparing the shirts: ${reason}`,
 });

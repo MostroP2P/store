@@ -62,7 +62,7 @@ function checkNumbers(values, rules, owner) {
   return {
     values: Object.fromEntries(Object.entries(values).filter(([key]) => !invalid.includes(key))),
     problems: invalid.map((key) => warning(
-      `${owner}: "${key}" inválido "${values[key]}" (número entre ${rules[key].min} y ${rules[key].max}); se usa el valor por defecto.`,
+      `${owner}: invalid "${key}" "${values[key]}" (a number between ${rules[key].min} and ${rules[key].max}); using the default.`,
     )),
   };
 }
@@ -85,7 +85,7 @@ export function fontFamilyFromFile(font) {
 
 function normalizeBase(base) {
   if (!isObject(base) || !isText(base.image)) {
-    return { error: 'Falta "base.image": la imagen de la remera base.' };
+    return { error: 'Missing "base.image": the image of the base shirt.' };
   }
   const area = base.printArea;
   const validArea = isObject(area)
@@ -93,7 +93,7 @@ function normalizeBase(base) {
     && isFiniteNumber(area.width) && area.width > 0
     && isFiniteNumber(area.height) && area.height > 0;
   if (!validArea) {
-    return { error: '"base.printArea" debe tener x, y, width y height numéricos (width y height > 0).' };
+    return { error: '"base.printArea" needs numeric x, y, width and height (width and height > 0).' };
   }
   const shading = checkNumbers(isObject(base.shading) ? base.shading : {}, SHADING_NUMBER_RULES, '"base.shading"');
   return {
@@ -107,16 +107,16 @@ function normalizeBase(base) {
 }
 
 function normalizeColors(colors) {
-  if (!Array.isArray(colors)) return { colors: [], problems: [error('"colors" debe ser una lista.')] };
+  if (!Array.isArray(colors)) return { colors: [], problems: [error('"colors" must be a list.')] };
   return colors.reduce(({ colors: valid, problems }, color, index) => {
     if (!isObject(color) || !isText(color.id)) {
-      return { colors: valid, problems: [...problems, error(`Color #${index + 1}: falta "id".`)] };
+      return { colors: valid, problems: [...problems, error(`Color #${index + 1}: missing "id".`)] };
     }
     if (!isHexColor(color.hex)) {
-      return { colors: valid, problems: [...problems, error(`Color "${color.id}": hex inválido "${color.hex}" (usá #rrggbb).`)] };
+      return { colors: valid, problems: [...problems, error(`Color "${color.id}": invalid hex "${color.hex}" (use #rrggbb).`)] };
     }
     if (valid.some((c) => c.id === color.id)) {
-      return { colors: valid, problems: [...problems, error(`Color "${color.id}" repetido: se ignora el segundo.`)] };
+      return { colors: valid, problems: [...problems, error(`Color "${color.id}" repeated: the second one is ignored.`)] };
     }
     const normalized = { id: color.id, name: isText(color.name) ? color.name : color.id, hex: color.hex.toLowerCase() };
     return { colors: [...valid, normalized], problems };
@@ -125,29 +125,29 @@ function normalizeColors(colors) {
 
 function normalizeRecommended(colors, colorIds, owner) {
   if (colors === undefined) return { colors: null, problems: [] };
-  if (!Array.isArray(colors)) return { colors: null, problems: [warning(`${owner}: "colors" debe ser una lista de ids.`)] };
+  if (!Array.isArray(colors)) return { colors: null, problems: [warning(`${owner}: "colors" must be a list of ids.`)] };
   const unknown = colors.filter((id) => !colorIds.includes(id));
   return {
     colors: colors.filter((id) => colorIds.includes(id)),
-    problems: unknown.map((id) => warning(`${owner}: color recomendado desconocido "${id}".`)),
+    problems: unknown.map((id) => warning(`${owner}: unknown recommended color "${id}".`)),
   };
 }
 
 function validateStyle(style, owner) {
   if (style === undefined) return { style: {}, problems: [] };
-  if (!isObject(style)) return { style: {}, problems: [warning(`${owner}: "style" debe ser un objeto.`)] };
+  if (!isObject(style)) return { style: {}, problems: [warning(`${owner}: "style" must be an object.`)] };
   const numbers = checkNumbers(style, STYLE_NUMBER_RULES, owner);
   const problems = [...numbers.problems];
   const badTextColor = style.textColor !== undefined && style.textColor !== 'auto' && !isHexColor(style.textColor);
-  if (badTextColor) problems.push(warning(`${owner}: "textColor" inválido "${style.textColor}" (usá "auto" o #rrggbb).`));
+  if (badTextColor) problems.push(warning(`${owner}: invalid "textColor" "${style.textColor}" (use "auto" or #rrggbb).`));
   const badPosition = style.textPosition !== undefined && !TEXT_POSITIONS.includes(style.textPosition);
-  if (badPosition) problems.push(warning(`${owner}: "textPosition" inválido "${style.textPosition}" (usá "below" o "above").`));
+  if (badPosition) problems.push(warning(`${owner}: invalid "textPosition" "${style.textPosition}" (use "below" or "above").`));
   const valid = Object.fromEntries(Object.entries(numbers.values).filter(([key]) =>
     !(key === 'textColor' && badTextColor) && !(key === 'textPosition' && badPosition)));
 
   const { minFontSize: min, maxFontSize: max } = valid;
   const inverted = min !== undefined && max !== undefined && min > max;
-  if (inverted) problems.push(warning(`${owner}: "minFontSize" (${min}) es mayor que "maxFontSize" (${max}); se usa ${max}.`));
+  if (inverted) problems.push(warning(`${owner}: "minFontSize" (${min}) is greater than "maxFontSize" (${max}); using ${max}.`));
   return { style: inverted ? { ...valid, minFontSize: max } : valid, problems };
 }
 
@@ -159,10 +159,10 @@ function storeFields(entry, inherited, owner) {
   const problems = [];
   const status = entry.status ?? inherited.status;
   const validStatus = PRODUCT_STATUSES.includes(status);
-  if (!validStatus) problems.push(warning(`${owner}: "status" inválido "${status}" (usá "draft" o "published"); queda como borrador.`));
+  if (!validStatus) problems.push(warning(`${owner}: invalid "status" "${status}" (use "draft" or "published"); kept as a draft.`));
   const price = entry.price ?? inherited.price;
   const validPrice = price === null || (isFiniteNumber(price) && price > 0);
-  if (!validPrice) problems.push(warning(`${owner}: "price" inválido "${price}" (número mayor a 0); se usa el precio de la tienda.`));
+  if (!validPrice) problems.push(warning(`${owner}: invalid "price" "${price}" (a number above 0); using the store price.`));
   const description = isText(entry.description) ? entry.description.trim() : inherited.description;
   return {
     fields: {
@@ -175,9 +175,9 @@ function storeFields(entry, inherited, owner) {
 }
 
 function normalizeDesign(design, index, colorIds) {
-  if (!isObject(design) || !isText(design.id)) return { problems: [error(`Diseño #${index + 1}: falta "id".`)] };
-  if (!isText(design.image)) return { problems: [error(`Diseño "${design.id}": falta "image".`)] };
-  const owner = `Diseño "${design.id}"`;
+  if (!isObject(design) || !isText(design.id)) return { problems: [error(`Design #${index + 1}: missing "id".`)] };
+  if (!isText(design.image)) return { problems: [error(`Design "${design.id}": missing "image".`)] };
+  const owner = `Design "${design.id}"`;
   const recommended = normalizeRecommended(design.colors, colorIds, owner);
   const store = storeFields(design, NO_STORE_FIELDS, owner);
   return {
@@ -197,8 +197,8 @@ function normalizeDesign(design, index, colorIds) {
 }
 
 function normalizeItem(item, index, series, seriesStyle, seriesStore, colorIds) {
-  const owner = `Serie "${series.id}", ítem #${index + 1}`;
-  if (!isObject(item) || !isText(item.image)) return { problems: [error(`${owner}: falta "image".`)] };
+  const owner = `Series "${series.id}", item #${index + 1}`;
+  if (!isObject(item) || !isText(item.image)) return { problems: [error(`${owner}: missing "image".`)] };
 
   const text = isText(item.text) ? item.text : null;
   const itemStyle = validateStyle(item.style, owner);
@@ -224,13 +224,13 @@ function normalizeItem(item, index, series, seriesStyle, seriesStore, colorIds) 
 }
 
 function normalizeOneSeries(series, index, colorIds) {
-  if (!isObject(series) || !isText(series.id)) return { problems: [error(`Serie #${index + 1}: falta "id".`)] };
+  if (!isObject(series) || !isText(series.id)) return { problems: [error(`Series #${index + 1}: missing "id".`)] };
   if (RESERVED_GROUP_IDS.includes(series.id)) {
-    return { problems: [error(`Serie "${series.id}": ese id está reservado, usá otro.`)] };
+    return { problems: [error(`Series "${series.id}": that id is reserved; use another one.`)] };
   }
-  if (!Array.isArray(series.items)) return { problems: [error(`Serie "${series.id}": falta la lista "items".`)] };
-  const seriesStyle = validateStyle(series.style, `Serie "${series.id}"`);
-  const seriesStore = storeFields(series, NO_STORE_FIELDS, `Serie "${series.id}"`);
+  if (!Array.isArray(series.items)) return { problems: [error(`Series "${series.id}": missing the "items" list.`)] };
+  const seriesStyle = validateStyle(series.style, `Series "${series.id}"`);
+  const seriesStore = storeFields(series, NO_STORE_FIELDS, `Series "${series.id}"`);
   const items = series.items.map((item, i) => normalizeItem(item, i, series, seriesStyle.style, seriesStore.fields, colorIds));
   return {
     group: { id: series.id, name: isText(series.name) ? series.name : series.id },
@@ -241,14 +241,14 @@ function normalizeOneSeries(series, index, colorIds) {
 
 function normalizeList(list, label, normalizeEntry) {
   if (list === undefined) return [];
-  if (!Array.isArray(list)) return [{ problems: [error(`"${label}" debe ser una lista.`)] }];
+  if (!Array.isArray(list)) return [{ problems: [error(`"${label}" must be a list.`)] }];
   return list.map(normalizeEntry);
 }
 
 function dedupeProducts(products) {
   return products.reduce(({ products: unique, problems }, product) => (
     unique.some((p) => p.id === product.id)
-      ? { products: unique, problems: [...problems, error(`ID repetido "${product.id}": se ignora la segunda remera.`)] }
+      ? { products: unique, problems: [...problems, error(`Repeated id "${product.id}": the second shirt is ignored.`)] }
       : { products: [...unique, product], problems }
   ), { products: [], problems: [] });
 }
@@ -256,7 +256,7 @@ function dedupeProducts(products) {
 function dedupeSeries(results) {
   return results.reduce((kept, result) => (
     result.group && kept.some((r) => r.group?.id === result.group.id)
-      ? [...kept, { problems: [error(`Serie "${result.group.id}" repetida: se ignora la segunda.`)] }]
+      ? [...kept, { problems: [error(`Series "${result.group.id}" repeated: the second one is ignored.`)] }]
       : [...kept, result]
   ), []);
 }
@@ -269,7 +269,7 @@ function collectFonts(products) {
     const existing = fonts.find((font) => font.family === family);
     if (!existing) return { fonts: [...fonts, { family, file: style.font }], problems };
     if (existing.file === style.font) return { fonts, problems };
-    const message = `Las fuentes "${existing.file}" y "${style.font}" tienen el mismo nombre: se usa la primera.`;
+    const message = `The fonts "${existing.file}" and "${style.font}" have the same name: using the first one.`;
     return problems.some((p) => p.message === message) ? { fonts, problems } : { fonts, problems: [...problems, warning(message)] };
   }, { fonts: [], problems: [] });
 }
@@ -280,13 +280,13 @@ function collectFonts(products) {
  * Each problem is { level: 'error' | 'warning', message }.
  */
 export function normalizeCatalog(raw) {
-  if (!isObject(raw)) return fail('El catálogo debe ser un objeto JSON.');
+  if (!isObject(raw)) return fail('The catalog must be a JSON object.');
   const { base, problems: baseProblems, error: baseError } = normalizeBase(raw.base);
   if (baseError) return fail(baseError);
 
   const colorResult = normalizeColors(raw.colors);
   if (colorResult.colors.length === 0) {
-    return { catalog: null, problems: [...colorResult.problems, error('No hay ningún color válido en "colors".')] };
+    return { catalog: null, problems: [...colorResult.problems, error('There is no valid color in "colors".')] };
   }
   const colorIds = colorResult.colors.map((c) => c.id);
 

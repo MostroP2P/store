@@ -39,11 +39,11 @@ export function isRelayUrl(value) {
 }
 
 function normalizeSize(entry, index, known) {
-  if (!isObject(entry) || !isText(entry.id)) return { problems: [warning(`Talle #${index + 1}: falta "id"; se ignora.`)] };
-  if (known.includes(entry.id)) return { problems: [warning(`Talle "${entry.id}" repetido: se ignora el segundo.`)] };
+  if (!isObject(entry) || !isText(entry.id)) return { problems: [warning(`Size #${index + 1}: missing "id"; ignored.`)] };
+  if (known.includes(entry.id)) return { problems: [warning(`Size "${entry.id}" repeated: the second one is ignored.`)] };
   const problems = MEASURES
     .filter((key) => entry[key] !== undefined && !isPositive(entry[key]))
-    .map((key) => warning(`Talle "${entry.id}": "${key}" inválido "${entry[key]}" (centímetros > 0).`));
+    .map((key) => warning(`Size "${entry.id}": invalid "${key}" "${entry[key]}" (centimeters > 0).`));
   const measure = (key) => (isPositive(entry[key]) ? entry[key] : null);
   return { size: { id: entry.id, width: measure('width'), length: measure('length') }, problems };
 }
@@ -63,14 +63,14 @@ function normalizeSizes(sizes) {
 function pickDefault(value, allowed, label) {
   if (value === undefined) return { value: allowed[0], problems: [] };
   if (allowed.includes(value)) return { value, problems: [] };
-  return { value: allowed[0], problems: [warning(`"store.${label}" desconocido "${value}"; se usa "${allowed[0]}".`)] };
+  return { value: allowed[0], problems: [warning(`"store.${label}": unknown value "${value}"; using "${allowed[0]}".`)] };
 }
 
 function normalizeCurrency(currency) {
   if (currency === undefined) return { currency: DEFAULT_CURRENCY, problems: [] };
   const code = String(currency).toUpperCase();
   if (CURRENCY.test(code)) return { currency: code, problems: [] };
-  return { currency: DEFAULT_CURRENCY, problems: [warning(`"store.currency" inválido "${currency}" (código de 3 letras); se usa ${DEFAULT_CURRENCY}.`)] };
+  return { currency: DEFAULT_CURRENCY, problems: [warning(`"store.currency": invalid value "${currency}" (a 3-letter code); using ${DEFAULT_CURRENCY}.`)] };
 }
 
 function normalizeLnAddress(address) {
@@ -78,15 +78,15 @@ function normalizeLnAddress(address) {
   if (LN_ADDRESS.test(value)) return { lnAddress: value, problems: [] };
   return {
     lnAddress: null,
-    problems: [error(`"store.lnAddress" inválido "${address}" (por ejemplo tienda@pay.mostro.foundation): sin eso no se puede cobrar.`)],
+    problems: [error(`"store.lnAddress": invalid value "${address}" (for example store@pay.mostro.foundation): without it the store cannot get paid.`)],
   };
 }
 
 function normalizeRelays(relays) {
   const list = Array.isArray(relays) ? relays : [];
   return list.reduce((acc, relay) => {
-    if (!isRelayUrl(relay)) return { ...acc, problems: [...acc.problems, warning(`Relay inválido "${relay}" (tiene que empezar con wss://); se ignora.`)] };
-    if (acc.relays.includes(relay)) return { ...acc, problems: [...acc.problems, warning(`Relay "${relay}" repetido; se ignora.`)] };
+    if (!isRelayUrl(relay)) return { ...acc, problems: [...acc.problems, warning(`Invalid relay "${relay}" (it must start with wss://); ignored.`)] };
+    if (acc.relays.includes(relay)) return { ...acc, problems: [...acc.problems, warning(`Relay "${relay}" repeated; ignored.`)] };
     return { ...acc, relays: [...acc.relays, relay] };
   }, { relays: [], problems: [] });
 }
@@ -94,11 +94,11 @@ function normalizeRelays(relays) {
 function normalizeNostr(nostr) {
   const npub = isObject(nostr) && typeof nostr.npub === 'string' ? nostr.npub.trim() : '';
   if (!isNpub(npub)) {
-    return { nostr: null, problems: [error(`"store.nostr.npub" inválido "${npub}": hace falta la npub de la tienda (npub1…) para recibir pedidos.`)] };
+    return { nostr: null, problems: [error(`"store.nostr.npub": invalid value "${npub}": the store npub (npub1…) is needed to receive orders.`)] };
   }
   const { relays, problems } = normalizeRelays(nostr.relays);
   if (relays.length === 0) {
-    return { nostr: null, problems: [...problems, error('"store.nostr.relays" no tiene ningún relay wss:// válido: sin eso no llegan los pedidos.')] };
+    return { nostr: null, problems: [...problems, error('"store.nostr.relays" has no valid wss:// relay: without one, orders cannot arrive.')] };
   }
   return { nostr: { npub, relays }, problems };
 }
@@ -109,7 +109,7 @@ function normalizeDetails(details) {
   return list.reduce((acc, entry, index) => (
     isObject(entry) && isText(entry.title) && isText(entry.text)
       ? { ...acc, details: [...acc.details, { title: entry.title.trim(), text: entry.text.trim() }] }
-      : { ...acc, problems: [...acc.problems, warning(`"store.details" #${index + 1}: necesita "title" y "text"; se ignora.`)] }
+      : { ...acc, problems: [...acc.problems, warning(`"store.details" #${index + 1}: needs "title" and "text"; ignored.`)] }
   ), { details: [], problems: [] });
 }
 
@@ -119,13 +119,13 @@ function normalizeDetails(details) {
  * A bad lnAddress or nostr only turns that part off (null): products are still shown, checkout is closed.
  */
 export function normalizeStoreConfig(raw, colorIds) {
-  if (!isObject(raw)) return { config: null, problems: [error('Falta la sección "store" en catalog.json: la tienda no puede abrir.')] };
+  if (!isObject(raw)) return { config: null, problems: [error('catalog.json has no "store" section: the store cannot open.')] };
   if (!isPositive(raw.price)) {
-    return { config: null, problems: [error(`"store.price" inválido "${raw.price}": tiene que ser un número mayor a 0.`)] };
+    return { config: null, problems: [error(`"store.price": invalid value "${raw.price}": it must be a number above 0.`)] };
   }
   const sizes = normalizeSizes(raw.sizes);
   if (sizes.sizes.length === 0) {
-    return { config: null, problems: [...sizes.problems, error('"store.sizes" no tiene ningún talle válido.')] };
+    return { config: null, problems: [...sizes.problems, error('"store.sizes" has no valid size.')] };
   }
   const currency = normalizeCurrency(raw.currency);
   const lnAddress = normalizeLnAddress(raw.lnAddress);

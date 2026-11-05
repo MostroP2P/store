@@ -238,7 +238,7 @@ Every text the buyer sees in `catalog.json` can be given in both languages, as a
 - **If a translation is missing** (or empty), the English one is used, and if that is missing too, the other one.
 - **Only the keys `en` and `es` count.** An object with other keys is not taken as a translation, and the name falls back to the `id`.
 - A test (`tests/i18n.test.js`) opens `catalog.json` in both languages and fails if anything is left in Spanish in the English version.
-- The viewer shows the catalog in Spanish.
+- The viewer shows the catalog in English.
 
 ### Fields of each T-shirt
 

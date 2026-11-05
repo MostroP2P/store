@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Visor de remeras · Mostro</title>
+  <title>T-shirt viewer · Mostro</title>
   <link rel="icon" href="designs/characters/mostro-8b.png">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/viewer.css">
@@ -15,23 +15,23 @@
   <header class="topbar">
     <h1 class="brand">
       <img src="designs/characters/mostro-8b.png" alt="" width="26" height="29">
-      Remeras Mostro
+      Mostro T-shirts
     </h1>
-    <div class="swatches" id="swatches" role="group" aria-label="Color de remera"></div>
+    <div class="swatches" id="swatches" role="group" aria-label="Shirt color"></div>
   </header>
 
-  <nav class="filters" id="filters" aria-label="Filtrar remeras"></nav>
+  <nav class="filters" id="filters" aria-label="Filter shirts"></nav>
   <section class="problems" id="problems" aria-live="polite"></section>
 
   <main class="grid" id="grid">
-    <p class="status">Cargando remeras…</p>
+    <p class="status">Loading shirts…</p>
   </main>
 
   <dialog class="detail" id="detail" aria-labelledby="detail-title">
     <div class="detail-head">
       <h2 id="detail-title"></h2>
       <form method="dialog">
-        <button class="icon-button" aria-label="Cerrar">✕</button>
+        <button class="icon-button" aria-label="Close">✕</button>
       </form>
     </div>
     <div class="stage detail-stage">
@@ -39,8 +39,8 @@
     </div>
     <p class="badges" id="detail-badges"></p>
     <div class="detail-actions">
-      <div class="swatches" id="detail-swatches" role="group" aria-label="Color de remera"></div>
-      <button class="button-primary" id="detail-download" type="button">Descargar PNG</button>
+      <div class="swatches" id="detail-swatches" role="group" aria-label="Shirt color"></div>
+      <button class="button-primary" id="detail-download" type="button">Download PNG</button>
     </div>
   </dialog>
 </body>
