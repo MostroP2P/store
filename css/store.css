@@ -76,6 +76,23 @@ body {
 .nav-link:hover,
 .nav-link[aria-current="page"] { color: var(--accent); }
 
+/* EN / ES: a nav link that is a button */
+.lang-switch {
+  padding: 6px 2px;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.lang-switch:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Static texts wait for their translation (lang.js) instead of flipping from English */
+html:not(.i18n-ready) [data-i18n] { visibility: hidden; }
+
 .cart-button {
   position: relative;
   display: grid;
@@ -885,7 +902,19 @@ fieldset:disabled { opacity: 0.6; }
   .field-narrow { grid-column: 1 / -1; }
   .cart-line { grid-template-columns: 72px minmax(0, 1fr); }
   .price-box { margin-left: 0; }
-  .store-nav { gap: 12px; }
+  /* Brand, Collection, EN/ES and the cart on one line at 360 px */
+  .store-header-inner { gap: 10px; }
+  .store-brand { gap: 8px; font-size: 1.05rem; white-space: nowrap; }
+  .store-nav { gap: 10px; }
+  .nav-link { letter-spacing: 0.02em; }
+}
+
+@media (max-width: 380px) {
+  .store-header-inner { gap: 8px; }
+  .store-brand { font-size: 0.95rem; }
+  .store-brand img { width: 24px; height: auto; }
+  .store-nav { gap: 8px; }
+  .nav-link { font-size: 0.8rem; letter-spacing: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

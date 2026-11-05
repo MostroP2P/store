@@ -4,10 +4,9 @@
 import { el } from '../dom.js';
 import { resolveCart, cartCount, MAX_QUANTITY } from './cart.js';
 import { drawProduct } from './boot.js';
-import { formatPrice } from './money.js';
 import { productHref } from './query.js';
 import { icon } from './icons.js';
-import { STRINGS } from './strings.js';
+import { T } from './lang.js';
 
 const THUMB_SCALE = 0.12;
 const CHECKOUT_PAGE = 'checkout.html';
@@ -18,7 +17,7 @@ function stepper(store, line) {
   const name = line.product.name;
   const input = el('input', {
     type: 'number', min: 1, max: MAX_QUANTITY, inputMode: 'numeric', value: line.quantity,
-    'aria-label': STRINGS.quantityOf(name), dataset: { focus: `${line.key}:qty` },
+    'aria-label': T.quantityOf(name), dataset: { focus: `${line.key}:qty` },
     // An emptied field is not "0": NaN leaves the line as it was (and re-renders the old quantity)
     onchange: (event) => {
       const value = event.target.value.trim();
@@ -30,7 +29,7 @@ function stepper(store, line) {
     onclick: () => store.cart.setQuantity(line.key, line.quantity + delta),
   }, [icon(iconName)]);
   return el('span', { className: 'stepper' }, [
-    step(-1, 'minus', STRINGS.decrease(name), 'minus'), input, step(1, 'plus', STRINGS.increase(name), 'plus'),
+    step(-1, 'minus', T.decrease(name), 'minus'), input, step(1, 'plus', T.increase(name), 'plus'),
   ]);
 }
 
@@ -44,29 +43,29 @@ function cartLine(store, line) {
       el('a', { className: 'cart-line-name', href, textContent: line.product.name }),
       el('div', { className: 'chips' }, [
         el('span', { className: 'chip', textContent: line.color.name }),
-        el('span', { className: 'chip', textContent: STRINGS.sizeChip(line.size) }),
+        el('span', { className: 'chip', textContent: T.sizeChip(line.size) }),
         stepper(store, line),
-        el('span', { className: 'chip price-mono', textContent: formatPrice(line.unitPrice) }),
-        ...(line.quantity > 1 ? [el('span', { className: 'chip chip-strong price-mono', textContent: formatPrice(line.total) })] : []),
+        el('span', { className: 'chip price-mono', textContent: store.money.price(line.unitPrice) }),
+        ...(line.quantity > 1 ? [el('span', { className: 'chip chip-strong price-mono', textContent: store.money.price(line.total) })] : []),
       ]),
       el('button', {
         type: 'button', className: 'button-danger-small', dataset: { focus: `${line.key}:remove` },
         onclick: () => store.cart.remove(line.key),
-      }, [icon('trash'), STRINGS.removeFromCart]),
+      }, [icon('trash'), T.removeFromCart]),
     ]),
   ]);
 }
 
 function summary(store, subtotal) {
   return el('aside', { className: 'cart-summary' }, [
-    el('p', { className: 'sum-row' }, [`${STRINGS.subtotal}: `, el('strong', { textContent: formatPrice(subtotal) })]),
-    el('p', { className: 'sum-row' }, [`${STRINGS.shipping}: `, el('strong', { textContent: STRINGS.shippingValue })]),
-    el('p', { className: 'sum-note' }, [icon('info'), STRINGS.shippingNote]),
-    el('p', { className: 'sum-total' }, [`${STRINGS.total}: `, el('strong', { textContent: formatPrice(subtotal) })]),
+    el('p', { className: 'sum-row' }, [`${T.subtotal}: `, el('strong', { textContent: store.money.price(subtotal) })]),
+    el('p', { className: 'sum-row' }, [`${T.shipping}: `, el('strong', { textContent: T.shippingValue })]),
+    el('p', { className: 'sum-note' }, [icon('info'), T.shippingNote]),
+    el('p', { className: 'sum-total' }, [`${T.total}: `, el('strong', { textContent: store.money.price(subtotal) })]),
     el('div', { className: 'cart-actions' }, [
-      el('a', { className: 'button-primary button-block', href: CHECKOUT_PAGE }, [icon('card'), STRINGS.checkout]),
+      el('a', { className: 'button-primary button-block', href: CHECKOUT_PAGE }, [icon('card'), T.checkout]),
       el('button', { type: 'button', className: 'button-outline-danger button-block', onclick: () => store.cart.clear() },
-        [icon('trash'), STRINGS.emptyCart]),
+        [icon('trash'), T.emptyCart]),
     ]),
   ]);
 }
@@ -74,7 +73,7 @@ function summary(store, subtotal) {
 function renderPanel(store, body) {
   const { lines, subtotal } = resolveCart(store.cart.get(), { products: store.products, colors: store.catalog.colors });
   if (lines.length === 0) {
-    body.replaceChildren(el('p', { className: 'cart-empty', textContent: STRINGS.cartEmpty }));
+    body.replaceChildren(el('p', { className: 'cart-empty', textContent: T.cartEmpty }));
     return;
   }
   const focused = document.activeElement?.dataset?.focus;
@@ -88,9 +87,9 @@ function renderPanel(store, body) {
 
 function buildDialog() {
   const body = el('div', { className: 'cart-body' });
-  const close = el('button', { type: 'button', className: 'icon-button', 'aria-label': STRINGS.close }, [icon('close')]);
+  const close = el('button', { type: 'button', className: 'icon-button', 'aria-label': T.close }, [icon('close')]);
   const dialog = el('dialog', { className: 'cart-panel', 'aria-labelledby': 'cart-title' }, [
-    el('div', { className: 'cart-head' }, [el('h2', { id: 'cart-title', textContent: STRINGS.cartTitle }), close]),
+    el('div', { className: 'cart-head' }, [el('h2', { id: 'cart-title', textContent: T.cartTitle }), close]),
     body,
   ]);
   close.addEventListener('click', () => dialog.close());
@@ -113,7 +112,7 @@ export function mountCart(store) {
     const count = cartCount(cart);
     button.hidden = count === 0;
     badge.textContent = String(count);
-    button.setAttribute('aria-label', STRINGS.cartButton(count));
+    button.setAttribute('aria-label', T.cartButton(count));
     if (count > lastCount) {
       button.classList.add(BUMP_CLASS);
       setTimeout(() => button.classList.remove(BUMP_CLASS), BUMP_MS);

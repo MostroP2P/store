@@ -18,57 +18,63 @@ const isPhone = (value) => {
   return PHONE.test(value) && digits >= PHONE_DIGITS.min && digits <= PHONE_DIGITS.max;
 };
 
-// label completes "Completá … para continuar." / "Revisá … para continuar."; the order is the form's order
+// Rules per field, in form order. The texts (labels, messages) live in strings/<lang>.js under `fields`.
 const FIELDS = Object.freeze({
-  street: { label: 'la calle', required: 'La calle es obligatoria.', max: 80 },
-  number: { label: 'el número', required: 'El número es obligatorio.', max: 10 },
-  floor: { label: 'el piso', max: 10 },
-  apartment: { label: 'el depto', max: 10 },
-  postalCode: {
-    label: 'el código postal', required: 'El código postal es obligatorio.', max: 8,
-    check: (v) => POSTAL_CODE.test(v) || 'Revisá el código postal.',
-  },
-  city: { label: 'la localidad', required: 'La localidad es obligatoria.', max: 80 },
-  province: {
-    label: 'la provincia', required: 'Elegí una provincia.', max: 40,
-    check: (v) => PROVINCES.includes(v) || 'Elegí una provincia.',
-  },
-  notes: { label: 'las instrucciones', max: 500 },
-  firstName: { label: 'tu nombre', required: 'El nombre es obligatorio.', max: 60 },
-  lastName: { label: 'tu apellido', required: 'El apellido es obligatorio.', max: 60 },
-  email: { label: 'el email', required: 'El email es obligatorio.', max: 120, check: (v) => EMAIL.test(v) || 'Revisá el email.' },
-  phone: { label: 'el teléfono', required: 'El teléfono es obligatorio.', max: 30, check: (v) => isPhone(v) || 'Revisá el teléfono.' },
+  street: { required: true, max: 80 },
+  number: { required: true, max: 10 },
+  floor: { max: 10 },
+  apartment: { max: 10 },
+  postalCode: { required: true, max: 8, check: (v) => POSTAL_CODE.test(v) },
+  city: { required: true, max: 80 },
+  province: { required: true, max: 40, check: (v) => PROVINCES.includes(v) },
+  notes: { max: 500 },
+  firstName: { required: true, max: 60 },
+  lastName: { required: true, max: 60 },
+  email: { required: true, max: 120, check: (v) => EMAIL.test(v) },
+  phone: { required: true, max: 30, check: isPhone },
 });
+
+/** What can be wrong with a field. */
+export const FIELD_PROBLEMS = Object.freeze({ REQUIRED: 'required', TOO_LONG: 'tooLong', INVALID: 'invalid' });
 
 export const FIELD_ORDER = Object.freeze(Object.keys(FIELDS));
 export const REQUIRED_FIELDS = Object.freeze(FIELD_ORDER.filter((name) => FIELDS[name].required));
+/** Fields with a format check (they need an `invalid` message). */
+export const CHECKED_FIELDS = Object.freeze(FIELD_ORDER.filter((name) => FIELDS[name].check));
 /** name → max length, for the inputs' maxlength attribute. */
 export const FIELD_LIMITS = Object.freeze(Object.fromEntries(FIELD_ORDER.map((name) => [name, FIELDS[name].max])));
 
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 
-function fieldError(name, raw) {
+function fieldProblem(name, raw) {
   const rule = FIELDS[name];
   const value = typeof raw === 'string' ? raw.trim() : '';
-  if (!value) return rule.required ?? null;
-  if (value.length > rule.max) return `Máximo ${rule.max} caracteres.`;
-  const verdict = rule.check ? rule.check(value) : true;
-  return verdict === true ? null : verdict;
+  if (!value) return rule.required ? FIELD_PROBLEMS.REQUIRED : null;
+  if (value.length > rule.max) return FIELD_PROBLEMS.TOO_LONG;
+  return !rule.check || rule.check(value) ? null : FIELD_PROBLEMS.INVALID;
 }
 
-/** { fieldName: message } for every invalid field; {} when the form is complete. */
+/** { fieldName: 'required' | 'tooLong' | 'invalid' } for every invalid field; {} when the form is complete. */
 export function validateCheckout(values) {
   return Object.fromEntries(FIELD_ORDER
-    .map((name) => [name, fieldError(name, values?.[name])])
-    .filter(([, message]) => message));
+    .map((name) => [name, fieldProblem(name, values?.[name])])
+    .filter(([, problem]) => problem));
+}
+
+/** Message under a field in the page language (`t`, a strings table): "La calle es obligatoria."; '' when fine. */
+export function fieldMessage(t, name, problem) {
+  if (problem === FIELD_PROBLEMS.TOO_LONG) return t.fieldTooLong(FIELDS[name].max);
+  if (problem === FIELD_PROBLEMS.REQUIRED) return t.fields[name].required;
+  if (problem === FIELD_PROBLEMS.INVALID) return t.fields[name].invalid;
+  return '';
 }
 
 /** "Completá la calle para continuar." for the first field (in form order) that blocks the payment. */
-export function firstProblem(errors) {
+export function firstProblem(t, errors) {
   const name = FIELD_ORDER.find((field) => errors[field]);
   if (!name) return null;
-  const { label, required } = FIELDS[name];
-  return errors[name] === required ? `Completá ${label} para continuar.` : `Revisá ${label} para continuar.`;
+  const field = t.fields[name].name;
+  return errors[name] === FIELD_PROBLEMS.REQUIRED ? t.completeField(field) : t.checkField(field);
 }
 
 /** Saved delivery data is kept for a week at most (shared computers). */

@@ -1,24 +1,18 @@
-// Store bootstrap shared by the three pages: catalog, store settings, fonts, images, shirt and cart.
+// Store bootstrap shared by the three pages: language, catalog, store settings, fonts, images, shirt and cart.
 
 import { el } from '../dom.js';
 import { normalizeCatalog } from '../catalog.js';
+import { localizeJson } from '../i18n.js';
 import { loadImage, prepareShirt } from '../shirt.js';
 import { renderProduct } from '../render.js';
 import { fetchCatalog, loadFonts, loadProductImages } from '../loader.js';
 import { normalizeStoreConfig } from './config.js';
 import { storeProducts } from './products.js';
 import { createCartStore, CART_STORAGE_KEY } from './cart-store.js';
+import { moneyFormat } from './money.js';
+import { browserStorage } from './persist.js';
 import { icon } from './icons.js';
-import { STRINGS } from './strings.js';
-
-/** window.localStorage / window.sessionStorage, or null when the browser blocks it (privacy settings). */
-function browserStorage(name) {
-  try {
-    return window[name];
-  } catch {
-    return null;
-  }
-}
+import { LANG, T, translatePage, mountLanguageSwitch } from './lang.js';
 
 const FETCH_TIMEOUT_MS = 10_000;
 
@@ -43,11 +37,12 @@ function variantChecker(products, config) {
 
 /** Everything a store page needs. Throws with a readable message when the store cannot open. */
 export async function loadStore() {
-  const raw = await fetchCatalog();
+  // catalog.json texts come as { "en": …, "es": … }: keep the page language
+  const raw = localizeJson(await fetchCatalog(), LANG);
   const { catalog } = normalizeCatalog(raw);
-  if (!catalog) throw new Error(STRINGS.catalogInvalid);
+  if (!catalog) throw new Error(T.catalogInvalid);
   const { config } = normalizeStoreConfig(raw.store, catalog.colors.map((c) => c.id));
-  if (!config) throw new Error(STRINGS.storeNotConfigured);
+  if (!config) throw new Error(T.storeNotConfigured);
 
   const products = storeProducts(catalog, config);
   const [baseImage, , images] = await Promise.all([
@@ -65,6 +60,7 @@ export async function loadStore() {
   return {
     catalog, config, products, shirt: prepareShirt(baseImage, catalog.base.shading), images, cart, storage,
     session: browserStorage('sessionStorage'),
+    money: moneyFormat(LANG, config.currency),
   };
 }
 
@@ -90,12 +86,14 @@ function hydrateIcons(root) {
 /** Loads the store and runs the page; a store that cannot open shows a message instead. */
 export async function startPage(run) {
   hydrateIcons(document);
+  translatePage(document);
+  mountLanguageSwitch(document.getElementById('lang-switch'));
   const main = document.querySelector('main');
   try {
     run(await loadStore());
   } catch (err) {
     main.replaceChildren(el('section', { className: 'store-message' }, [
-      el('h1', { textContent: STRINGS.storeUnavailable }),
+      el('h1', { textContent: T.storeUnavailable }),
       el('p', { className: 'muted', textContent: err.message }),
     ]));
   }

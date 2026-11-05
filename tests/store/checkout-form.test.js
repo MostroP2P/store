@@ -4,13 +4,16 @@ import {
   FIELD_ORDER,
   REQUIRED_FIELDS,
   PROVINCES,
+  CHECKED_FIELDS,
   validateCheckout,
+  fieldMessage,
   firstProblem,
   sanitizeSavedForm,
   savedFormRecord,
   restoreSavedForm,
   SAVED_FORM_TTL_MS,
 } from '../../src/store/checkout-form.js';
+import { STRINGS } from '../../src/store/strings.js';
 
 const VALID = Object.freeze({
   street: 'Av. Siempreviva',
@@ -36,19 +39,17 @@ test('every required field is reported when empty', () => {
   assert.deepEqual(Object.keys(errors).sort(), [
     'city', 'email', 'firstName', 'lastName', 'number', 'phone', 'postalCode', 'province', 'street',
   ]);
-  assert.equal(errors.street, 'La calle es obligatoria.');
+  assert.equal(errors.street, 'required');
 });
 
 test('blank text counts as empty', () => {
-  assert.equal(validateCheckout({ ...VALID, firstName: '   ' }).firstName, 'El nombre es obligatorio.');
+  assert.equal(validateCheckout({ ...VALID, firstName: '   ' }).firstName, 'required');
 });
 
 test('checks email, phone, postal code and province formats', () => {
   const errors = validateCheckout({ ...VALID, email: 'ana@', phone: '12-34', postalCode: '12', province: 'Narnia' });
-  assert.equal(errors.email, 'Revisá el email.');
-  assert.equal(errors.phone, 'Revisá el teléfono.');
-  assert.equal(errors.postalCode, 'Revisá el código postal.');
-  assert.equal(errors.province, 'Elegí una provincia.');
+  assert.deepEqual(errors, { email: 'invalid', phone: 'invalid', postalCode: 'invalid', province: 'invalid' });
+  assert.deepEqual([...CHECKED_FIELDS].sort(), Object.keys(errors).sort());
 });
 
 test('accepts the new Argentine postal code (CPA)', () => {
@@ -57,15 +58,28 @@ test('accepts the new Argentine postal code (CPA)', () => {
 
 test('limits the length of every field', () => {
   const errors = validateCheckout({ ...VALID, notes: 'x'.repeat(501), city: 'x'.repeat(81) });
-  assert.equal(errors.notes, 'Máximo 500 caracteres.');
-  assert.equal(errors.city, 'Máximo 80 caracteres.');
+  assert.deepEqual(errors, { notes: 'tooLong', city: 'tooLong' });
 });
 
-test('firstProblem follows the form order', () => {
-  assert.equal(firstProblem({}), null);
-  assert.equal(firstProblem(validateCheckout({})), 'Completá la calle para continuar.');
+test('fieldMessage explains a problem in the page language', () => {
+  assert.equal(fieldMessage(STRINGS.es, 'street', 'required'), 'La calle es obligatoria.');
+  assert.equal(fieldMessage(STRINGS.en, 'street', 'required'), 'Street is required.');
+  assert.equal(fieldMessage(STRINGS.es, 'email', 'invalid'), 'Revisá el email.');
+  assert.equal(fieldMessage(STRINGS.en, 'email', 'invalid'), 'Check the email.');
+  assert.equal(fieldMessage(STRINGS.es, 'province', 'invalid'), 'Elegí una provincia.');
+  assert.equal(fieldMessage(STRINGS.es, 'notes', 'tooLong'), 'Máximo 500 caracteres.');
+  assert.equal(fieldMessage(STRINGS.en, 'city', 'tooLong'), 'Up to 80 characters.');
+  assert.equal(fieldMessage(STRINGS.en, 'city', undefined), '');
+});
+
+test('firstProblem names the first field (in form order) that blocks the payment', () => {
+  assert.equal(firstProblem(STRINGS.es, {}), null);
+  assert.equal(firstProblem(STRINGS.es, validateCheckout({})), 'Completá la calle para continuar.');
+  assert.equal(firstProblem(STRINGS.en, validateCheckout({})), 'Fill in the street to continue.');
   const errors = validateCheckout({ ...VALID, email: 'nope', phone: '' });
-  assert.equal(firstProblem(errors), 'Revisá el email para continuar.');
+  assert.equal(firstProblem(STRINGS.es, errors), 'Revisá el email para continuar.');
+  assert.equal(firstProblem(STRINGS.en, errors), 'Check the email to continue.');
+  assert.equal(firstProblem(STRINGS.en, { notes: 'tooLong' }), 'Check the instructions to continue.');
 });
 
 test('FIELD_ORDER covers every validated field', () => {

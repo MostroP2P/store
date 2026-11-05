@@ -12,15 +12,15 @@ import { buildCheckoutForm } from './checkout-fields.js';
 import { createPaymentPanel } from './payment-ui.js';
 import { resolveCart } from './cart.js';
 import {
-  validateCheckout, firstProblem, sanitizeSavedForm, savedFormRecord, restoreSavedForm, FIELD_ORDER, FIELD_LIMITS,
+  validateCheckout, fieldMessage, firstProblem, sanitizeSavedForm, savedFormRecord, restoreSavedForm, FIELD_ORDER, FIELD_LIMITS,
 } from './checkout-form.js';
-import { YADIO_URL, parseYadioRate, satsFor, formatPrice, formatSats } from './money.js';
+import { YADIO_URL, parseYadioRate, satsFor } from './money.js';
 import { requestInvoice } from './lnurl.js';
 import { waitForPayment, preimageMatches, isPaidNow } from './payment.js';
-import { newOrderId, orderComment, orderMessage, paidMessage, claimedMessage } from './order.js';
+import { newOrderId, orderComment, orderSubject, orderMessage, paidMessage, claimedMessage } from './order.js';
 import { createSenderKey, sendPrivateMessage } from './nostr-order.js';
 import { readJson, writeJson, removeKey } from './persist.js';
-import { STRINGS } from './strings.js';
+import { LANG, T } from './lang.js';
 
 const FORM_STORAGE_KEY = 'mostro-store:checkout';
 const SUMMARY_THUMB_SCALE = 0.1;
@@ -45,11 +45,11 @@ function summaryLine(store, line) {
   return el('li', { className: 'summary-line' }, [
     canvas,
     el('div', {}, [
-      el('p', { className: 'summary-name', textContent: STRINGS.summaryQuantity(line.product.name, line.quantity) }),
+      el('p', { className: 'summary-name', textContent: T.summaryQuantity(line.product.name, line.quantity) }),
       el('p', { className: 'muted', textContent: line.color.name }),
-      el('p', { className: 'muted', textContent: STRINGS.sizeChip(line.size) }),
+      el('p', { className: 'muted', textContent: T.sizeChip(line.size) }),
     ]),
-    el('p', { className: 'summary-price', textContent: formatPrice(line.total) }),
+    el('p', { className: 'summary-price', textContent: store.money.price(line.total) }),
   ]);
 }
 
@@ -65,7 +65,7 @@ function showReady(view, subtotal, quote) {
     view.payment.closed();
     return;
   }
-  view.payment.ready({ subtotal, quote, hint: view.notice ?? firstProblem(validateCheckout(readForm(view))) });
+  view.payment.ready({ subtotal, quote, hint: view.notice ?? firstProblem(T, validateCheckout(readForm(view))) });
 }
 
 /** Either the checkout (summary, form, payment) or the "empty cart" message. */
@@ -76,8 +76,8 @@ function showCheckout(isEmpty) {
 
 function fillSummary(view, lines, subtotal, satsText) {
   $('summary-lines').replaceChildren(...lines.map((line) => summaryLine(view.store, line)));
-  $('summary-subtotal').textContent = formatPrice(subtotal);
-  $('summary-total').textContent = formatPrice(subtotal);
+  $('summary-subtotal').textContent = view.store.money.price(subtotal);
+  $('summary-total').textContent = view.store.money.price(subtotal);
   $('summary-sats').textContent = satsText;
 }
 
@@ -88,7 +88,7 @@ function renderSummary(view) {
   showCheckout(lines.length === 0);
   if (lines.length === 0) return;
   const quote = quoteFor(view, subtotal);
-  fillSummary(view, lines, subtotal, quote?.sats ? STRINGS.approxSats(formatSats(quote.sats)) : '');
+  fillSummary(view, lines, subtotal, quote?.sats ? T.approxSats(view.store.money.sats(quote.sats)) : '');
   if (!view.active && !view.busy && !view.result) showReady(view, subtotal, quote);
 }
 
@@ -115,7 +115,7 @@ const freshRate = (view) => (view.quote?.rate && Date.now() - view.quote.at < QU
 // ---------- Form ----------
 
 function showFieldError(view, name, errors) {
-  const message = view.touched.has(name) ? (errors[name] ?? '') : '';
+  const message = view.touched.has(name) ? fieldMessage(T, name, errors[name]) : '';
   view.form.errors.get(name).textContent = message;
   view.form.controls.get(name).setAttribute('aria-invalid', String(Boolean(message)));
 }
@@ -125,8 +125,8 @@ function onFormChange(view, name) {
   writeJson(view.store.session, FORM_STORAGE_KEY, savedFormRecord(values, Date.now()));
   const errors = validateCheckout(values);
   if (name) showFieldError(view, name, errors);
-  if (name === 'notes') $('field-notes-counter').textContent = STRINGS.notesCounter(values.notes.length, FIELD_LIMITS.notes);
-  view.payment.setHint(firstProblem(errors));
+  if (name === 'notes') $('field-notes-counter').textContent = T.notesCounter(values.notes.length, FIELD_LIMITS.notes);
+  view.payment.setHint(firstProblem(T, errors));
 }
 
 function restoreForm(view) {
@@ -136,7 +136,7 @@ function restoreForm(view) {
   if (!saved && record !== null) removeKey(view.store.session, FORM_STORAGE_KEY);
   const values = saved ?? sanitizeSavedForm(null);
   FIELD_ORDER.forEach((name) => { view.form.controls.get(name).value = values[name]; });
-  $('field-notes-counter').textContent = STRINGS.notesCounter(values.notes.length, FIELD_LIMITS.notes);
+  $('field-notes-counter').textContent = T.notesCounter(values.notes.length, FIELD_LIMITS.notes);
 }
 
 function clearSavedForm(view) {
@@ -145,11 +145,16 @@ function clearSavedForm(view) {
   view.touched = new Set();
   const errors = validateCheckout({});
   FIELD_ORDER.forEach((name) => showFieldError(view, name, errors));
-  $('field-notes-counter').textContent = STRINGS.notesCounter(0, FIELD_LIMITS.notes);
-  view.payment.setHint(firstProblem(errors));
+  $('field-notes-counter').textContent = T.notesCounter(0, FIELD_LIMITS.notes);
+  view.payment.setHint(firstProblem(T, errors));
 }
 
-const lockForm = (view, locked) => view.form.fieldsets.forEach((fieldset) => { fieldset.disabled = locked; });
+/** Locks the form, and the language switch (its reload would drop the invoice), while paying and once paid. */
+function lockForm(view, locked) {
+  view.form.fieldsets.forEach((fieldset) => { fieldset.disabled = locked; });
+  const languageSwitch = $('lang-switch');
+  if (languageSwitch) languageSwitch.disabled = locked;
+}
 
 /** Validates the whole form and starts the payment, or points at the first problem. Used by Pay and Retry. */
 function trySubmit(view) {
@@ -187,21 +192,21 @@ async function createOrder(view, session, pool) {
   const { config } = view.store;
   const { lines, subtotal } = cartTotals(view);
   const customer = readForm(view);
-  const rate = await step(view, session, STRINGS.stepRate, STRINGS.errorRate, () => freshRate(view));
+  const rate = await step(view, session, T.stepRate, T.errorRate, () => freshRate(view));
   const sats = satsFor(subtotal, rate);
   const id = newOrderId();
-  const invoice = await step(view, session, STRINGS.stepInvoice, STRINGS.errorInvoice, () => requestInvoice({
+  const invoice = await step(view, session, T.stepInvoice, T.errorInvoice, () => requestInvoice({
     address: config.lnAddress, msat: sats * MSAT_PER_SAT, comment: orderComment(id), fetchJson,
   }));
   const order = {
-    id, subtotal, currency: config.currency, sats, rate, paymentHash: invoice.paymentHash, customer,
+    id, subtotal, currency: config.currency, lang: LANG, sats, rate, paymentHash: invoice.paymentHash, customer,
     lines: lines.map((l) => ({ name: l.product.name, colorName: l.color.name, size: l.size, quantity: l.quantity, total: l.total })),
   };
   // What this order buys: only this comes off the cart when it completes
   const items = lines.map((l) => ({ productId: l.product.id, colorId: l.color.id, size: l.size, quantity: l.quantity }));
   const senderKey = createSenderKey();
-  await step(view, session, STRINGS.stepOrder, STRINGS.errorOrder, () => sendPrivateMessage({
-    pool, npub: config.nostr.npub, relays: config.nostr.relays, message: orderMessage(order), subject: STRINGS.orderNumber(id), senderKey,
+  await step(view, session, T.stepOrder, T.errorOrder, () => sendPrivateMessage({
+    pool, npub: config.nostr.npub, relays: config.nostr.relays, message: orderMessage(order), subject: orderSubject(id), senderKey,
   }));
   return { session, order, items, invoice, pool, senderKey };
 }
@@ -290,9 +295,9 @@ async function payWithWebln(view, ctx, panel) {
     if (!current()) return;
     if (await preimageMatches(response?.preimage, ctx.invoice.paymentHash)) completeOrder(view, ctx, 'paid');
     // No valid proof from the wallet: keep waiting for the status check
-    else panel.fail(STRINGS.weblnUnverified);
+    else panel.fail(T.weblnUnverified);
   } catch {
-    if (current()) panel.fail(STRINGS.weblnFailed);
+    if (current()) panel.fail(T.weblnFailed);
   } finally {
     if (current()) panel.weblnBusy(false);
   }
@@ -314,7 +319,7 @@ function completeOrder(view, ctx, kind) {
   // always show the confirmation, with what this order bought
   const bought = resolveCart({ items: ctx.items }, { products: view.store.products, colors: view.store.catalog.colors });
   showCheckout(false);
-  fillSummary(view, bought.lines, ctx.order.subtotal, formatSats(ctx.order.sats));
+  fillSummary(view, bought.lines, ctx.order.subtotal, view.store.money.sats(ctx.order.sats));
   document.querySelector('main').classList.add('is-paid');
   completion.show(view.payment, { order: ctx.order, email: emailOf(ctx) });
   // Not clear(): an older invoice confirmed late must keep items added afterwards (e.g. from another tab)
@@ -324,7 +329,7 @@ function completeOrder(view, ctx, kind) {
   // Best effort: the store matches orders against its wallet anyway (payment hash + "Pedido MS-…" comment)
   sendPrivateMessage({
     pool: ctx.pool, npub: nostr.npub, relays: nostr.relays,
-    message: completion.message(ctx.order), subject: STRINGS.orderNumber(ctx.order.id), senderKey: ctx.senderKey,
+    message: completion.message(ctx.order), subject: orderSubject(ctx.order.id), senderKey: ctx.senderKey,
   }).catch(() => {}).finally(() => ctx.pool.destroy());
 }
 
@@ -334,7 +339,7 @@ function onCartChange(view) {
   if (view.paid) return;
   if (view.active || view.busy) {
     // Another tab may rewrite the same cart: only a real change cancels the invoice
-    if (cartSignature(view) !== view.cartKey) cancelActive(view, STRINGS.cartChanged);
+    if (cartSignature(view) !== view.cartKey) cancelActive(view, T.cartChanged);
     return;
   }
   view.result = false;
@@ -363,7 +368,9 @@ startPage((store) => {
   const view = {
     store,
     form: buildCheckoutForm($('checkout-form')),
-    payment: createPaymentPanel($('payment-body'), { lnAddress: store.config.lnAddress, liveRegion: $('payment-status') }),
+    payment: createPaymentPanel($('payment-body'), {
+      lnAddress: store.config.lnAddress, liveRegion: $('payment-status'), money: store.money,
+    }),
     touched: new Set(),
     quote: null,
     session: 0,

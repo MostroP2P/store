@@ -7,6 +7,7 @@ Es un sitio estático: no tiene base de datos, servidor, cuentas de usuario ni b
 - **El cobro** es en bitcoin, por Lightning, a una LN address.
 - **Los pedidos** llegan cifrados por Nostr (NIP-17) a la cuenta de la tienda.
 - **La dirección del comprador** no se guarda en ningún servidor.
+- **Idiomas:** inglés por defecto, o español si el navegador está en español. El botón **EN/ES** del header cambia el idioma.
 
 ## Índice
 
@@ -39,6 +40,8 @@ npm run coverage       # tests + cobertura (mínimo 80 %)
 > ⚠️ **Probar el checkout manda pedidos de verdad.** Llegan a la npub configurada y se piden facturas reales a la LN address. Para probar sin llenarle la bandeja a la tienda, usá una clave de desarrollo ([§9](#9-desarrollo)).
 
 ## 2. Cómo compra un cliente
+
+La tienda se ve en **inglés**, o en **español** si el navegador del comprador está en español (cuenta el primer idioma de su lista que sea inglés o español). El botón **EN/ES** del header cambia de idioma y lo recuerda en ese navegador. Mientras hay una factura en curso el botón queda deshabilitado, para que la recarga no la pierda.
 
 1. **Colección** (`index.html`): ve todas las remeras a la venta, agrupadas por serie.
 2. **Producto** (`producto.html`): elige el color y el talle. "Guía de talles" muestra la tabla de medidas.
@@ -91,9 +94,12 @@ CP 1234, Springfield, Buenos Aires
 Contacto:
 Email: ana@example.com
 Teléfono: 11 2233 4455
+Idioma: español
 
 Instrucciones: Tocar timbre dos veces
 ```
+
+Los mensajes a la tienda están siempre en español. La línea `Idioma` dice en qué idioma compró la persona (`inglés` o `español`), para contestarle en ese idioma; el nombre del color también viene en ese idioma.
 
 En la misma conversación puede llegar un segundo mensaje:
 
@@ -173,7 +179,7 @@ cp /etc/caddy/Caddyfile.bak-20261104-store-status /etc/caddy/Caddyfile && system
 1. **Leé el pedido.** Buscá el DM `Pedido MS-XXXXXX` en el cliente Nostr de la tienda.
 2. **Buscá el pago en LNbits**, con el mismo comentario `Pedido MS-XXXXXX` y el mismo payment hash.
 3. **Verificá que esté cobrado y que el monto alcance** para esas remeras al precio del catálogo, con la cotización de ese momento.
-4. **Escribile al comprador** al email o teléfono del pedido para coordinar el envío. El texto actual dice "Envío: a coordinar".
+4. **Escribile al comprador** al email o teléfono del pedido para coordinar el envío, en el idioma de la línea `Idioma`. El texto actual dice "Envío: a coordinar".
 5. **Si hay un DM sin pago**, el comprador no pagó, o pagó otra factura del mismo carrito (cada intento genera un número nuevo). En ese caso no se despacha.
 
 ## 6. Configuración: `catalog.json`
@@ -196,7 +202,7 @@ cp /etc/caddy/Caddyfile.bak-20261104-store-status /etc/caddy/Caddyfile && system
     "relays": ["wss://relay.mostro.network", "wss://nos.lol", "wss://relay.damus.io"]
   },
   "details": [
-    { "title": "Envío", "text": "Enviamos a todo el país…" }
+    { "title": { "en": "Shipping", "es": "Envío" }, "text": { "en": "We ship anywhere in Argentina…", "es": "Enviamos a todo el país…" } }
   ]
 }
 ```
@@ -216,6 +222,21 @@ cp /etc/caddy/Caddyfile.bak-20261104-store-status /etc/caddy/Caddyfile && system
 Si `lnAddress` o `nostr` son inválidos, las remeras se ven igual, pero no se puede pagar.
 
 **Si la LN address cambia de dominio**, hay que agregarlo al `connect-src` del `Content-Security-Policy` en `index.html`, `producto.html` y `checkout.html`. Si no, el navegador bloquea el pedido de la factura.
+
+### Textos en inglés y español
+
+Todo texto que ve el comprador en `catalog.json` puede ir en los dos idiomas, como un objeto con `en` y `es`:
+
+```json
+{ "id": "black", "name": { "en": "Black", "es": "Negro" }, "hex": "#1a1a1a" }
+```
+
+- **Dónde:** nombres de colores, `description` y `name` de diseños, series e ítems, y `title` / `text` de `store.details`.
+- **Un texto igual en los dos idiomas** puede quedar como string, por ejemplo las frases de las remeras ("Love at first sat").
+- **Si falta una traducción** (o está vacía), se usa la inglesa, y si tampoco está, la otra.
+- **Solo valen las claves `en` y `es`.** Un objeto con otras claves no se toma como traducción, y el nombre cae al `id`.
+- Un test (`tests/i18n.test.js`) abre `catalog.json` en los dos idiomas y falla si queda algo en español en la versión en inglés.
+- El visor muestra el catálogo en español.
 
 ### Campos de cada remera
 
@@ -257,6 +278,7 @@ visor.html                                 visor
 catalog.json                               remeras, precios, talles, pago y npub
 css/                                       base.css (colores, botones), store.css, viewer.css
 src/                                       render de remeras, compartido por visor y tienda
+src/i18n.js                                idioma de la página y traducciones de catalog.json
 src/store/                                 tienda: carrito, checkout, LNURL, BOLT11, Nostr, QR…
 src/viewer/                                visor
 src/vendor/                                librerías de terceros ya armadas (ver su README)
@@ -270,7 +292,8 @@ docs/SPEC.md                               diseño completo
 Las reglas del repo:
 
 - Los módulos que no tocan el DOM tienen tests con cobertura de 80 % o más (hoy, alrededor de 99 %).
-- Los textos de la tienda están en `src/store/strings.js`.
+- Los textos de la tienda están en `src/store/strings/en.js` y `src/store/strings/es.js`, con las mismas claves: un test falla si a un idioma le falta algo o si queda español en el inglés.
+- Los textos fijos de los HTML llevan `data-i18n="clave"` (o `data-i18n-attr="aria-label:clave"`). El HTML trae el inglés, y `src/store/lang.js` lo cambia al idioma de la página.
 
 ### Probar el checkout sin molestar a la tienda
 

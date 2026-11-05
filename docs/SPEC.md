@@ -87,6 +87,7 @@ tshirts/
 │   ├── color.js                hex, luminancia, color de texto automático (puro)
 │   ├── loader.js               carga catálogo, fuentes e imágenes (visor y tienda)
 │   ├── dom.js                  el() / svgEl(): DOM sin innerHTML
+│   ├── i18n.js                 idioma de la página y traducciones de catalog.json (puro)
 │   ├── viewer/                 visor: app.js, ui.js, state.js, strings.js
 │   ├── store/                  tienda (ver §10.2)
 │   └── vendor/                 nostr-tools y qrcode-generator ya armados (ver README ahí)
@@ -291,17 +292,19 @@ Mismo catálogo y mismo render que el visor. Todo corre en el navegador: no hay 
 | `config.js` | Valida la sección `store` de `catalog.json`. |
 | `products.js` | Remeras publicadas, precio final, colores, relacionadas, secciones. |
 | `cart.js`, `cart-store.js`, `persist.js` | Carrito inmutable, guardado y sincronización; `localStorage` sin excepciones. |
-| `money.js` | Formato `$30.000` y sats, conversión ARS → sats, cotización de Yadio. |
+| `money.js` | Formato por idioma (`$30.000` en español, `ARS 30,000` en inglés) y sats, conversión ARS → sats, cotización de Yadio. |
 | `bolt11.js` | Decodifica facturas: monto, payment hash, vencimiento (con checksum). |
 | `lnurl.js` | LNURL-pay (LUD-06/12/16): pide la factura y verifica el monto exacto. |
 | `payment.js` | Espera el pago (polling), cuenta regresiva, prueba de pago con preimage. |
-| `order.js` | Número de pedido `MS-XXXXXX`, comentario del pago y textos del DM. |
-| `checkout-form.js` | Campos, validación, provincias, datos guardados. |
+| `order.js` | Número de pedido `MS-XXXXXX`, comentario del pago y textos del DM (siempre en español, con el idioma del comprador). |
+| `checkout-form.js` | Campos, validación (devuelve `required`, `tooLong` o `invalid`; el texto lo pone `strings`), provincias, datos guardados. |
 | `query.js` | URL de la página de producto. |
 | `qr.js` | QR con módulos redondeados y el logo de Mostro, basado en el de donate. Tiene ajustes para que decodifique en todas las versiones. |
 | `nostr-order.js` | DM NIP-17 a la tienda: relays de la tienda (kind 10050) y publicación. |
+| `strings.js` | Textos de la tienda: `strings/en.js` y `strings/es.js`, con las mismas claves. |
+| `../i18n.js` | Qué idioma ver (`pickLanguage`) y `localizeJson`, que deja `catalog.json` en un idioma. |
 
-Los módulos de DOM son `boot.js`, `cart-ui.js`, `product-card.js`, `home-page.js`, `product-page.js`, `size-guide.js`, `checkout-fields.js`, `checkout-page.js`, `payment-ui.js` e `icons.js`. Los textos están en `strings.js`.
+Los módulos de DOM son `boot.js`, `cart-ui.js`, `product-card.js`, `home-page.js`, `product-page.js`, `size-guide.js`, `checkout-fields.js`, `checkout-page.js`, `payment-ui.js`, `icons.js` y `lang.js` (idioma de la página, textos fijos y botón EN/ES).
 
 ### 10.3 Campos del catálogo
 
@@ -315,7 +318,7 @@ Los módulos de DOM son `boot.js`, `cart-ui.js`, `product-card.js`, `home-page.j
     "defaultSize": "L",
     "sizes": [{ "id": "S", "width": 49, "length": 69 }],
     "nostr": { "npub": "npub1…", "relays": ["wss://relay.mostro.network", "wss://nos.lol", "wss://relay.damus.io"] },
-    "details": [{ "title": "Envío", "text": "…" }]
+    "details": [{ "title": { "en": "Shipping", "es": "Envío" }, "text": { "en": "…", "es": "…" } }]
   },
   "designs": [{ "id": "mostro-invaders", "status": "published", "price": 35000, "description": "…" }]
 }
@@ -325,6 +328,7 @@ Los módulos de DOM son `boot.js`, `cart-ui.js`, `product-card.js`, `home-page.j
 - **`price`** es opcional por remera; si falta se usa `store.price`. La moneda es `store.currency`, y se convierte a sats al pagar.
 - **`sizes`** lleva `width` (ancho de axila a axila) y `length` (largo de hombro a ruedo), en cm, para la guía de talles. Si falta una medida, se muestra "—".
 - **`details`** son los acordeones de la página de producto.
+- **Textos traducidos:** cualquier texto puede ser `{ "en": …, "es": … }` (ver §10.8).
 - Si `lnAddress` o `nostr` son inválidos, las remeras se ven igual pero el checkout queda cerrado.
 
 > ⚠️ Los ítems publicados tienen el `id` fijo (`mostro-quotes-love-at-first-sat`, …). Si cambiás un texto, el ID no cambia y los links y los carritos guardados siguen funcionando.
@@ -405,7 +409,18 @@ El backup quedó en `/etc/caddy/Caddyfile.bak-20261104-store-status`. No hace fa
   3. verificá que el monto alcance para las remeras al precio del catálogo, con la cotización de ese momento.
 - **`src/vendor/`.** CI vuelve a armarlo con `scripts/vendor/build.sh` y falla si difiere de lo commiteado.
 
-### 10.8 Pendientes
+### 10.8 Idiomas
+
+- **Cuál se ve.** `pickLanguage` toma la elección guardada (`localStorage`, `mostro-store:lang`). Si no hay, el primer idioma de `navigator.languages` que sea `en` o `es` (`es-AR`, `es_AR` y `es-419` cuentan como `es`). Si no hay ninguno, inglés.
+- **Botón EN/ES.** Está en el header y muestra el otro idioma. Guarda la elección y recarga la página: el carrito (`localStorage`) y los datos del checkout (`sessionStorage`) sobreviven. En el checkout se deshabilita desde que se pide la factura, para que la recarga no la pierda, y sigue así en la confirmación, para no perder el número de pedido de la pantalla. Si el navegador no deja guardar, el botón no aparece.
+- **Textos de la tienda.** `src/store/strings/en.js` y `es.js`. `lang.js` exporta `T`, la tabla del idioma de la página. Un test compara la forma de las tablas (mismas claves, listas del mismo largo, funciones con los mismos argumentos) y que el inglés no tenga español.
+- **Textos fijos del HTML.** Llevan `data-i18n="clave"` para el texto o `data-i18n-attr="atributo:clave"` para atributos (`aria-label`, `content`). El HTML trae el inglés y `<html lang="en">`. `translatePage` cambia los textos y `lang`, y agrega la clase `i18n-ready`. Hasta entonces el CSS los oculta (`visibility: hidden`), así un visitante en español no los ve saltar desde el inglés.
+- **Catálogo.** `localizeJson(catalog, lang)` reemplaza cada `{ "en": …, "es": … }` por el texto del idioma, antes de validar. Si falta una traducción se usa el inglés, y si no, la otra. El visor usa siempre español.
+- **Precios.** Español: `$30.000`. Inglés: `ARS 30,000`, para que no se lean como dólares.
+- **Pedidos.** El DM a la tienda va siempre en español (`Pedido MS-…`, `$30.000`) y agrega `Idioma: inglés` o `Idioma: español`, para contestarle al comprador en su idioma. Los nombres de colores vienen en el idioma del comprador.
+- **Mensajes técnicos** (el "Detalle técnico" de un error: LNURL, factura, Yadio, relays) están en inglés en los dos idiomas.
+
+### 10.9 Pendientes
 
 - Medidas reales de cada talle: las de `catalog.json` son aproximadas.
 - Política y costo de envío (hoy dice "a coordinar").

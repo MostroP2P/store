@@ -5,10 +5,13 @@ import { parseHash, toHash, resolveColor, DEFAULT_FILTER } from './state.js';
 import { loadImage, prepareShirt } from '../shirt.js';
 import { renderProduct, WARNING_TEXT_TOO_LONG } from '../render.js';
 import { fetchCatalog, loadFonts, loadProductImages } from '../loader.js';
+import { localizeJson } from '../i18n.js';
 import { STRINGS } from './strings.js';
 import * as ui from './ui.js';
 
 const THUMB_SCALE = 0.45;
+// The viewer is the team's tool and speaks Spanish: catalog texts ({ "en": …, "es": … }) in Spanish too
+const VIEWER_LANG = 'es';
 const DEBUG = new URLSearchParams(window.location.search).has('debug');
 
 const $ = (selector) => document.querySelector(selector);
@@ -120,7 +123,7 @@ function startViewer({ catalog, shirt, images }) {
 async function boot(problemsBox) {
   let raw;
   try {
-    raw = await fetchCatalog();
+    raw = localizeJson(await fetchCatalog(), VIEWER_LANG);
   } catch (err) {
     ui.showProblems(problemsBox, [{ level: 'error', message: STRINGS.catalogNotLoaded(err.message) }]);
     return;
