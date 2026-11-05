@@ -76,7 +76,6 @@ tshirts/
 ├── product.html                store: one T-shirt (color, size, cart, buy)
 ├── checkout.html               store: summary, shipping details and Lightning payment
 ├── viewer.html                 viewer: all the T-shirts, in any color
-├── producto.html, visor.html   old addresses: redirect to product.html and viewer.html
 ├── css/                        base.css (colors and buttons), store.css, viewer.css
 ├── catalog.json                ← the only file you edit: T-shirts, prices, sizes, payment
 ├── package.json                npm shortcuts; playwright-core is the only (development) dependency
@@ -91,8 +90,6 @@ tshirts/
 │   ├── loader.js               loads catalogue, fonts and images (viewer and store)
 │   ├── dom.js                  el() / svgEl(): DOM without innerHTML
 │   ├── i18n.js                 page language and catalog.json translations (pure)
-│   ├── redirect.js             new address of an old page, query and hash kept (pure)
-│   ├── legacy-page.js          runs that redirect in producto.html and visor.html
 │   ├── viewer/                 viewer: app.js, ui.js, state.js, strings.js
 │   ├── store/                  store (see §10.2)
 │   └── vendor/                 prebuilt nostr-tools and qrcode-generator (see the README there)
@@ -290,7 +287,6 @@ Same catalogue and same render as the viewer. Everything runs in the browser: th
 |---|---|
 | `index.html` | Collection, one section per series. Each card shows the T-shirt in its default color, the name, the price and the available colors. |
 | `product.html?id=…&color=…&size=…` | Like kinoto.com.ar/item/…: color (circles), size (list) plus **Size guide** (table from `store.sizes`) and price. **Add to cart** shows how many of that variant are in the cart, for example "(1)". **Buy now** adds it and goes to checkout. Below, the accordions from `store.details` and "You may also like". The URL stores color and size. |
-| `producto.html`, `visor.html` | The old addresses, kept because links to them are out there. They redirect to `product.html` and `viewer.html`, keeping the query and the hash; `?talle=` becomes `?size=`, and `product.html` still reads `?talle=` too. |
 | Cart | The button appears at the top right when the cart is not empty, with the quantity. The "Your cart" panel shows each line with color, size, − quantity +, price, line total (if there is more than one) and **Remove from cart**. At the bottom: subtotal, shipping (to be arranged), total, **Checkout** and **Empty cart**. It is saved in `localStorage` (`mostro-store:cart`) and synchronized between tabs. |
 | `checkout.html` | Order summary, **Where should we deliver your order?** (street, number, floor, apartment, postal code, city, province), instructions (up to 500 characters) and personal information (first name, last name, email, phone). The data is saved only in that tab (`sessionStorage`, `mostro-store:checkout`), so it survives a reload. It is deleted when the tab is closed, when the order is finished or when **Clear saved details** is tapped. On the right, the payment method: Lightning. |
 

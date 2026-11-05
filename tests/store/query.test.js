@@ -15,11 +15,6 @@ test('reads a product, color and size from the query string', () => {
   assert.equal(size, 'M');
 });
 
-test('old links with ?talle= still pick the size; ?size= wins when both are there', () => {
-  assert.equal(parseProductQuery('?id=love&talle=M', PRODUCTS, CONFIG).size, 'M');
-  assert.equal(parseProductQuery('?id=love&talle=M&size=S', PRODUCTS, CONFIG).size, 'S');
-});
-
 test('falls back to defaults for unknown colors or sizes', () => {
   assert.deepEqual(
     parseProductQuery('?id=love&color=pink&size=XXL', PRODUCTS, CONFIG),

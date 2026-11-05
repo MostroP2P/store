@@ -76,6 +76,12 @@ test('the detail: badges, PNG download, close, and the URL hash', () => withView
   assert.match(await page.textContent('#detail-badges'), /Could not download the PNG: the canvas is empty/);
 }));
 
+test('?debug draws the print area, to calibrate it', () => withViewer({}, async (page, shop) => {
+  await page.goto(`${shop.url}/viewer.html?debug#shirt=${INVADERS}`);
+  await page.waitForSelector('dialog.detail[open]');
+  assert.equal(await page.textContent('#detail-title'), 'Mostro Invaders');
+}));
+
 test('the viewer reports what is wrong in catalog.json', async () => {
   const raw = await catalog();
   const broken = {

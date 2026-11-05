@@ -79,14 +79,12 @@ The browser tests are the one exception to "nothing to install": they need `npm 
 |---|---|
 | `index.html`, `product.html`, `checkout.html` | The store: collection, product page, checkout |
 | `viewer.html` | The internal viewer: every shirt, drafts included, in any colour |
-| `producto.html`, `visor.html` | Old addresses: they redirect to `product.html` and `viewer.html`, keeping the query and the hash |
 | `catalog.json` | Shirts, series, colours, prices, sizes, LN address, the store's npub and relays, product-page details |
 | `css/` | `base.css` (tokens, buttons), `store.css`, `viewer.css` |
 | `src/catalog.js` | Validation and normalisation of `catalog.json` |
 | `src/render.js`, `src/shirt.js`, `src/shading.js`, `src/text.js`, `src/layouts.js`, `src/color.js` | The shirt renderer, shared by the store and the viewer |
 | `src/loader.js`, `src/dom.js` | Loading the catalogue, fonts and images; `el()` / `svgEl()`, the DOM without `innerHTML` |
 | `src/i18n.js` | Which language to show, and `localizeJson` for the catalogue's translated texts |
-| `src/redirect.js`, `src/legacy-page.js` | The new address of an old page, and the script the old pages run |
 | `src/store/` (pure) | `config`, `products`, `cart`, `cart-store`, `persist`, `money`, `bech32`, `bolt11`, `lnurl`, `payment`, `order`, `checkout-form`, `query`, `qr`, `nostr-order`, `strings` |
 | `src/store/` (DOM) | `boot`, `lang`, `home-page`, `product-page`, `product-card`, `cart-ui`, `size-guide`, `checkout-fields`, `checkout-page`, `payment-ui`, `icons` |
 | `src/store/strings/` | The English and Spanish user-interface catalogues |
@@ -167,9 +165,8 @@ updating a pull request, and report the real result.
   Translatable texts in `catalog.json` are `{ "en": …, "es": … }`. The tests fail if the
   catalogues differ in shape or if Spanish is left in the English one.
 - **Published product ids never change.** They are in links and in saved carts.
-- **Page names and query parameters are part of those links.** Rename one only with a
-  redirect from the old name, as `producto.html` and `visor.html` do, and keep reading
-  the old parameter (`?talle=`).
+- **Page names and query parameters are part of those links.** Renaming one breaks every
+  link already shared; the pull request says so, and adds a redirect when the old links matter.
 - **Storage keys are a contract.** `mostro-store:cart` and `mostro-store:lang` in
   `localStorage`, `mostro-store:checkout` in `sessionStorage`. Changing a format needs a
   migration or a tolerant reader; every read already survives corrupt or blocked
