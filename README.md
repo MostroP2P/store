@@ -1,79 +1,81 @@
 # Mostro Store
 
-La tienda de remeras de Mostro, en **[store.mostro.network](https://store.mostro.network)**, y el visor interno para decidir qué remeras mandar a hacer.
+The Mostro T-shirt store, at **[store.mostro.network](https://store.mostro.network)**, and the internal viewer used to decide which T-shirts to print.
 
-Es un sitio estático: no tiene base de datos, servidor, cuentas de usuario ni build. Todo se configura en un archivo, `catalog.json`.
+It is a static site: no database, server, user accounts or build. Everything is configured in one file, `catalog.json`.
 
-- **El cobro** es en bitcoin, por Lightning, a una LN address.
-- **Los pedidos** llegan cifrados por Nostr (NIP-17) a la cuenta de la tienda.
-- **La dirección del comprador** no se guarda en ningún servidor.
-- **Idiomas:** inglés por defecto, o español si el navegador está en español. El botón **EN/ES** del header cambia el idioma.
+- **Payment** is in bitcoin, over Lightning, to an LN address.
+- **Orders** reach the store account encrypted over Nostr (NIP-17).
+- **The buyer's address** is not stored on any server.
+- **Languages:** English by default, or Spanish if the browser is in Spanish. The **EN/ES** button in the header switches the language.
 
-## Índice
+## Contents
 
-1. [Probarlo en tu máquina](#1-probarlo-en-tu-máquina)
-2. [Cómo compra un cliente](#2-cómo-compra-un-cliente)
-3. [Cómo te llegan los pedidos (Nostr)](#3-cómo-te-llegan-los-pedidos-nostr)
-4. [Cómo te llegan los pagos (Lightning)](#4-cómo-te-llegan-los-pagos-lightning)
-5. [Qué hacer con cada pedido](#5-qué-hacer-con-cada-pedido)
-6. [Configuración: `catalog.json`](#6-configuración-catalogjson)
-7. [Agregar o cambiar remeras](#7-agregar-o-cambiar-remeras)
-8. [Privacidad y seguridad](#8-privacidad-y-seguridad)
-9. [Desarrollo](#9-desarrollo)
-10. [Publicar en store.mostro.network](#10-publicar-en-storemostronetwork)
-11. [Pendientes](#11-pendientes)
+1. [Try it on your machine](#1-try-it-on-your-machine)
+2. [How a customer buys](#2-how-a-customer-buys)
+3. [How orders reach you (Nostr)](#3-how-orders-reach-you-nostr)
+4. [How payments reach you (Lightning)](#4-how-payments-reach-you-lightning)
+5. [What to do with each order](#5-what-to-do-with-each-order)
+6. [Configuration: `catalog.json`](#6-configuration-catalogjson)
+7. [Add or change T-shirts](#7-add-or-change-t-shirts)
+8. [Privacy and security](#8-privacy-and-security)
+9. [Development](#9-development)
+10. [Publish to store.mostro.network](#10-publish-to-storemostronetwork)
+11. [To do](#11-to-do)
 
 ---
 
-## 1. Probarlo en tu máquina
+## 1. Try it on your machine
 
-Hace falta Python 3, para el servidor local, y Node 24, para los tests. No hay dependencias, así que no hace falta `npm install`.
+You need Python 3 for the local server and Node 24 for the tests. There are no dependencies, so there is no need to run `npm install`.
 
 ```bash
-npm start              # tienda: http://localhost:8000 · visor: http://localhost:8000/visor.html
-npm test               # tests unitarios
-npm run coverage       # tests + cobertura (mínimo 80 %)
+npm start              # store: http://localhost:8000 · viewer: http://localhost:8000/visor.html
+npm test               # unit tests
+npm run coverage       # tests + coverage (80 % minimum)
 ```
 
-`npm start` usa `scripts/serve.py`, un servidor sin caché, así que los cambios en `catalog.json` o en las imágenes se ven al recargar.
+`npm start` uses `scripts/serve.py`, a server with no cache, so changes to `catalog.json` or to the images show up on reload.
 
-> ⚠️ **Probar el checkout manda pedidos de verdad.** Llegan a la npub configurada y se piden facturas reales a la LN address. Para probar sin llenarle la bandeja a la tienda, usá una clave de desarrollo ([§9](#9-desarrollo)).
+> ⚠️ **Testing the checkout sends real orders.** They reach the configured npub and real invoices are requested from the LN address. To test without filling the store's inbox, use a development key ([§9](#9-development)).
 
-## 2. Cómo compra un cliente
+## 2. How a customer buys
 
-La tienda se ve en **inglés**, o en **español** si el navegador del comprador está en español (cuenta el primer idioma de su lista que sea inglés o español). El botón **EN/ES** del header cambia de idioma y lo recuerda en ese navegador. Mientras hay una factura en curso el botón queda deshabilitado, para que la recarga no la pierda.
+The store shows in **English**, or in **Spanish** if the buyer's browser is in Spanish (the first language in its list that is English or Spanish counts). The **EN/ES** button in the header switches the language and remembers it in that browser. While an invoice is in progress the button is disabled, so a reload does not lose it.
 
-1. **Colección** (`index.html`): ve todas las remeras a la venta, agrupadas por serie.
-2. **Producto** (`producto.html`): elige el color y el talle. "Guía de talles" muestra la tabla de medidas.
-   - **Agregar al carrito** suma la remera. El botón muestra cuántas de esa variante lleva, por ejemplo "(1)".
-   - **Comprar** la suma y va directo al checkout.
-3. **Carrito**: el botón de arriba a la derecha aparece con la cantidad de remeras.
-   - En el panel "Tu carrito" puede sumar o restar cada remera, sacarla, **Vaciar carrito** o ir al **Checkout**.
-   - El carrito queda guardado en el navegador, aunque cierre la página.
-4. **Checkout** (`checkout.html`): completa dónde quiere recibir el pedido y sus datos de contacto, y toca **Pagar con Lightning**. La página:
-   1. convierte el total en pesos a sats con la cotización de [Yadio](https://api.yadio.io/exrates/BTC);
-   2. pide una factura a la LN address de la tienda;
-   3. manda el pedido cifrado a la tienda por Nostr;
-   4. muestra el QR, con botones para copiar la factura, abrir la wallet o pagar con una extensión WebLN.
-5. **Confirmación**: cuando la página ve el pago, muestra "¡Pago recibido!" con el número de pedido, y saca esas remeras del carrito.
-   - La página consulta el estado del pago cada 3 segundos ([§4](#4-cómo-te-llegan-los-pagos-lightning)).
-   - Si esa consulta falla 3 veces seguidas, ofrece **"Ya pagué"**, que cierra el pedido y le avisa a la tienda.
+1. **Collection** (`index.html`): the buyer sees all the T-shirts for sale, grouped by series.
+2. **Product** (`producto.html`): the buyer picks the color and the size. "Size guide" shows the measurements table.
+   - **Add to cart** adds the T-shirt. The button shows how many of that variant are in the cart, for example "Add to cart (1)".
+   - **Buy now** adds it and goes straight to the checkout.
+3. **Cart**: the button at the top right shows the number of T-shirts.
+   - In the "Your cart" panel the buyer can add or remove each T-shirt, delete it, use **Empty cart**, or go to **Checkout**.
+   - The cart is saved in the browser, even if the buyer closes the page.
+4. **Checkout** (`checkout.html`): the buyer fills in where to receive the order and their contact details, then taps **Pay with Lightning**. The page:
+   1. converts the total in pesos to sats using the [Yadio](https://api.yadio.io/exrates/BTC) exchange rate;
+   2. requests an invoice from the store's LN address;
+   3. sends the encrypted order to the store over Nostr;
+   4. shows the QR, with buttons to copy the invoice, open the wallet or pay with a WebLN extension.
+5. **Confirmation**: when the page sees the payment, it shows "Payment received!" with the order number, and removes those T-shirts from the cart.
+   - The page checks the payment status every 3 seconds ([§4](#4-how-payments-reach-you-lightning)).
+   - If that check fails 3 times in a row, it offers **"I've paid"**, which closes the order and notifies the store.
 
-Si la factura vence, el comprador puede generar otra. Cada intento es un pedido nuevo, con otro número.
+If the invoice expires, the buyer can create another one. Each attempt is a new order, with a different number.
 
-## 3. Cómo te llegan los pedidos (Nostr)
+## 3. How orders reach you (Nostr)
 
-Los pedidos llegan como **mensajes privados de Nostr (NIP-17)** a la cuenta de la tienda:
+Orders arrive as **Nostr private messages (NIP-17)** to the store account:
 
 ```
 npub1st0re749d5d02mwnf2c0vcj566p85y5wpnaz65llr8wt49cyp6kqe44n9m
 ```
 
-Está configurada en `catalog.json`, en `store.nostr.npub`.
+It is set in `catalog.json`, in `store.nostr.npub`.
 
-**Para leerlos**, entrá con la clave privada de esa cuenta (nsec) en un cliente que soporte NIP-17, como 0xchat o Amethyst.
+**To read them**, log in with the private key of that account (nsec) in **0xchat** or **Amethyst**. Orders arrive from an unknown key, so they may show up in the requests or unknown senders section, not in the main inbox.
 
-Cada pedido llega como un mensaje con asunto `Pedido MS-XXXXXX`:
+> ⚠️ **Do not use Nostrich to read the orders.** It understands NIP-17, but it discards messages from accounts without a profile: it shows them neither in "Requests" nor in "Hidden requests" (see `splitInbox` in `apps/web/lib/chat-inbox.ts` of [nostrich-client](https://github.com/nostrichOS/nostrich-client)). Each order is sent from a disposable key without a profile, so it never shows up, even if the push notification arrives.
+
+Each order arrives as a message with the subject `Pedido MS-XXXXXX`:
 
 ```
 🛒 Pedido MS-7K3F2Q — Pendiente de pago
@@ -99,44 +101,44 @@ Idioma: español
 Instrucciones: Tocar timbre dos veces
 ```
 
-Los mensajes a la tienda están siempre en español. La línea `Idioma` dice en qué idioma compró la persona (`inglés` o `español`), para contestarle en ese idioma; el nombre del color también viene en ese idioma.
+Messages to the store are always in Spanish, by design. The `Idioma` line says which language the buyer used (`inglés` or `español`), so you can reply in that language. The color name also comes in that language.
 
-En la misma conversación puede llegar un segundo mensaje:
+A second message can arrive in the same conversation:
 
-- **`✅ Pedido MS-… pagado`**: la página vio el pago confirmado.
-- **`⚠️ Pedido MS-…: el comprador dice que ya pagó`**: tocó "Ya pagué", porque la página no pudo confirmarlo.
+- **`✅ Pedido MS-… pagado`**: the page saw the payment confirmed.
+- **`⚠️ Pedido MS-…: el comprador dice que ya pagó`**: the buyer tapped "I've paid" because the page could not confirm the payment.
 
-Si no llega ninguno de los dos, mirá igual la billetera: el comprador pudo haber pagado y cerrado la página sin tocar "Ya pagué".
+If neither arrives, check the wallet anyway: the buyer may have paid and closed the page without tapping "I've paid".
 
-**Algunas cosas a saber:**
+**Some things to know:**
 
-- **No se puede responder por Nostr.** Cada pedido sale de una clave descartable, para que el comprador no necesite Nostr. Al comprador escribile por email o teléfono, con los datos del pedido.
-- **Relays.** Los pedidos se publican en los relays de `store.nostr.relays` (`relay.mostro.network`, `nos.lol`, `relay.damus.io`) y en los relays de mensajes privados de la tienda, si los publicó.
-  - Hacen falta al menos 2 relays que acepten cada pedido. Si no, la página no muestra la factura.
-- **Recomendado: publicá los relays de DM de la tienda (kind 10050).** Hoy la npub no tiene esa lista, y muchos clientes solo buscan mensajes privados ahí.
-  - Desde la cuenta de la tienda, configurá en tu cliente esos mismos tres relays como relays de mensajes privados.
-  - La tienda los encuentra sola y manda los pedidos ahí.
+- **You cannot reply over Nostr.** Each order is sent from a disposable key, so the buyer does not need Nostr. Write to the buyer by email or phone, using the order details.
+- **Relays.** Orders are published to the relays in `store.nostr.relays` (`relay.mostro.network`, `nos.lol`, `relay.damus.io`) and to the store's private message relays, if it has published them.
+  - At least 2 relays must accept each order. Otherwise the page does not show the invoice.
+- **Recommended: publish the store's DM relays (kind 10050).** Today the npub does not have that list, and many clients only look for private messages there.
+  - From the store account, set those same three relays as private message relays in your client.
+  - The store finds them on its own and sends the orders there.
 
-## 4. Cómo te llegan los pagos (Lightning)
+## 4. How payments reach you (Lightning)
 
-Los pagos van a la LN address de `store.lnAddress`, que es **`store@pay.mostro.foundation`**, un LNbits.
+Payments go to the LN address in `store.lnAddress`, which is **`store@pay.mostro.foundation`**, an LNbits instance.
 
-- Acepta entre 1.000 y 1.000.000 sats por pedido: con la cotización actual, unas 44 remeras como máximo.
-- Acepta comentarios de hasta 100 caracteres; el del pedido ocupa unos 40.
+- It accepts between 1,000 and 1,000,000 sats per order: at the current rate, about 44 T-shirts at most.
+- It accepts comments of up to 100 characters; the order comment takes about 40.
 
-- **Monto:** el precio en pesos (`store.price`, hoy $30.000 por remera) convertido a sats en el momento de pagar, redondeado hacia arriba.
-- **Comentario del pago:** `Pedido MS-XXXXXX · store.mostro.network`. Es la forma de saber a qué pedido corresponde cada pago, y nunca lleva datos personales.
-- **Verificaciones de la página:** antes de mostrar la factura, chequea que sea de mainnet, que sea exactamente por el monto pedido, que tenga una fecha y un vencimiento razonables, y que la haya emitido el mismo servidor de la LN address.
+- **Amount:** the price in pesos (`store.price`, today $30.000 per T-shirt) converted to sats at the time of payment, rounded up.
+- **Payment comment:** `Pedido MS-XXXXXX · store.mostro.network`. This is how you tell which order each payment belongs to, and it never carries personal data.
+- **Checks made by the page:** before showing the invoice, it checks that it is a mainnet invoice, that it is for exactly the requested amount, that it has a reasonable date and expiry, and that it was issued by the same server as the LN address.
 
-### Confirmación automática del pago
+### Automatic payment confirmation
 
-Está activa desde el 4/11/2026.
+It has been active since 4/11/2026.
 
-- LNbits responde, sin pedir clave, si una factura se pagó: `GET /api/v1/payments/<payment_hash>` devuelve solo `{"paid": true|false}`.
-- La página lo consulta cada 3 segundos y, cuando llega el pago, muestra "¡Pago recibido!" sola.
-- Si se paga con una extensión WebLN (por ejemplo Alby), la confirmación no depende de esta consulta.
+- LNbits answers, without a key, whether an invoice was paid: `GET /api/v1/payments/<payment_hash>` returns only `{"paid": true|false}`.
+- The page checks it every 3 seconds and, when the payment arrives, shows "Payment received!" by itself.
+- If the buyer pays with a WebLN extension (for example Alby), the confirmation does not depend on this check.
 
-Para que funcione, el Caddy de `pay.mostro.foundation` deja pasar esa única ruta además de las de LNURL. Está en el servidor `lnbits`, en `/etc/caddy/Caddyfile`:
+For this to work, the Caddy of `pay.mostro.foundation` lets that single route through, in addition to the LNURL ones. It is on the `lnbits` server, in `/etc/caddy/Caddyfile`:
 
 ```caddy
 	@paymentStatus {
@@ -148,43 +150,43 @@ Para que funcione, el Caddy de `pay.mostro.foundation` deja pasar esa única rut
 	}
 ```
 
-**Es seguro:**
+**It is safe:**
 
-- Sin clave, LNbits solo contesta si la factura está pagada: no muestra montos, comentarios ni saldo.
-- El hash de una factura solo lo conocen el comprador y la tienda.
-- Solo pasa `GET` con exactamente 64 caracteres hexadecimales. El resto de la API de LNbits (crear facturas, pagar, ver la billetera) sigue devolviendo 404.
+- Without a key, LNbits only answers whether the invoice is paid: it does not show amounts, comments or balance.
+- Only the buyer and the store know the hash of an invoice.
+- Only `GET` with exactly 64 hexadecimal characters gets through. The rest of the LNbits API (create invoices, pay, view the wallet) still returns 404.
 
-**Si la consulta falla** (por Caddy, LNbits o la red), la página sigue intentando. A las 3 fallas seguidas ofrece **"Ya pagué"**: el pedido se cierra y la tienda recibe un aviso para verificar el pago en la billetera.
+**If the check fails** (because of Caddy, LNbits or the network), the page keeps trying. After 3 failures in a row it offers **"I've paid"**: the order is closed and the store gets a notice to verify the payment in the wallet.
 
-**Para verificar la ruta:**
+**To verify the route:**
 
 ```bash
 curl -i -H 'Origin: https://store.mostro.network' \
   https://pay.mostro.foundation/api/v1/payments/0000000000000000000000000000000000000000000000000000000000000000
 ```
 
-- **Funciona:** responde `404` con `{"detail":"Payment does not exist."}` y el header `access-control-allow-origin: *`. Contesta LNbits.
-- **Está bloqueada:** responde `404` con el cuerpo vacío. Contesta Caddy.
+- **It works:** it returns `404` with `{"detail":"Payment does not exist."}` and the header `access-control-allow-origin: *`. LNbits is answering.
+- **It is blocked:** it returns `404` with an empty body. Caddy is answering.
 
-**Para deshacerla**, en el servidor:
+**To undo it**, on the server:
 
 ```bash
 cp /etc/caddy/Caddyfile.bak-20261104-store-status /etc/caddy/Caddyfile && systemctl reload caddy
 ```
 
-## 5. Qué hacer con cada pedido
+## 5. What to do with each order
 
-> **La billetera manda, no los mensajes.** Cualquiera puede mandarle un mensaje a la npub de la tienda, y la pantalla "¡Pago recibido!" corre en el navegador del comprador. Solo despachá lo que veas cobrado en la billetera.
+> **The wallet is the source of truth, not the messages.** Anyone can send a message to the store's npub, and the "Payment received!" screen runs in the buyer's browser. Only ship what you see paid in the wallet.
 
-1. **Leé el pedido.** Buscá el DM `Pedido MS-XXXXXX` en el cliente Nostr de la tienda.
-2. **Buscá el pago en LNbits**, con el mismo comentario `Pedido MS-XXXXXX` y el mismo payment hash.
-3. **Verificá que esté cobrado y que el monto alcance** para esas remeras al precio del catálogo, con la cotización de ese momento.
-4. **Escribile al comprador** al email o teléfono del pedido para coordinar el envío, en el idioma de la línea `Idioma`. El texto actual dice "Envío: a coordinar".
-5. **Si hay un DM sin pago**, el comprador no pagó, o pagó otra factura del mismo carrito (cada intento genera un número nuevo). En ese caso no se despacha.
+1. **Read the order.** Look for the DM `Pedido MS-XXXXXX` in the store's Nostr client.
+2. **Find the payment in LNbits**, with the same `Pedido MS-XXXXXX` comment and the same payment hash.
+3. **Check that it is paid and that the amount covers** those T-shirts at the catalog price, at the exchange rate of that moment.
+4. **Write to the buyer** at the email or phone in the order to arrange shipping, in the language of the `Idioma` line. The current text says "Shipping: to be arranged".
+5. **If there is a DM with no payment**, the buyer did not pay, or paid another invoice for the same cart (each attempt generates a new number). In that case, do not ship.
 
-## 6. Configuración: `catalog.json`
+## 6. Configuration: `catalog.json`
 
-### Sección `store`
+### The `store` section
 
 ```json
 "store": {
@@ -207,130 +209,130 @@ cp /etc/caddy/Caddyfile.bak-20261104-store-status /etc/caddy/Caddyfile && system
 }
 ```
 
-| Campo | Qué es |
+| Field | What it is |
 |---|---|
-| `currency` | Moneda de los precios. Se convierte a sats con Yadio. |
-| `price` | Precio por defecto de cada remera. |
-| `lnAddress` | Dónde se cobra. Si cambia de dominio, actualizá el CSP (ver abajo). |
-| `defaultColor` | Color que se muestra primero. |
-| `defaultSize` | Talle que se muestra primero. |
-| `sizes` | Talles. `width` es el ancho de axila a axila y `length` el largo de hombro a ruedo, ambos en cm, para la guía de talles. |
-| `nostr.npub` | Cuenta que recibe los pedidos. Tiene que ser una npub válida: si no, el checkout queda cerrado. |
-| `nostr.relays` | Relays `wss://` donde se publican los pedidos. |
-| `details` | Los acordeones de la página de producto: envío, pago, privacidad… |
+| `currency` | Currency of the prices. It is converted to sats with Yadio. |
+| `price` | Default price of each T-shirt. |
+| `lnAddress` | Where payments are received. If it changes domain, update the CSP (see below). |
+| `defaultColor` | Color shown first. |
+| `defaultSize` | Size shown first. |
+| `sizes` | Sizes. `width` is the width from armpit to armpit and `length` the length from shoulder to hem, both in cm, for the size guide. |
+| `nostr.npub` | Account that receives the orders. It must be a valid npub: otherwise the checkout stays closed. |
+| `nostr.relays` | `wss://` relays where the orders are published. |
+| `details` | The accordions on the product page: shipping, payment, privacy… |
 
-Si `lnAddress` o `nostr` son inválidos, las remeras se ven igual, pero no se puede pagar.
+If `lnAddress` or `nostr` are invalid, the T-shirts still show, but nobody can pay.
 
-**Si la LN address cambia de dominio**, hay que agregarlo al `connect-src` del `Content-Security-Policy` en `index.html`, `producto.html` y `checkout.html`. Si no, el navegador bloquea el pedido de la factura.
+**If the LN address changes domain**, add it to the `connect-src` of the `Content-Security-Policy` in `index.html`, `producto.html` and `checkout.html`. Otherwise the browser blocks the invoice request.
 
-### Textos en inglés y español
+### Texts in English and Spanish
 
-Todo texto que ve el comprador en `catalog.json` puede ir en los dos idiomas, como un objeto con `en` y `es`:
+Every text the buyer sees in `catalog.json` can be given in both languages, as an object with `en` and `es`:
 
 ```json
 { "id": "black", "name": { "en": "Black", "es": "Negro" }, "hex": "#1a1a1a" }
 ```
 
-- **Dónde:** nombres de colores, `description` y `name` de diseños, series e ítems, y `title` / `text` de `store.details`.
-- **Un texto igual en los dos idiomas** puede quedar como string, por ejemplo las frases de las remeras ("Love at first sat").
-- **Si falta una traducción** (o está vacía), se usa la inglesa, y si tampoco está, la otra.
-- **Solo valen las claves `en` y `es`.** Un objeto con otras claves no se toma como traducción, y el nombre cae al `id`.
-- Un test (`tests/i18n.test.js`) abre `catalog.json` en los dos idiomas y falla si queda algo en español en la versión en inglés.
-- El visor muestra el catálogo en español.
+- **Where:** color names, `description` and `name` of designs, series and items, and `title` / `text` of `store.details`.
+- **A text that is the same in both languages** can stay as a string, for example the phrases on the T-shirts ("Love at first sat").
+- **If a translation is missing** (or empty), the English one is used, and if that is missing too, the other one.
+- **Only the keys `en` and `es` count.** An object with other keys is not taken as a translation, and the name falls back to the `id`.
+- A test (`tests/i18n.test.js`) opens `catalog.json` in both languages and fails if anything is left in Spanish in the English version.
+- The viewer shows the catalog in Spanish.
 
-### Campos de cada remera
+### Fields of each T-shirt
 
-| Campo | Qué es |
+| Field | What it is |
 |---|---|
-| `status` | `"published"` la pone a la venta. Sin este campo queda como borrador: solo se ve en el visor, con la etiqueta "Borrador". Una serie se lo pasa a sus remeras. |
-| `price` | Precio propio. Si falta, se usa `store.price`. |
-| `description` | Texto que aparece bajo el nombre, en la página del producto. |
-| `id` | Fijalo antes de publicar, y no lo cambies después: se usa en los links y en los carritos guardados. |
-| `colors` | Colores en los que se vende. Si falta, se vende en todos. |
+| `status` | `"published"` puts it on sale. Without this field it stays as a draft: it only shows in the viewer, with a draft label. A series passes it on to its T-shirts. |
+| `price` | Its own price. If missing, `store.price` is used. |
+| `description` | Text shown under the name, on the product page. |
+| `id` | Set it before publishing, and do not change it afterwards: it is used in links and in saved carts. |
+| `colors` | Colors it is sold in. If missing, it is sold in all of them. |
 
-## 7. Agregar o cambiar remeras
+## 7. Add or change T-shirts
 
-El visor (`visor.html`) muestra todas las remeras del catálogo, incluidos los borradores, en cualquier color, y deja descargar el PNG. Sirve para decidir qué publicar.
+The viewer (`visor.html`) shows all the T-shirts in the catalog, drafts included, in any color, and lets you download the PNG. Use it to decide what to publish.
 
-- **Agregar una remera a una serie:** sumá `{ "id": "mostro-quotes-…", "image": "designs/stickers/…png", "text": "Tu mensaje" }` en `items`.
-- **Agregar un diseño completo:** dejá el PNG transparente en `designs/` y sumalo en `designs`.
-- **Ponerla a la venta:** agregale `"status": "published"`.
-- **Cambiar la fuente de una serie:** copiá el archivo a `assets/fonts/` y cambiá `"font"` en el `style` de la serie.
-- **Calibrar el área de impresión:** abrí `/visor.html?debug`.
+- **Add a T-shirt to a series:** add `{ "id": "mostro-quotes-…", "image": "designs/stickers/…png", "text": "Tu mensaje" }` to `items`.
+- **Add a whole design:** put the transparent PNG in `designs/` and add it to `designs`.
+- **Put it on sale:** add `"status": "published"` to it.
+- **Change the font of a series:** copy the file to `assets/fonts/` and change `"font"` in the series `style`.
+- **Calibrate the print area:** open `/visor.html?debug`.
 
-El formato completo del catálogo está en [docs/SPEC.md](docs/SPEC.md) (§4 y §10).
+The full catalog format is in [docs/SPEC.md](docs/SPEC.md) (§4 and §10).
 
-## 8. Privacidad y seguridad
+## 8. Privacy and security
 
-- **La dirección del comprador** solo viaja cifrada a la npub de la tienda.
-  - Ni Yadio ni el servidor Lightning la ven: el pago solo lleva el número de pedido.
-  - En el navegador se guarda solo en esa pestaña (`sessionStorage`), y se borra al cerrarla, al terminar el pedido o con "Limpiar datos guardados".
-- **Sin cookies, analytics ni scripts de terceros.** Cada página tiene Content-Security-Policy y `referrer: no-referrer`. Las consultas a APIs tienen un timeout de 10 s.
-- **El texto del pedido** se limpia antes de mandarlo, para que nadie pueda inyectar líneas falsas como "✅ pagado" en los datos de envío.
-- **Las librerías de terceros** se guardan en `src/vendor/`: nostr-tools y qrcode-generator, con versiones fijas. La CI las vuelve a armar desde `scripts/vendor/` y falla si difieren de lo commiteado.
-- **Claves:** el repo no guarda ninguna. `.secrets/` está en `.gitignore` y nunca se publica.
+- **The buyer's address** only travels encrypted to the store's npub.
+  - Neither Yadio nor the Lightning server see it: the payment only carries the order number.
+  - In the browser it is stored only in that tab (`sessionStorage`), and it is deleted when the tab is closed, when the order ends, or with "Clear saved details".
+- **No cookies, analytics or third-party scripts.** Each page has a Content-Security-Policy and `referrer: no-referrer`. Requests to APIs have a 10 s timeout.
+- **The order text** is sanitized before it is sent, so nobody can inject fake lines such as "✅ pagado" into the shipping data.
+- **Third-party libraries** are kept in `src/vendor/`: nostr-tools and qrcode-generator, with pinned versions. CI rebuilds them from `scripts/vendor/` and fails if they differ from what is committed.
+- **Keys:** the repo stores none. `.secrets/` is in `.gitignore` and is never published.
 
-## 9. Desarrollo
+## 9. Development
 
 ```
-index.html, producto.html, checkout.html   tienda
-visor.html                                 visor
-catalog.json                               remeras, precios, talles, pago y npub
-css/                                       base.css (colores, botones), store.css, viewer.css
-src/                                       render de remeras, compartido por visor y tienda
-src/i18n.js                                idioma de la página y traducciones de catalog.json
-src/store/                                 tienda: carrito, checkout, LNURL, BOLT11, Nostr, QR…
-src/viewer/                                visor
-src/vendor/                                librerías de terceros ya armadas (ver su README)
-scripts/serve.py                           servidor local sin caché
-scripts/vendor/                            receta reproducible de src/vendor/
-scripts/dev-nostr-key.mjs                  clave Nostr de desarrollo
-tests/                                     tests unitarios (node --test)
-docs/SPEC.md                               diseño completo
+index.html, producto.html, checkout.html   store
+visor.html                                 viewer
+catalog.json                               T-shirts, prices, sizes, payment and npub
+css/                                       base.css (colors, buttons), store.css, viewer.css
+src/                                       T-shirt rendering, shared by viewer and store
+src/i18n.js                                page language and catalog.json translations
+src/store/                                 store: cart, checkout, LNURL, BOLT11, Nostr, QR…
+src/viewer/                                viewer
+src/vendor/                                prebuilt third-party libraries (see its README)
+scripts/serve.py                           local server with no cache
+scripts/vendor/                            reproducible recipe for src/vendor/
+scripts/dev-nostr-key.mjs                  development Nostr key
+tests/                                     unit tests (node --test)
+docs/SPEC.md                               full design
 ```
 
-Las reglas del repo:
+The repo rules:
 
-- Los módulos que no tocan el DOM tienen tests con cobertura de 80 % o más (hoy, alrededor de 99 %).
-- Los textos de la tienda están en `src/store/strings/en.js` y `src/store/strings/es.js`, con las mismas claves: un test falla si a un idioma le falta algo o si queda español en el inglés.
-- Los textos fijos de los HTML llevan `data-i18n="clave"` (o `data-i18n-attr="aria-label:clave"`). El HTML trae el inglés, y `src/store/lang.js` lo cambia al idioma de la página.
+- Modules that do not touch the DOM have tests with 80 % coverage or more (today, around 99 %).
+- The store texts are in `src/store/strings/en.js` and `src/store/strings/es.js`, with the same keys: a test fails if one language is missing something or if Spanish is left in the English one.
+- Fixed texts in the HTML files carry `data-i18n="key"` (or `data-i18n-attr="aria-label:key"`). The HTML holds the English, and `src/store/lang.js` changes it to the page language.
 
-### Probar el checkout sin molestar a la tienda
+### Test the checkout without bothering the store
 
-Para que los pedidos de prueba no lleguen a la npub real, usá una clave propia:
+So that test orders do not reach the real npub, use your own key:
 
-1. Corré `node scripts/dev-nostr-key.mjs`. Guarda la clave en `.secrets/store-nostr-dev.txt` (nunca sobreescribe una existente) e imprime una npub.
-2. Poné esa npub en `store.nostr.npub`, **solo en tu copia local o en un branch de pruebas**. No la subas a `main`.
-3. Importá el `secret_hex` del archivo en un cliente con NIP-17 para leer tus pedidos.
+1. Run `node scripts/dev-nostr-key.mjs`. It saves the key in `.secrets/store-nostr-dev.txt` (it never overwrites an existing one) and prints an npub.
+2. Put that npub in `store.nostr.npub`, **only in your local copy or in a test branch**. Do not push it to `main`.
+3. Import the `secret_hex` from the file into a NIP-17 client to read your orders.
 
-Las facturas se piden igual a la LN address configurada. Quedan sin pagar y vencen solas.
+Invoices are still requested from the configured LN address. They stay unpaid and expire on their own.
 
-### Actualizar las librerías de terceros
+### Update the third-party libraries
 
-Ver [src/vendor/README.md](src/vendor/README.md). En resumen: cambiar las versiones en `scripts/vendor/package.json` y correr `sh scripts/vendor/build.sh`.
+See [src/vendor/README.md](src/vendor/README.md). In short: change the versions in `scripts/vendor/package.json` and run `sh scripts/vendor/build.sh`.
 
-## 10. Publicar en store.mostro.network
+## 10. Publish to store.mostro.network
 
-`.github/workflows/pages.yml` corre en cada push a `main`:
+`.github/workflows/pages.yml` runs on every push to `main`:
 
-1. corre los tests con cobertura;
-2. verifica que `src/vendor/` sea idéntico a lo que arma `scripts/vendor/`;
-3. publica en GitHub Pages las páginas `*.html`, `css/`, `catalog.json`, `src/`, `assets/` y `designs/`.
+1. it runs the tests with coverage;
+2. it checks that `src/vendor/` is identical to what `scripts/vendor/` builds;
+3. it publishes the `*.html` pages, `css/`, `catalog.json`, `src/`, `assets/` and `designs/` to GitHub Pages.
 
-En los pull requests solo corren los dos primeros pasos, sin publicar.
+On pull requests only the first two steps run, without publishing.
 
-Configuración (una sola vez, ya hecha):
+Setup (one time only, already done):
 
-1. **Settings → Pages → Build and deployment → Source:** elegir **GitHub Actions**.
-2. **DNS de `mostro.network`:** crear un registro `CNAME` de `store` → `mostrop2p.github.io`.
-3. **Settings → Pages → Custom domain:** poner `store.mostro.network` y tildar **Enforce HTTPS**.
-4. **Recomendado:** verificar `mostro.network` en la organización (**Settings → Pages → Verified domains**), así nadie más puede tomar el subdominio.
+1. **Settings → Pages → Build and deployment → Source:** choose **GitHub Actions**.
+2. **DNS of `mostro.network`:** create a `CNAME` record from `store` to `mostrop2p.github.io`.
+3. **Settings → Pages → Custom domain:** enter `store.mostro.network` and check **Enforce HTTPS**.
+4. **Recommended:** verify `mostro.network` in the organization (**Settings → Pages → Verified domains**), so nobody else can take the subdomain.
 
-> Con el deploy por Actions, GitHub ignora el archivo `CNAME`: el dominio se configura solo en Settings.
+> With deployment through Actions, GitHub ignores the `CNAME` file: the domain is configured only in Settings.
 
-## 11. Pendientes
+## 11. To do
 
-- [ ] **Relays de DM de la tienda:** publicar el kind 10050 desde la npub de la tienda ([§3](#3-cómo-te-llegan-los-pedidos-nostr)).
-- [ ] **Medidas reales de cada talle** en `store.sizes`: las actuales son aproximadas.
-- [ ] **Texto y costo de envío** en `store.details`: hoy dice "a coordinar".
-- [ ] **Un pago real** con una wallet de celular después del deploy.
+- [ ] **Store DM relays:** publish the kind 10050 from the store's npub ([§3](#3-how-orders-reach-you-nostr)).
+- [ ] **Real measurements for each size** in `store.sizes`: the current ones are approximate.
+- [ ] **Shipping text and cost** in `store.details`: it currently says "to be arranged".
+- [ ] **One real payment** with a mobile wallet after the deploy.
