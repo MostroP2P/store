@@ -27,12 +27,15 @@ It is a static site: no database, server, user accounts or build. Everything is 
 
 ## 1. Try it on your machine
 
-You need Python 3 for the local server and Node 24 for the tests. There are no dependencies, so there is no need to run `npm install`.
+You need Python 3 for the local server and Node 24 for the tests. The site and the unit tests have no dependencies; only the browser tests need `npm ci` and Chromium.
 
 ```bash
 npm start              # store: http://localhost:8000 · viewer: http://localhost:8000/viewer.html
 npm test               # unit tests
-npm run coverage       # tests + coverage (80 % minimum)
+npm run coverage       # unit tests + coverage (100 % of the pure modules)
+npm ci && npx playwright-core install --only-shell chromium   # once, for the browser tests
+npm run test:e2e       # every page in Chromium, with every outside service answered locally
+npm run coverage:all   # both, and the line coverage of every file in src/ (100 %)
 ```
 
 `npm start` uses `scripts/serve.py`, a server with no cache, so changes to `catalog.json` or to the images show up on reload.
@@ -289,12 +292,14 @@ scripts/serve.py                           local server with no cache
 scripts/vendor/                            reproducible recipe for src/vendor/
 scripts/dev-nostr-key.mjs                  development Nostr key
 tests/                                     unit tests (node --test)
+tests/e2e/                                 browser tests (playwright-core) and the combined coverage report
 docs/SPEC.md                               full design
 ```
 
 The repo rules:
 
-- Modules that do not touch the DOM have tests with 80 % coverage or more (today, around 99 %).
+- Modules that do not touch the DOM have unit tests at 100 % of lines, branches and functions.
+- The pages, the cart, the checkout and the viewer have browser tests (`tests/e2e/`): they buy, pay with Lightning and with WebLN, decrypt the order the store receives, and go through every error, with no request leaving the machine. Unit and browser tests together cover 100 % of the lines of `src/`.
 - The store texts are in `src/store/strings/en.js` and `src/store/strings/es.js`, with the same keys: a test fails if one language is missing something or if Spanish is left in the English one.
 - Fixed texts in the HTML files carry `data-i18n="key"` (or `data-i18n-attr="aria-label:key"`). The HTML holds the English, and `src/store/lang.js` changes it to the page language.
 

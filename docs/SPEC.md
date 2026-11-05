@@ -32,7 +32,9 @@ No database, no build and no backend. The whole catalogue lives in a single `cat
 cd /disco/dev/tshirts
 npm start              # local server without cache → store at http://localhost:8000, viewer at /viewer.html
 npm test               # unit tests (node --test, no dependencies)
-npm run coverage       # tests + coverage
+npm run coverage       # unit tests + coverage (100 % of the pure modules)
+npm run test:e2e       # browser tests (playwright-core, needs npm ci and Chromium)
+npm run coverage:all   # both, and the line coverage of every file in src/
 ```
 
 > An HTTP server is needed because the browser does not allow `fetch('catalog.json')` from `file://`.
@@ -77,7 +79,7 @@ tshirts/
 ├── producto.html, visor.html   old addresses: redirect to product.html and viewer.html
 ├── css/                        base.css (colors and buttons), store.css, viewer.css
 ├── catalog.json                ← the only file you edit: T-shirts, prices, sizes, payment
-├── package.json                npm shortcuts start / test / coverage (no dependencies)
+├── package.json                npm shortcuts; playwright-core is the only (development) dependency
 ├── src/
 │   ├── render.js               composes a T-shirt: color + design + text
 │   ├── shirt.js                prepares the base and paints it a color (canvas)
@@ -260,9 +262,9 @@ The image is scaled with *contain* inside `printArea`, centered horizontally and
 ## 8. Quality and tests
 
 - **Unit tests (`npm test`):** they cover all the pure modules: `catalog`, `text`, `layouts`, `color`, `shading` and `state`. Text measurement is injected, so it is tested without a canvas.
-- **Coverage (`npm run coverage`):** target ≥ 80 % in the pure modules. The DOM/canvas modules (`app`, `ui`, `render`, `shirt`) are verified in the browser.
+- **Coverage (`npm run coverage`):** 100 % of lines, branches and functions of the pure modules; CI fails below that.
 - **Visual verification:** all the colors, both layouts, the download and the URL hash are checked.
-- **E2E (Playwright):** left for when the store exists, because only then is there a critical flow (purchase) that justifies it.
+- **Browser tests (`npm run test:e2e`, `tests/e2e/`):** playwright-core drives Chromium through the store (language, collection, product, size guide, cart, checkout, Lightning and WebLN payments, expiry, the "I've paid" fallback, every error) and the viewer. A harness answers Yadio, the LN address, the payment status and the Nostr relays, and blocks every other request, so no real invoice or order is made; the tests decrypt the order the store receives with a test key. The V8 coverage of each page is saved before every navigation (the Navigation API pauses it), and `npm run coverage:all` joins it with the unit tests': 100 % of the lines of `src/`, enforced in CI.
 
 ---
 

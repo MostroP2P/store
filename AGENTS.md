@@ -72,6 +72,8 @@ Plain HTML, CSS and ES modules. No framework, no bundler, no build step, nothing
 install to run the site. Do not introduce a framework or a build tool to save typing.
 The only third-party code is vendored in `src/vendor/` (nostr-tools and
 qrcode-generator, pinned), rebuilt reproducibly from `scripts/vendor/`.
+The browser tests are the one exception to "nothing to install": they need `npm ci`
+(playwright-core, pinned) and Chromium.
 
 | Path | Purpose |
 |---|---|
@@ -94,6 +96,7 @@ qrcode-generator, pinned), rebuilt reproducibly from `scripts/vendor/`.
 | `scripts/vendor/` | The pinned recipe that builds `src/vendor/` |
 | `scripts/dev-nostr-key.mjs` | A development Nostr key, written to `.secrets/` |
 | `tests/` | `node --test` suites, one per pure module |
+| `tests/e2e/` | Browser tests (playwright-core): every page, with Yadio, the LN address, the payment status and the relays answered locally; `report.js` joins the coverage of both kinds of test |
 | `.github/workflows/pages.yml` | Tests with coverage and the vendor check on every pull request; deploy on `main` |
 | `docs/SPEC.md` | The specification |
 
@@ -102,31 +105,36 @@ spec wins and this file gets fixed.
 
 ## Commands
 
-Node 24 and Python 3. There are no dependencies to install.
+Node 24 and Python 3. The site and the unit tests install nothing; the browser tests need
+`npm ci` and `npx playwright-core install --only-shell chromium` once (`CHROMIUM_PATH` may point at
+another Chromium).
 
 | Command | What it does |
 |---|---|
 | `npm start` | The site at `http://localhost:8000` (viewer at `/viewer.html`) |
 | `npm test` | Every suite under `tests/` |
-| `npm run coverage` | The same, failing under 80% of lines, functions or branches of `src/` (vendor excluded) |
+| `npm run coverage` | The same, failing under 100% of lines, functions or branches of what they load in `src/` |
+| `npm run test:e2e` | Every page in Chromium (`tests/e2e/*.e2e.js`); no request leaves the machine |
+| `npm run coverage:all` | Both, then the line coverage of every file in `src/` by either; fails under 100% |
 | `sh scripts/vendor/build.sh` | Rebuild `src/vendor/` from `scripts/vendor/` |
 | `node scripts/dev-nostr-key.mjs` | Create a development key in `.secrets/` (never overwrites one) |
 
-CI runs `npm run coverage` and checks that `src/vendor/` is exactly what the recipe
-builds. Run the coverage before opening or updating a pull request, and report the real
-result.
+CI runs `npm run coverage`, checks that `src/vendor/` is exactly what the recipe builds,
+and runs `npm run coverage:all` in Chromium. Run both coverage commands before opening or
+updating a pull request, and report the real result.
 
 ## How code is written here
 
-- **Tests first.** Write the test, watch it fail, then implement. Every pure module has a
-  suite and stays at 80% coverage or more (today it is close to 100%). Node reports
-  coverage only for files a test loads, so a new module without a test is invisible to
-  the threshold: write its test first. Tests are named for the behaviour they pin, not
-  for the function they call.
+- **Tests first.** Write the test, watch it fail, then implement. Tests are named for the
+  behaviour they pin, not for the function they call.
 - **Pure where it can be.** Decisions (prices, validation, invoices, order texts, what is
-  in the cart) live in pure modules with tests. DOM modules only render and wire events.
-  DOM modules have no unit tests, so a change there needs a check in a real browser, and
-  the pull request says how it was checked.
+  in the cart) live in pure modules with unit tests, held at 100% of lines, branches and
+  functions. Node reports coverage only for files a test loads, so a new module without a
+  test is invisible to the threshold: write its test first.
+- **DOM modules are covered in the browser.** They only render and wire events, and
+  `tests/e2e/` drives them; CI holds the unit and browser tests together at 100% of the
+  lines of `src/`. A change to a DOM module needs a browser scenario. A branch that can
+  never run is removed, not tested.
 - **Small files, organised by domain.** 200 to 400 lines is typical, 800 the limit.
   Extract rather than append.
 - **Immutable data.** Return new values; do not mutate what you were handed.
@@ -137,7 +145,8 @@ result.
 
 ## Things that bite
 
-- **Testing the checkout is real.** It asks the configured LN address for real invoices
+- **Testing the checkout by hand is real.** (The browser tests are not: their harness
+  answers every outside service and blocks the rest.) It asks the configured LN address for real invoices
   and sends real orders to the store's npub. Point `store.nostr.npub` at a development
   key on a local branch (`node scripts/dev-nostr-key.mjs`), never commit that change to
   `main`, and never pay an invoice or send an order without the maintainer's go-ahead.
