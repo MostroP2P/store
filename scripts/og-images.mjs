@@ -1,12 +1,14 @@
 // Draws the link preview images in Chromium (playwright-core): assets/og/<id>.jpg for every product on sale,
-// in its default color, and assets/og/store.jpg. Run it after adding a shirt or changing its look:
+// in its default color, and assets/og/store.jpg, plus assets/og/fingerprints.json (what each one shows).
+// Run it after adding a shirt or changing its look, its name or its price:
 //   npm run og-images            (needs `npm ci` and `npx playwright-core install --only-shell chromium`)
 // The pages that point at them come from `npm run seo`.
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright-core';
 import { startSite } from '../tests/e2e/server.js';
-import { ogImagesNeeded, ogImage, OG_IMAGE } from './seo-pages.mjs';
+import { ogImagesNeeded, ogImage, OG_IMAGE, publishedProducts } from './seo-pages.mjs';
+import { cardFingerprints, repositoryFileHash, FINGERPRINTS } from './og-fingerprint.mjs';
 
 const ROOT = new URL('..', import.meta.url);
 
@@ -26,6 +28,10 @@ try {
     console.log(`wrote ${ogImage(name)}`);
   }
   if (errors.length > 0) throw new Error(errors.join('\n'));
+  // What each image shows, so `npm run seo -- --check` and tests/seo.test.js can tell when one is out of date
+  const fingerprints = await cardFingerprints(publishedProducts(raw), names, repositoryFileHash(ROOT));
+  await writeFile(new URL(FINGERPRINTS, ROOT), `${JSON.stringify(fingerprints, null, 2)}\n`);
+  console.log(`wrote ${FINGERPRINTS}`);
 } finally {
   await browser.close();
   await site.close();

@@ -81,7 +81,7 @@ The browser tests are the one exception to "nothing to install": they need `npm 
 | `viewer.html` | The internal viewer: every shirt, drafts included, in any colour |
 | `<id>.html` (generated) | One page per product on sale: `product.html` with that product's title, text and preview tags; never edit by hand |
 | `robots.txt`, `sitemap.xml` (generated) | For search engines; the sitemap lists the collection and every product page |
-| `assets/og/` (generated) | The link preview images, 1200 × 630: `store.jpg` and `<id>.jpg` per product |
+| `assets/og/` (generated) | The link preview images, 1200 × 630: `store.jpg` and `<id>.jpg` per product, and `fingerprints.json` (what each one shows) |
 | `catalog.json` | Shirts, series, colours, prices, sizes, LN address, the store's npub and relays, product-page details |
 | `css/` | `base.css` (tokens, buttons), `store.css`, `viewer.css` |
 | `src/catalog.js` | Validation and normalisation of `catalog.json` |
@@ -97,7 +97,7 @@ The browser tests are the one exception to "nothing to install": they need `npm 
 | `scripts/vendor/` | The pinned recipe that builds `src/vendor/` |
 | `scripts/dev-nostr-key.mjs` | A development Nostr key, written to `.secrets/` |
 | `scripts/seo.mjs`, `scripts/seo-pages.mjs` | Write the SEO blocks, the product pages and the sitemap from `catalog.json` |
-| `scripts/og-images.mjs`, `scripts/og/` | Draw the preview images in Chromium, with the store's own renderer |
+| `scripts/og-images.mjs`, `scripts/og/`, `scripts/og-cards.mjs`, `scripts/og-fingerprint.mjs` | Draw the preview images in Chromium, with the store's own renderer, and fingerprint what each one shows |
 | `tests/` | `node --test` suites, one per pure module |
 | `tests/e2e/` | Browser tests (playwright-core): every page, with Yadio, the LN address, the payment status and the relays answered locally; `report.js` joins the coverage of both kinds of test |
 | `.github/workflows/pages.yml` | Tests with coverage and the vendor check on every pull request; deploy on `main` |
@@ -175,9 +175,11 @@ updating a pull request, and report the real result.
   of the product pages.
 - **Product pages are generated.** A link preview never runs JavaScript, so each product on
   sale has a static page of its own (`<id>.html`) with its tags and image. After changing
-  `catalog.json`, `product.html` or the head of `index.html`, run `npm run seo`; after adding
-  a shirt or changing its look, `npm run og-images`. `tests/seo.test.js` fails when the pages,
-  the sitemap or an image are out of date. Edit `product.html`, never an `<id>.html`.
+  `catalog.json`, `product.html` or the head of `index.html`, run `npm run seo`; when a shirt
+  is added or its look, name or price changes, `npm run og-images`. `tests/seo.test.js` fails
+  when the pages or the sitemap are out of date, or when an image no longer matches its
+  fingerprint (its catalog values, the files it reads and the code that draws it). Edit
+  `product.html`, never an `<id>.html`.
 - **Page names and query parameters are part of those links.** Renaming one breaks every
   link already shared; the pull request says so, and adds a redirect when the old links matter.
 - **Storage keys are a contract.** `mostro-store:cart` and `mostro-store:lang` in

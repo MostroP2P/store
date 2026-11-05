@@ -9,6 +9,7 @@ import { loadImage, prepareShirt } from '../../src/shirt.js';
 import { renderProduct } from '../../src/render.js';
 import { normalizeStoreConfig } from '../../src/store/config.js';
 import { storeProducts, defaultColorFor } from '../../src/store/products.js';
+import { storeShirts, STORE_CARD, LOGO } from '../og-cards.mjs';
 import { moneyFormat } from '../../src/store/money.js';
 
 const WIDTH = 1200;
@@ -19,10 +20,6 @@ const TEXT = '#f2f5ee';
 const MUTED = '#a9b3a2';
 const SANS = 'system-ui, "Noto Sans", "DejaVu Sans", Arial, sans-serif';
 const DOMAIN = 'store.mostro.network';
-const LOGO = 'designs/characters/mostro.png';
-const STORE = 'store';
-// The store card shows these three, in these colors
-const STORE_SHIRTS = [['mostro-quotes-love-at-first-sat', 'white'], ['mostro-invaders', 'black'], ['mostro-quotes-hold-my-invoice', 'orange']];
 
 const ready = (async () => {
   const raw = localizeJson(await fetchCatalog('catalog.json'), DEFAULT_LANG);
@@ -120,13 +117,14 @@ function productCard(context, state, product) {
 }
 
 // The two side shirts first, so the middle one (bigger) lies on top
-const STORE_LAYOUT = Object.freeze([{ shirt: 0, x: 20, y: 130, height: 400 }, { shirt: 2, x: 330, y: 130, height: 400 }, { shirt: 1, x: 165, y: 80, height: 470 }]);
+const STORE_LAYOUT = Object.freeze([{ slot: 0, x: 20, y: 130, height: 400 }, { slot: 2, x: 330, y: 130, height: 400 }, { slot: 1, x: 165, y: 80, height: 470 }]);
 
 function storeCard(context, state) {
-  STORE_LAYOUT.forEach(({ shirt, x, y, height }) => {
-    const [id, colorId] = STORE_SHIRTS[shirt];
-    const product = state.products.find((p) => p.id === id) ?? state.products[shirt];
-    context.drawImage(shirtCanvas(state, product, colorId, height), x, y);
+  // A catalog with fewer than three shirts on sale leaves slots empty
+  const shirts = storeShirts(state.products, state.config);
+  STORE_LAYOUT.forEach(({ slot, x, y, height }) => {
+    const shirt = shirts.find((entry) => entry.slot === slot);
+    if (shirt) context.drawImage(shirtCanvas(state, shirt.product, shirt.colorId, height), x, y);
   });
   const x = 700;
   const family = `"LuckiestGuy-Regular", ${SANS}`;
@@ -145,7 +143,7 @@ window.drawCard = async (name) => {
   canvas.height = HEIGHT;
   const context = canvas.getContext('2d');
   background(context);
-  if (name === STORE) storeCard(context, state);
+  if (name === STORE_CARD) storeCard(context, state);
   else productCard(context, state, state.products.find((product) => product.id === name));
   return canvas.toDataURL('image/jpeg', JPEG_QUALITY);
 };

@@ -15,10 +15,11 @@ const metaContent = (html, key, name) => new RegExp(`<meta ${key}="${name}" cont
 const jsonLdOf = (html) => JSON.parse(/<script type="application\/ld\+json">(.*?)<\/script>/.exec(html)[1]);
 
 test('the committed pages, sitemap and preview images match catalog.json (run `npm run seo` and `npm run og-images`)', async () => {
-  const { changed, stale, missingImages } = await seoPlan();
+  const { changed, stale, missingImages, staleImages } = await seoPlan();
   assert.deepEqual([...changed.keys()], [], 'out of date');
   assert.deepEqual(stale, [], 'pages of products no longer on sale');
   assert.deepEqual(missingImages, [], 'missing preview images');
+  assert.deepEqual(staleImages, [], 'preview images drawn from an older catalog, design or renderer');
 });
 
 test('every product on sale gets a page of its own, with its preview tags', async () => {

@@ -170,7 +170,10 @@ export function sitemapXml(products) {
   ].join('\n');
 }
 
-/** Products on sale, in English, from the raw catalog.json. Throws when the catalog or the store section is unusable. */
+/**
+ * Products on sale, in English, from the raw catalog.json: { products, currency, catalog, config }.
+ * Throws when the catalog or the store section is unusable.
+ */
 export function publishedProducts(rawCatalog) {
   const raw = localizeJson(rawCatalog, DEFAULT_LANG);
   const { catalog } = normalizeCatalog(raw);
@@ -180,7 +183,7 @@ export function publishedProducts(rawCatalog) {
   const products = storeProducts(catalog, config);
   const unusable = products.filter((product) => RESERVED_PAGES.includes(product.id) || !/^[a-z0-9-]+$/.test(product.id));
   if (unusable.length > 0) throw new Error(`these ids cannot name a page: ${unusable.map((p) => p.id).join(', ')}`);
-  return { products, currency: config.currency };
+  return { products, currency: config.currency, catalog, config };
 }
 
 /** Every file the SEO build writes: Map(path → content). `pages` holds the current index.html and product.html. */

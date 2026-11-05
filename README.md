@@ -267,7 +267,7 @@ The viewer (`viewer.html`) shows all the T-shirts in the catalog, drafts include
 
 - `npm run seo` writes the product pages (from `product.html`), the SEO tags of `index.html` and `product.html`, and `sitemap.xml`. Never edit an `<id>.html` by hand.
 - `npm run og-images` draws the preview images (`assets/og/`, 1200 × 630) in Chromium, with the shirt in its default color. It needs `npm ci` and Chromium (see §1).
-- A test fails if the pages, the sitemap or an image are out of date, so CI catches a forgotten step.
+- A test fails if the pages, the sitemap or an image are out of date, so CI catches a forgotten step. Each image has a fingerprint of what it shows (name, price, color, design files and the drawing code) in `assets/og/fingerprints.json`: changing the price, for example, makes every image out of date until `npm run og-images` redraws them.
 
 The full catalog format is in [docs/SPEC.md](docs/SPEC.md) (§4 and §10).
 
