@@ -1,7 +1,7 @@
 // Checkout (checkout.html): order summary, delivery form (kept only in this tab) and Lightning payment.
 // Flow: Yadio rate → sats → LNURL invoice whose comment is the order number → order sent to the store
 // as an encrypted Nostr DM (NIP-17) → QR → payment confirmed by polling (LUD-21 / LNbits) or by WebLN.
-// When the page can't see the payment (no status endpoint) the buyer can say "Ya pagué": the store
+// When the page can't see the payment (no status endpoint) the buyer can say "I've paid": the store
 // then checks its wallet. The wallet is always the source of truth, never this page.
 
 import { el } from '../dom.js';

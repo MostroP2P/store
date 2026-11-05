@@ -69,7 +69,7 @@ export function fieldMessage(t, name, problem) {
   return '';
 }
 
-/** "Completá la calle para continuar." for the first field (in form order) that blocks the payment. */
+/** "Fill in the street to continue." for the first field (in form order) that blocks the payment. */
 export function firstProblem(t, errors) {
   const name = FIELD_ORDER.find((field) => errors[field]);
   if (!name) return null;

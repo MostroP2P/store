@@ -296,12 +296,12 @@ test('store fields: a design can be published with its own price and description
 test('store fields: series items inherit status, price and description, and can override them', () => {
   const raw = validRaw();
   Object.assign(raw.series[0], { status: 'published', price: 30000, description: 'Frases Mostro' });
-  Object.assign(raw.series[0].items[1], { status: 'draft', price: 32000, description: 'Buen día' });
+  Object.assign(raw.series[0].items[1], { status: 'draft', price: 32000, description: 'Good morning' });
   const { catalog } = normalizeCatalog(raw);
   const love = product(catalog, 'quotes-love-at-first-sat');
   const gm = product(catalog, 'quotes-gm');
   assert.deepEqual([love.status, love.price, love.description], ['published', 30000, 'Frases Mostro']);
-  assert.deepEqual([gm.status, gm.price, gm.description], ['draft', 32000, 'Buen día']);
+  assert.deepEqual([gm.status, gm.price, gm.description], ['draft', 32000, 'Good morning']);
 });
 
 test('store fields: invalid status or price fall back with a warning', () => {

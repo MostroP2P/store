@@ -11,7 +11,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const FILE = resolve(ROOT, '.secrets/store-nostr-dev.txt');
 
 if (existsSync(FILE)) {
-  process.stdout.write(`Ya existe ${FILE}: no se sobreescribe.\n`);
+  process.stdout.write(`${FILE} already exists: not overwritten.\n`);
   process.exit(0);
 }
 
@@ -25,4 +25,4 @@ writeFileSync(FILE, [
   `npub=${npub}`,
   '',
 ].join('\n'), { mode: 0o600 });
-process.stdout.write(`Clave guardada en ${FILE}\nPoné esta npub en catalog.json → store.nostr.npub:\n${npub}\n`);
+process.stdout.write(`Key saved to ${FILE}\nPut this npub in catalog.json → store.nostr.npub:\n${npub}\n`);

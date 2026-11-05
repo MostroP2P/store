@@ -54,11 +54,11 @@ test('relatedProducts lists the same group first and never the product itself', 
 
 test('groupSections follows the catalog order and skips empty groups', () => {
   const products = storeProducts(CATALOG, CONFIG);
-  const sections = groupSections(products, CATALOG.groups, 'Diseños');
+  const sections = groupSections(products, CATALOG.groups, 'Designs');
   assert.deepEqual(sections.map((s) => [s.id, s.name, s.products.length]), [
-    ['designs', 'Diseños', 1],
+    ['designs', 'Designs', 1],
     ['quotes', 'Mostro dice…', 3],
   ]);
-  const onlyQuotes = groupSections(products.filter((p) => p.groupId === 'quotes'), CATALOG.groups, 'Diseños');
+  const onlyQuotes = groupSections(products.filter((p) => p.groupId === 'quotes'), CATALOG.groups, 'Designs');
   assert.deepEqual(onlyQuotes.map((s) => s.id), ['quotes']);
 });

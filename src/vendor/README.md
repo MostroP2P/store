@@ -1,19 +1,19 @@
-# Librerías de terceros
+# Third-party libraries
 
-El sitio no tiene build: estas librerías se guardan ya armadas y se sirven tal cual. No hay CDNs en tiempo de ejecución.
+The site has no build step: these libraries are stored already bundled and served as they are. There are no CDNs at runtime.
 
-| Archivo | Origen | Licencia | Para qué |
+| File | Source | License | Used for |
 |---|---|---|---|
-| `nostr-tools.js` | [nostr-tools](https://github.com/nbd-wtf/nostr-tools) 2.25.2, más `@noble/*` y `@scure/base`, armado con esbuild | Unlicense (`nostr-tools.LICENSE`); `@noble` y `@scure` MIT (avisos al final del archivo) | Mandar el pedido cifrado por Nostr (NIP-17) |
-| `qrcode-generator.js` | [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) 2.0.4, `dist/qrcode.mjs` | MIT (encabezado del archivo) | QR de la factura Lightning |
+| `nostr-tools.js` | [nostr-tools](https://github.com/nbd-wtf/nostr-tools) 2.25.2, plus `@noble/*` and `@scure/base`, bundled with esbuild | Unlicense (`nostr-tools.LICENSE`); `@noble` and `@scure` MIT (notices at the end of the file) | Sending the order encrypted over Nostr (NIP-17) |
+| `qrcode-generator.js` | [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) 2.0.4, `dist/qrcode.mjs` | MIT (file header) | The Lightning invoice QR |
 
-`nostr-tools.js` solo incluye lo que importa `scripts/vendor/nostr-entry.js`: claves, `wrapEvent`/`unwrapEvent` (NIP-17), NIP-19 y `SimplePool`.
+`nostr-tools.js` only includes what `scripts/vendor/nostr-entry.js` imports: keys, `wrapEvent`/`unwrapEvent` (NIP-17), NIP-19 and `SimplePool`.
 
-## Actualizar
+## Updating
 
-1. Cambiá las versiones en `scripts/vendor/package.json`. Usá versiones con al menos dos semanas de publicadas.
-2. Corré `npm install --package-lock-only --ignore-scripts` dentro de `scripts/vendor/`.
-3. Corré `sh scripts/vendor/build.sh`.
-4. Corré `npm test` y probá el checkout.
+1. Change the versions in `scripts/vendor/package.json`. Use versions published at least two weeks ago.
+2. Run `npm install --package-lock-only --ignore-scripts` inside `scripts/vendor/`.
+3. Run `sh scripts/vendor/build.sh`.
+4. Run `npm test` and try the checkout.
 
-El `package-lock.json` fija el hash de cada paquete, así que el resultado es reproducible.
+`package-lock.json` pins the hash of every package, so the result is reproducible.
