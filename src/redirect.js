@@ -28,6 +28,6 @@ export function legacyTarget(target, search, hash, renames) {
     if (!to) return [[key, value]];
     return params.has(to) ? [] : [[to, value]];
   }));
-  const query = renamed.toString();
-  return `${target}${query ? `?${query}` : ''}${hash}`;
+  // At least one parameter was renamed, so the query is never empty
+  return `${target}?${renamed}${hash}`;
 }

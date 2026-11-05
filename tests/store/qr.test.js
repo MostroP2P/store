@@ -53,3 +53,8 @@ test('drops the logo when it would hide an alignment pattern (it breaks scanning
   assert.equal(version(v14), 14);
   assert.notEqual(v14.logo, null);
 });
+
+test('can leave the logo out', () => {
+  const qr = buildStyledQr(INVOICE_URI, { mode: 'Alphanumeric', errorCorrection: 'Q', withLogo: false });
+  assert.equal(qr.logo, null);
+});

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { generateSecretKey, getPublicKey, npubEncode, unwrapEvent } from '../../src/vendor/nostr-tools.js';
 import {
   npubToHex,
+  createSenderKey,
   wrapOrderMessage,
   findDmRelays,
   publishEvent,
@@ -129,4 +130,17 @@ test('sendPrivateMessage refuses an invalid npub before touching the network', a
     /npub/,
   );
   assert.equal(pool.queries.length, 0);
+});
+
+test('createSenderKey makes a new 32-byte key for every checkout', () => {
+  const [a, b] = [createSenderKey(), createSenderKey()];
+  assert.equal(a.length, 32);
+  assert.notDeepEqual(a, b);
+});
+
+test('findDmRelays uses the newest relay list, whatever order the relays return them in', async () => {
+  const pool = fakePool({ events: [relayList(9, ['wss://new.example']), relayList(1, ['wss://old.example'])] });
+  const relays = await findDmRelays({ pool, recipientHex: STORE_HEX, relays: FALLBACK, maxWait: 10 });
+  assert.ok(relays.includes('wss://new.example'));
+  assert.ok(!relays.includes('wss://old.example'));
 });

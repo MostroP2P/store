@@ -129,3 +129,32 @@ test('ends "unconfirmed" when the last check after expiry fails', async () => {
   const result = await waitForPayment({ url: 'https://pay/x', fetchJson, ...clock, intervalMs: 3000, expiresAt: clock.now() + 8_000 });
   assert.equal(result, 'unconfirmed');
 });
+
+test('waits with real timers and a silent fallback when none is given', async () => {
+  const { fetchJson } = answers(new Error('offline'));
+  const result = await waitForPayment({ url: 'u', fetchJson, expiresAt: Date.now() + 40, intervalMs: 5 });
+  assert.equal(result, 'unconfirmed');
+});
+
+test('stops when the caller cancels while a check is in flight', async () => {
+  const clock = fakeClock();
+  let cancelled = false;
+  const fetchJson = async () => {
+    cancelled = true;
+    return { paid: true };
+  };
+  const result = await waitForPayment({
+    url: 'u', fetchJson, expiresAt: clock.now() + 60_000, now: clock.now, sleep: clock.sleep, isCancelled: () => cancelled,
+  });
+  assert.equal(result, 'cancelled');
+});
+
+test('a cancel during the wait stops before checking the status again', async () => {
+  const clock = fakeClock();
+  const { fetchJson, calls } = answers({ paid: false });
+  const result = await waitForPayment({
+    url: 'u', fetchJson, expiresAt: clock.now() + 60_000, now: clock.now, sleep: clock.sleep, isCancelled: () => true,
+  });
+  assert.equal(result, 'cancelled');
+  assert.equal(calls.length, 0);
+});

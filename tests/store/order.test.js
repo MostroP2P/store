@@ -102,3 +102,11 @@ test('claimedMessage tells the store to check the wallet before shipping', () =>
   assert.match(message, /billetera/);
   assert.match(message, /67\.072 sats/);
 });
+
+test('orderMessage leaves out optional fields that are missing altogether', () => {
+  const { floor, apartment, notes, ...customer } = ORDER.customer;
+  const message = orderMessage({ ...ORDER, customer });
+  assert.ok(message.includes('Av. Siempreviva 742\n'));
+  assert.ok(!message.includes('Instrucciones'));
+  assert.ok(!message.includes('undefined'));
+});

@@ -144,3 +144,15 @@ test('rejects an npub whose checksum is wrong (a typo would lose orders)', () =>
   assert.equal(config.nostr, null);
   assert.match(messages(problems, 'error')[0], /npub/);
 });
+
+test('sizes or relays that are not lists count as none', () => {
+  assert.equal(normalizeStoreConfig({ ...validRaw(), sizes: 'S, M' }, COLOR_IDS).config, null);
+  const { config, problems } = normalizeStoreConfig({ ...validRaw(), nostr: { npub: NPUB, relays: 'wss://nos.lol' } }, COLOR_IDS);
+  assert.equal(config.nostr, null);
+  assert.match(messages(problems, 'error')[0], /relays/);
+});
+
+test('a single details object is read as a list of one', () => {
+  const { config } = normalizeStoreConfig({ ...validRaw(), details: { title: 'Shipping', text: 'Anywhere.' } }, COLOR_IDS);
+  assert.deepEqual(config.details, [{ title: 'Shipping', text: 'Anywhere.' }]);
+});

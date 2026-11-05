@@ -12,11 +12,11 @@ export const luminance = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
 function percentile(histogram, total, fraction) {
   const target = total * fraction;
   let cumulative = 0;
-  for (let value = 0; value < histogram.length; value++) {
-    cumulative += histogram[value];
-    if (cumulative >= target) return value;
-  }
-  return histogram.length - 1;
+  // Always found: the running count ends at `total`, and target ≤ total
+  return histogram.findIndex((count) => {
+    cumulative += count;
+    return cumulative >= target;
+  });
 }
 
 /** p1 / p50 / p99 of the luminance of the opaque pixels. */

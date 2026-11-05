@@ -80,3 +80,14 @@ test('the language switch is labelled in the language it switches to', () => {
   assert.equal(STRINGS.en.switchLanguage, 'View in English');
   assert.equal(STRINGS.es.switchLanguage, 'Ver en español');
 });
+
+test('counts read right in both languages', () => {
+  assert.equal(STRINGS.en.cartButton(1), 'Open the cart: 1 T-shirt');
+  assert.equal(STRINGS.en.cartButton(3), 'Open the cart: 3 T-shirts');
+  assert.equal(STRINGS.es.cartButton(1), 'Abrir el carrito: 1 remera');
+  assert.equal(STRINGS.es.cartButton(3), 'Abrir el carrito: 3 remeras');
+  SUPPORTED_LANGS.forEach((lang) => {
+    assert.equal(STRINGS[lang].summaryQuantity('Love', 1), 'Love');
+    assert.equal(STRINGS[lang].summaryQuantity('Love', 2), 'Love (2)');
+  });
+});

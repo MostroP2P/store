@@ -165,3 +165,8 @@ test('requestInvoice runs the LNURL-pay flow and returns the checked invoice', a
   assert.equal(invoice.paymentHash, COFFEE_HASH);
   assert.equal(invoice.statusUrl, `https://pay.mostro.foundation/api/v1/payments/${COFFEE_HASH}`);
 });
+
+test('an LNURL error without a reason still fails with a message', () => {
+  assert.throws(() => parsePayParams({ status: 'ERROR' }), /Lightning server returned an error/);
+  assert.throws(() => parseInvoiceResponse({ status: 'ERROR' }, COFFEE_MSAT, at), /could not create the invoice/);
+});

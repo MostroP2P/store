@@ -125,3 +125,15 @@ test('subtractItems removes only what was bought and keeps items added later', (
   assert.deepEqual(subtractItems(addItem(EMPTY_CART, LOVE_BLACK_L, 2), bought).items, []);
   assert.deepEqual(subtractItems(EMPTY_CART, bought).items, []);
 });
+
+test('adding nothing of a new variant leaves the cart as it was', () => {
+  const cart = addItem(EMPTY_CART, { productId: 'love', colorId: 'black', size: 'M' }, 0);
+  assert.equal(cart, EMPTY_CART);
+});
+
+test('adding to one variant leaves the other lines alone', () => {
+  const love = { productId: 'love', colorId: 'black', size: 'M' };
+  const node = { productId: 'node', colorId: 'red', size: 'L' };
+  const cart = addItem(addItem(addItem(EMPTY_CART, love), node), love);
+  assert.deepEqual(cart.items.map((item) => [item.productId, item.quantity]), [['love', 2], ['node', 1]]);
+});
