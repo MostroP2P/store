@@ -29,13 +29,13 @@ def main():
     handler = partial(NoCacheHandler, directory=str(PROJECT_ROOT))
     with ThreadingHTTPServer((HOST, port), handler) as server:
         print(
-            f"Tienda: http://localhost:{port}   Visor: http://localhost:{port}/visor.html   (Ctrl+C para cortar)",
+            f"Store: http://localhost:{port}   Viewer: http://localhost:{port}/visor.html   (Ctrl+C to stop)",
             flush=True,
         )
         try:
             server.serve_forever()
         except KeyboardInterrupt:
-            print("\nServidor detenido.")
+            print("\nServer stopped.")
 
 
 if __name__ == "__main__":

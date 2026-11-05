@@ -2,7 +2,7 @@
   "name": "mostro-tshirts",
   "private": true,
   "type": "module",
-  "description": "Visor de remeras: previsualiza diseños sobre remeras de colores. Base de store.mostro.network.",
+  "description": "The Mostro t-shirt store (store.mostro.network) and its viewer, which previews designs on every shirt colour.",
   "scripts": {
     "start": "python3 scripts/serve.py 8000",
     "test": "node --test",

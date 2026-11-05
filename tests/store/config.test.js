@@ -14,7 +14,7 @@ const validRaw = () => ({
   defaultSize: 'M',
   defaultColor: 'white',
   nostr: { npub: NPUB, relays: ['wss://relay.mostro.network', 'wss://nos.lol'] },
-  details: [{ title: 'Envío', text: 'A todo el país.' }],
+  details: [{ title: 'Shipping', text: 'Anywhere in the country.' }],
 });
 
 const messages = (problems, level) => problems.filter((p) => p.level === level).map((p) => p.message);
@@ -34,7 +34,7 @@ test('normalizes a complete store section', () => {
     defaultSize: 'M',
     defaultColor: 'white',
     nostr: { npub: NPUB, relays: ['wss://relay.mostro.network', 'wss://nos.lol'] },
-    details: [{ title: 'Envío', text: 'A todo el país.' }],
+    details: [{ title: 'Shipping', text: 'Anywhere in the country.' }],
   });
 });
 

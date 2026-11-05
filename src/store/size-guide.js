@@ -1,4 +1,4 @@
-// "Guía de talles" dialog: tips, a measuring diagram and the size table from catalog.json (store.sizes).
+// "Size guide" dialog: tips, a measuring diagram and the size table from catalog.json (store.sizes).
 
 import { el, svgEl } from '../dom.js';
 import { icon } from './icons.js';
