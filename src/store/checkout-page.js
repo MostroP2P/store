@@ -315,6 +315,9 @@ function completeOrder(view, ctx, kind) {
   view.session += 1;
   view.active = null;
   view.paid = true;
+  // A late confirmation arrives after cancelActive unlocked everything: lock again, so the language
+  // switch can't reload the confirmation away (and its order number with it)
+  lockForm(view, true);
   // The cart may have changed, even emptied, since this order was made (e.g. confirmed after a cancel):
   // always show the confirmation, with what this order bought
   const bought = resolveCart({ items: ctx.items }, { products: view.store.products, colors: view.store.catalog.colors });
