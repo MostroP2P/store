@@ -36,7 +36,7 @@ English into the repository, the pull request and the issue tracker.
 ## What this project is
 
 The Mostro t-shirt store at `store.mostro.network`, plus an internal viewer
-(`visor.html`) to preview designs on every shirt colour. It is a static site on GitHub
+(`viewer.html`) to preview designs on every shirt colour. It is a static site on GitHub
 Pages: no backend, no database, no accounts, no build step. Everything is configured in
 `catalog.json`.
 
@@ -75,14 +75,16 @@ qrcode-generator, pinned), rebuilt reproducibly from `scripts/vendor/`.
 
 | Path | Purpose |
 |---|---|
-| `index.html`, `producto.html`, `checkout.html` | The store: collection, product page, checkout |
-| `visor.html` | The internal viewer: every shirt, drafts included, in any colour |
+| `index.html`, `product.html`, `checkout.html` | The store: collection, product page, checkout |
+| `viewer.html` | The internal viewer: every shirt, drafts included, in any colour |
+| `producto.html`, `visor.html` | Old addresses: they redirect to `product.html` and `viewer.html`, keeping the query and the hash |
 | `catalog.json` | Shirts, series, colours, prices, sizes, LN address, the store's npub and relays, product-page details |
 | `css/` | `base.css` (tokens, buttons), `store.css`, `viewer.css` |
 | `src/catalog.js` | Validation and normalisation of `catalog.json` |
 | `src/render.js`, `src/shirt.js`, `src/shading.js`, `src/text.js`, `src/layouts.js`, `src/color.js` | The shirt renderer, shared by the store and the viewer |
 | `src/loader.js`, `src/dom.js` | Loading the catalogue, fonts and images; `el()` / `svgEl()`, the DOM without `innerHTML` |
 | `src/i18n.js` | Which language to show, and `localizeJson` for the catalogue's translated texts |
+| `src/redirect.js`, `src/legacy-page.js` | The new address of an old page, and the script the old pages run |
 | `src/store/` (pure) | `config`, `products`, `cart`, `cart-store`, `persist`, `money`, `bech32`, `bolt11`, `lnurl`, `payment`, `order`, `checkout-form`, `query`, `qr`, `nostr-order`, `strings` |
 | `src/store/` (DOM) | `boot`, `lang`, `home-page`, `product-page`, `product-card`, `cart-ui`, `size-guide`, `checkout-fields`, `checkout-page`, `payment-ui`, `icons` |
 | `src/store/strings/` | The English and Spanish user-interface catalogues |
@@ -104,7 +106,7 @@ Node 24 and Python 3. There are no dependencies to install.
 
 | Command | What it does |
 |---|---|
-| `npm start` | The site at `http://localhost:8000` (viewer at `/visor.html`) |
+| `npm start` | The site at `http://localhost:8000` (viewer at `/viewer.html`) |
 | `npm test` | Every suite under `tests/` |
 | `npm run coverage` | The same, failing under 80% of lines, functions or branches of `src/` (vendor excluded) |
 | `sh scripts/vendor/build.sh` | Rebuild `src/vendor/` from `scripts/vendor/` |
@@ -149,13 +151,16 @@ result.
 - **Buyer text in the order message is flattened** to one line per field, without control
   or bidi characters, so nobody can fake a line such as "✅ paid". Keep it that way.
 - **The Content-Security-Policy is a meta tag in each page.** A new API or LN address
-  domain goes in `connect-src` of `index.html`, `producto.html` and `checkout.html`.
+  domain goes in `connect-src` of `index.html`, `product.html` and `checkout.html`.
   Never add `'unsafe-inline'`, `'unsafe-eval'` or a wildcard host.
 - **Two catalogues.** A new user-facing string needs an English and a Spanish entry with
   the same key. Static text in the HTML carries `data-i18n="key"` and ships in English.
   Translatable texts in `catalog.json` are `{ "en": …, "es": … }`. The tests fail if the
   catalogues differ in shape or if Spanish is left in the English one.
 - **Published product ids never change.** They are in links and in saved carts.
+- **Page names and query parameters are part of those links.** Rename one only with a
+  redirect from the old name, as `producto.html` and `visor.html` do, and keep reading
+  the old parameter (`?talle=`).
 - **Storage keys are a contract.** `mostro-store:cart` and `mostro-store:lang` in
   `localStorage`, `mostro-store:checkout` in `sessionStorage`. Changing a format needs a
   migration or a tolerant reader; every read already survives corrupt or blocked

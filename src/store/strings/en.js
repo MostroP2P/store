@@ -27,7 +27,7 @@ export const EN = {
   pageTitle: (name) => `${name} · Mostro Store`,
   designs: 'Designs',
   storeUnavailable: 'The store is not available right now.',
-  catalogInvalid: 'catalog.json has errors: check it in visor.html.',
+  catalogInvalid: 'catalog.json has errors: check it in viewer.html.',
   storeNotConfigured: 'catalog.json is missing the "store" section (price and sizes).',
   noProducts: 'No T-shirts for sale yet.',
   productNotFound: 'We couldn’t find that T-shirt.',

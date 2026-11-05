@@ -5,7 +5,7 @@ import { STRINGS } from '../../src/store/strings.js';
 import { SUPPORTED_LANGS } from '../../src/i18n.js';
 import { FIELD_ORDER, REQUIRED_FIELDS, CHECKED_FIELDS } from '../../src/store/checkout-form.js';
 
-const STORE_PAGES = ['index.html', 'producto.html', 'checkout.html'];
+const STORE_PAGES = ['index.html', 'product.html', 'checkout.html'];
 const SPANISH_ONLY = /[áéíóúñ¿¡]/i;
 const SAMPLE_ARGS = ['X', 'X', 'X'];
 

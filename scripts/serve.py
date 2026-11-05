@@ -29,7 +29,7 @@ def main():
     handler = partial(NoCacheHandler, directory=str(PROJECT_ROOT))
     with ThreadingHTTPServer((HOST, port), handler) as server:
         print(
-            f"Store: http://localhost:{port}   Viewer: http://localhost:{port}/visor.html   (Ctrl+C to stop)",
+            f"Store: http://localhost:{port}   Viewer: http://localhost:{port}/viewer.html   (Ctrl+C to stop)",
             flush=True,
         )
         try:
