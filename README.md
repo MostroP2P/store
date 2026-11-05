@@ -257,7 +257,7 @@ Every text the buyer sees in `catalog.json` can be given in both languages, as a
 
 The viewer (`viewer.html`) shows all the T-shirts in the catalog, drafts included, in any color, and lets you download the PNG. Use it to decide what to publish.
 
-- **Add a T-shirt to a series:** add `{ "id": "mostro-quotes-…", "image": "designs/stickers/…png", "text": "Tu mensaje" }` to `items`.
+- **Add a T-shirt to a series:** add `{ "id": "mostro-quotes-…", "image": "designs/stickers/…png", "text": "Tu mensaje" }` to `items`. If the series is already published, the new T-shirt goes on sale with it at once: run `npm run seo` and commit what it writes, or the collection links to a product page that does not exist yet and the buyer gets a 404.
 - **Add a whole design:** put the transparent PNG in `designs/` and add it to `designs`.
 - **Put it on sale:** add `"status": "published"` to it, then run `npm run seo` and commit what it writes (see below).
 - **Change the font of a series:** copy the file to `assets/fonts/` and change `"font"` in the series `style`.
