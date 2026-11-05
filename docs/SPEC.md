@@ -101,6 +101,7 @@ tshirts/
 │   └── vendor/                 reproducible recipe for src/vendor/
 ├── tests/                      one *.test.js per pure module (tests/store/, tests/viewer/)
 ├── assets/
+│   ├── mostro-logo.png         Mostro in the store header (50×72, 1.5 KB; from designs/characters/mostro.png)
 │   ├── shirts/t-shirt.png      base T-shirt (black, transparent background)
 │   └── fonts/                  fonts for the messages + their license
 ├── designs/

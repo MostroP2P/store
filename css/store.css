@@ -55,7 +55,6 @@ body {
   letter-spacing: 0.02em;
 }
 
-.store-brand img { image-rendering: pixelated; }
 .store-brand strong { color: var(--accent); }
 
 .store-nav {
@@ -912,7 +911,7 @@ fieldset:disabled { opacity: 0.6; }
 @media (max-width: 380px) {
   .store-header-inner { gap: 8px; }
   .store-brand { font-size: 0.95rem; }
-  .store-brand img { width: 24px; height: auto; }
+  .store-brand img { width: auto; height: 30px; }
   .store-nav { gap: 8px; }
   .nav-link { font-size: 0.8rem; letter-spacing: 0; }
 }
