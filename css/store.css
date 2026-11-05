@@ -6,6 +6,8 @@
   --badge-bg: #f7931a;
   --radius-large: 22px;
   --shadow: 0 18px 50px rgb(0 0 0 / 0.45);
+  /* Long enough for the scripts of a working page to start on a slow phone connection */
+  --boot-notice-delay: 8s;
 }
 
 body {
@@ -157,6 +159,26 @@ html:not(.i18n-ready) [data-i18n] { visibility: hidden; }
 }
 
 .store-message h1 { margin: 0; font-size: 1.5rem; }
+
+/* A page whose scripts never started: one module that fails to load (the network changed, the connection
+   dropped) stops them all, and no script is left to say so, so the stylesheet does. translatePage marks the
+   page i18n-ready first thing; without it, after the wait, the notice covers the page's main. It sits out of
+   the flow, so a page that does start never moves. If this stylesheet is what failed, the notice simply shows. */
+.boot-notice { display: none; }
+html:not(.i18n-ready) .store-main { position: relative; }
+html:not(.i18n-ready) .boot-notice {
+  display: grid;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  align-content: start;
+  padding-inline: var(--gutter);
+  background: var(--bg);
+  visibility: hidden;
+  animation: boot-notice-reveal 0s var(--boot-notice-delay) forwards;
+}
+
+@keyframes boot-notice-reveal { to { visibility: visible; } }
 
 .hero { padding: 16px 0 8px; }
 
