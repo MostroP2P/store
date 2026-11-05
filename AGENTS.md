@@ -81,6 +81,7 @@ The browser tests are the one exception to "nothing to install": they need `npm 
 | `viewer.html` | The internal viewer: every shirt, drafts included, in any colour |
 | `<id>.html` (generated) | One page per product on sale: `product.html` with that product's title, text and preview tags; never edit by hand |
 | `robots.txt`, `sitemap.xml` (generated) | For search engines; the sitemap lists the collection and every product page |
+| `favicon.ico`, `apple-touch-icon.png` | The tab and home-screen icons, from the Mostro logo (`designs/characters/mostro.png`); at the root, where clients ask for them without reading the HTML |
 | `assets/og/` (drawn at deploy, not committed) | The link preview images, 1200 × 630: `store.jpg` and `<id>.jpg` per product |
 | `catalog.json` | Shirts, series, colours, prices, sizes, LN address, the store's npub and relays, product-page details |
 | `css/` | `base.css` (tokens, buttons), `store.css`, `viewer.css` |

@@ -78,6 +78,8 @@ tshirts/
 ├── viewer.html                 viewer: all the T-shirts, in any color
 ├── <id>.html                   one page per T-shirt on sale, generated from product.html (§10.9)
 ├── robots.txt, sitemap.xml     for search engines (the sitemap is generated)
+├── favicon.ico                 tab icon: the Mostro logo at 16, 32 and 48 px, at the root because clients ask for it there
+├── apple-touch-icon.png        home-screen icon: the logo at 180 × 180 on the store's background, opaque
 ├── css/                        base.css (colors and buttons), store.css, viewer.css
 ├── catalog.json                ← the only file you edit: T-shirts, prices, sizes, payment
 ├── package.json                npm shortcuts; playwright-core is the only (development) dependency
