@@ -80,6 +80,15 @@ function fit(context, text, { family, weight, maxWidth, maxLines, maxHeight, sta
   return { size: min, lines: wrap(context, text, maxWidth).slice(0, maxLines) };
 }
 
+/** The largest size (from `start` down to `min`) at which every one of `lines` fits in `maxWidth`. */
+function fitWidth(context, lines, { family, weight, maxWidth, start, min }) {
+  for (let size = start; size > min; size -= 1) {
+    context.font = font({ size, family, weight });
+    if (lines.every((line) => context.measureText(line).width <= maxWidth)) return size;
+  }
+  return min;
+}
+
 function footer(context, state, x) {
   const height = 56;
   const width = (state.logo.naturalWidth / state.logo.naturalHeight) * height;
@@ -128,11 +137,15 @@ function storeCard(context, state) {
     if (shirt) context.drawImage(shirtCanvas(state, shirt.product, shirt.colorId, height), x, y);
   });
   const x = 700;
+  const maxWidth = 440;
   const family = `"LuckiestGuy-Regular", ${SANS}`;
-  const title = fit(context, 'Mostro T-shirts', { family, maxWidth: 440, maxLines: 2, maxHeight: 200, start: 84, min: 40 });
+  const title = fit(context, 'Mostro T-shirts', { family, maxWidth, maxLines: 2, maxHeight: 200, start: 84, min: 40 });
   label(context, x, 92);
   const after = text(context, title.lines, { x, y: 136, size: title.size, family, color: TEXT });
-  text(context, ['Pay with Lightning.', 'Orders encrypted over Nostr.'], { x, y: after + 24, size: 30, family: SANS, weight: 600, color: MUTED, lineHeight: 1.3 });
+  // The sans is whatever the machine has (Noto Sans here, the wider DejaVu Sans on the CI runner)
+  const tagline = ['Pay with Lightning.', 'Orders encrypted over Nostr.'];
+  const size = fitWidth(context, tagline, { family: SANS, weight: 600, maxWidth, start: 30, min: 20 });
+  text(context, tagline, { x, y: after + 24, size, family: SANS, weight: 600, color: MUTED, lineHeight: 1.3 });
   footer(context, state, x);
 }
 
