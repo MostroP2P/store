@@ -5,13 +5,13 @@ import { parseHash, toHash, resolveColor, DEFAULT_FILTER } from './state.js';
 import { loadImage, prepareShirt } from '../shirt.js';
 import { renderProduct, WARNING_TEXT_TOO_LONG } from '../render.js';
 import { fetchCatalog, loadFonts, loadProductImages } from '../loader.js';
-import { localizeJson } from '../i18n.js';
+import { localizeJson, DEFAULT_LANG } from '../i18n.js';
 import { STRINGS } from './strings.js';
 import * as ui from './ui.js';
 
 const THUMB_SCALE = 0.45;
-// The viewer is the team's tool and speaks Spanish: catalog texts ({ "en": …, "es": … }) in Spanish too
-const VIEWER_LANG = 'es';
+// The viewer is the team's tool and speaks English: catalog texts ({ "en": …, "es": … }) in English too
+const VIEWER_LANG = DEFAULT_LANG;
 const DEBUG = new URLSearchParams(window.location.search).has('debug');
 
 const $ = (selector) => document.querySelector(selector);

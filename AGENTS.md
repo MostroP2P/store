@@ -30,11 +30,6 @@ itself:
 
 Their keys, and every comment around them, stay in English.
 
-Some older files are still in Spanish: the viewer (`visor.html`, `src/viewer/`) and the
-catalogue validation messages (`src/catalog.js`, `src/store/config.js`). Do not add more
-Spanish to them; translate what you touch, in a pull request of its own when it is more
-than a few lines.
-
 If you are prompted in another language, answer the person in that language, but write
 English into the repository, the pull request and the issue tracker.
 
