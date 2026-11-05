@@ -1,7 +1,8 @@
 # Tests + publish to GitHub Pages (store.mostro.network).
 # Every commit pushed to main runs the tests and, if they pass, deploys.
-# Pull requests only run the tests.
-# Only the files the site needs are published (no docs/, tests/, scripts/ or .secrets/).
+# Pull requests run the tests and build the site, without publishing it.
+# Only the files the site needs are published (no docs/, tests/, scripts/ or .secrets/), plus the link
+# preview images, which are drawn here and never committed.
 
 name: Pages
 
@@ -42,16 +43,6 @@ jobs:
           sh scripts/vendor/build.sh
           git diff --exit-code -- src/vendor
 
-      # Pages deploys from Actions do not run Jekyll, so no .nojekyll is needed
-      - name: Collect site files
-        run: |
-          mkdir _site
-          cp -r *.html css catalog.json src assets designs _site/
-
-      - uses: actions/upload-pages-artifact@v5
-        with:
-          path: _site
-
   # Every page in Chromium, with Yadio, the LN address, the payment status and the relays answered
   # locally (tests/e2e/), then the line coverage of the unit and browser tests together
   e2e:
@@ -73,9 +64,42 @@ jobs:
       - name: Browser tests and combined coverage (100 % of the lines of src/)
         run: npm run coverage:all
 
+  # The site to publish. The link preview images (assets/og/: one per product on sale and one for the
+  # store) are drawn here from catalog.json by the store's own renderer, so a preview always shows the
+  # name, price and design that are live. Pull requests draw them too, so a change that breaks them fails
+  # before it reaches main.
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Install the drawing dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Install Chromium
+        run: npx playwright-core install --with-deps --only-shell chromium
+
+      # Pages deploys from Actions do not run Jekyll, so no .nojekyll is needed
+      - name: Collect site files
+        run: |
+          mkdir _site
+          cp -r *.html robots.txt sitemap.xml css catalog.json src assets designs _site/
+
+      - name: Draw the link preview images
+        run: npm run og-images -- _site
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
   deploy:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: [build, e2e]
+    needs: [build, e2e, site]
     runs-on: ubuntu-latest
     permissions:
       actions: read

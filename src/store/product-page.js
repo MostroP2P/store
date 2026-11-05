@@ -1,4 +1,4 @@
-// Product page (product.html?id=…&color=…&size=…), like kinoto.com.ar/item/…: color and size,
+// Product page (<id>.html?color=…&size=…, or product.html?id=…), like kinoto.com.ar/item/…: color and size,
 // size guide, price, "Agregar al carrito" and "Comprar" (adds to the cart and goes to checkout).
 
 import { el } from '../dom.js';
@@ -52,9 +52,11 @@ function sync(view, next) {
   $('size-select').value = size;
   const inCart = variantQuantity(view.store.cart.get(), { productId: product.id, colorId, size });
   $('add-label').textContent = inCart > 0 ? T.addToCartCount(inCart) : T.addToCart;
-  // Compare only the query: GitHub Pages also serves this page as /product (without .html)
+  // On the product's own page compare only the query (GitHub Pages also serves it without .html);
+  // product.html?id=… moves to the product's page, the address worth sharing
   const href = productHref({ id: product.id, color: colorId, size });
-  if (window.location.search !== href.slice(href.indexOf('?'))) window.history.replaceState(null, '', href);
+  const own = document.documentElement.dataset.product === product.id;
+  if (!own || window.location.search !== href.slice(href.indexOf('?'))) window.history.replaceState(null, '', href);
 }
 
 function fillProduct(view) {
@@ -100,7 +102,7 @@ function showNotFound() {
 
 startPage((store) => {
   mountCart(store);
-  const selection = parseProductQuery(window.location.search, store.products, store.config);
+  const selection = parseProductQuery(window.location.search, store.products, store.config, document.documentElement.dataset.product);
   if (!selection.product) {
     showNotFound();
     return;
