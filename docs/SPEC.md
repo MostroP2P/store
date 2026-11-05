@@ -1,118 +1,118 @@
-# Remeras Mostro: spec (visor + tienda)
+# Mostro T-shirts: spec (viewer + store)
 
-Sistema web mínimo para ver cómo queda cada diseño sobre una remera, eligiendo el color de la remera desde la página, y venderlas.
-Sin base de datos, sin build y sin backend. Todo el catálogo vive en un único `catalog.json`.
+A minimal web system to see how each design looks on a T-shirt, choosing the T-shirt color from the page, and to sell them.
+No database, no build and no backend. The whole catalogue lives in a single `catalog.json`.
 
-- **Visor** (`visor.html`): sirve para decidir qué remeras mandar a hacer.
-- **Tienda** (`index.html`, en `store.mostro.network`): colección, producto, carrito y checkout con pago Lightning (ver §10).
-
----
-
-## 1. Objetivos
-
-1. Ver cada diseño sobre una remera, con el color de remera que elijas, o un color libre.
-2. Mantener **el diseño separado de la remera**: la remera es una imagen base y el diseño se compone encima al momento de mostrarla.
-3. Soportar **series**: remeras del mismo tipo, armadas con *imagen + mensaje*. Para agregar una remera nueva alcanza con una línea en el JSON.
-4. Descargar el mockup en PNG.
-5. Que el catálogo y el render se puedan reusar tal cual en la tienda.
-
-### Fuera de alcance (por ahora)
-
-- Costo de envío calculado en la página: se coordina por email después del pago.
-- Stock, cupones y panel de administración de pedidos.
-- Espalda de la remera, mangas, varios modelos de remera.
-- Editar el catálogo desde la web (el JSON se edita a mano).
-- Base de datos, login, backend y bundler.
+- **Viewer** (`visor.html`): used to decide which T-shirts to produce.
+- **Store** (`index.html`, at `store.mostro.network`): collection, product, cart and checkout with Lightning payment (see §10).
 
 ---
 
-## 2. Cómo se usa
+## 1. Goals
+
+1. See each design on a T-shirt, in the T-shirt color you choose, or in any free color.
+2. Keep **the design separate from the T-shirt**: the T-shirt is a base image and the design is composited on top when it is displayed.
+3. Support **series**: T-shirts of the same type, built from *image + message*. To add a new T-shirt, one line in the JSON is enough.
+4. Download the mockup as a PNG.
+5. Let the store reuse the catalogue and the render as they are.
+
+### Out of scope (for now)
+
+- Shipping cost calculated on the page: it is arranged by email after payment.
+- Stock, coupons and an order admin panel.
+- T-shirt back, sleeves, several T-shirt models.
+- Editing the catalogue from the web (the JSON is edited by hand).
+- Database, login, backend and bundler.
+
+---
+
+## 2. How to use it
 
 ```bash
 cd /disco/dev/tshirts
-npm start              # servidor local sin caché → tienda en http://localhost:8000, visor en /visor.html
-npm test               # tests unitarios (node --test, sin dependencias)
-npm run coverage       # tests + cobertura
+npm start              # local server without cache → store at http://localhost:8000, viewer at /visor.html
+npm test               # unit tests (node --test, no dependencies)
+npm run coverage       # tests + coverage
 ```
 
-> Hace falta un servidor HTTP porque el navegador no permite hacer `fetch('catalog.json')` desde `file://`.
-> `npm start` usa `scripts/serve.py`: igual que `python3 -m http.server`, pero sin caché, así los cambios en stickers o en el catálogo se ven con solo recargar. `package.json` existe solo para tener estos atajos: no hay dependencias, no hace falta `npm install`.
+> An HTTP server is needed because the browser does not allow `fetch('catalog.json')` from `file://`.
+> `npm start` uses `scripts/serve.py`: the same as `python3 -m http.server`, but without cache, so changes to stickers or to the catalogue show up with just a reload. `package.json` exists only to provide these shortcuts: there are no dependencies, so `npm install` is not needed.
 
-Con `?debug` en la URL del visor (`http://localhost:8000/visor.html?debug`) se dibuja el área de impresión en rojo, para calibrarla.
+With `?debug` in the viewer URL (`http://localhost:8000/visor.html?debug`) the print area is drawn in red, to calibrate it.
 
-### Agregar una remera a una serie
+### Add a T-shirt to a series
 
-1. Copiá la imagen a `designs/stickers/`.
-2. Agregá una línea en `items` de la serie:
+1. Copy the image to `designs/stickers/`.
+2. Add a line to the series `items`:
    ```json
    { "image": "designs/stickers/mostro-hodl-512.png", "text": "HODL" }
    ```
-3. Recargá la página.
+3. Reload the page.
 
-### Agregar un diseño completo (como invaders)
+### Add a full design (like invaders)
 
-1. Copiá el PNG con fondo transparente a `designs/`.
-2. Agregá una entrada en `designs`:
+1. Copy the PNG with a transparent background to `designs/`.
+2. Add an entry to `designs`:
    ```json
    { "id": "mostro-invaders", "name": "Mostro Invaders", "image": "designs/invaders-design.png" }
    ```
 
-### Cambiar la fuente de una serie
+### Change the font of a series
 
-1. Copiá el archivo de la fuente (`.ttf`, `.otf`, `.woff` o `.woff2`) a `assets/fonts/`.
-2. Cambiá **una línea**: `"font": "assets/fonts/OtraFuente.ttf"` en el `style` de la serie.
+1. Copy the font file (`.ttf`, `.otf`, `.woff` or `.woff2`) to `assets/fonts/`.
+2. Change **one line**: `"font": "assets/fonts/OtraFuente.ttf"` in the `style` of the series.
 
-La fuente se carga sola a partir del archivo; no hay que declararla en otro lado.
+The font loads by itself from the file; it does not have to be declared anywhere else.
 
 ---
 
-## 3. Estructura de archivos
+## 3. File structure
 
 ```
 tshirts/
-├── index.html                  tienda: colección
-├── producto.html               tienda: una remera (color, talle, carrito, comprar)
-├── checkout.html               tienda: resumen, datos de envío y pago Lightning
-├── visor.html                  visor: todas las remeras, en cualquier color
-├── css/                        base.css (colores y botones), store.css, viewer.css
-├── catalog.json                ← lo único que se edita: remeras, precios, talles, pago
-├── package.json                atajos npm start / test / coverage (sin dependencias)
+├── index.html                  store: collection
+├── producto.html               store: one T-shirt (color, size, cart, buy)
+├── checkout.html               store: summary, shipping details and Lightning payment
+├── visor.html                  viewer: all the T-shirts, in any color
+├── css/                        base.css (colors and buttons), store.css, viewer.css
+├── catalog.json                ← the only file you edit: T-shirts, prices, sizes, payment
+├── package.json                npm shortcuts start / test / coverage (no dependencies)
 ├── src/
-│   ├── render.js               compone una remera: color + diseño + texto
-│   ├── shirt.js                prepara la base y la pinta de un color (canvas)
-│   ├── shading.js              mapas de sombras y brillos (puro)
-│   ├── catalog.js              valida y normaliza catalog.json (puro)
-│   ├── layouts.js              posición de imagen y texto (puro)
-│   ├── text.js                 corte de líneas y tamaño de letra (puro)
-│   ├── color.js                hex, luminancia, color de texto automático (puro)
-│   ├── loader.js               carga catálogo, fuentes e imágenes (visor y tienda)
-│   ├── dom.js                  el() / svgEl(): DOM sin innerHTML
-│   ├── i18n.js                 idioma de la página y traducciones de catalog.json (puro)
-│   ├── viewer/                 visor: app.js, ui.js, state.js, strings.js
-│   ├── store/                  tienda (ver §10.2)
-│   └── vendor/                 nostr-tools y qrcode-generator ya armados (ver README ahí)
+│   ├── render.js               composes a T-shirt: color + design + text
+│   ├── shirt.js                prepares the base and paints it a color (canvas)
+│   ├── shading.js              shadow and highlight maps (pure)
+│   ├── catalog.js              validates and normalizes catalog.json (pure)
+│   ├── layouts.js              position of image and text (pure)
+│   ├── text.js                 line breaking and font size (pure)
+│   ├── color.js                hex, luminance, automatic text color (pure)
+│   ├── loader.js               loads catalogue, fonts and images (viewer and store)
+│   ├── dom.js                  el() / svgEl(): DOM without innerHTML
+│   ├── i18n.js                 page language and catalog.json translations (pure)
+│   ├── viewer/                 viewer: app.js, ui.js, state.js, strings.js
+│   ├── store/                  store (see §10.2)
+│   └── vendor/                 prebuilt nostr-tools and qrcode-generator (see the README there)
 ├── scripts/
-│   ├── serve.py                servidor local sin caché
-│   └── vendor/                 receta reproducible de src/vendor/
-├── tests/                      un *.test.js por cada módulo puro (tests/store/, tests/viewer/)
+│   ├── serve.py                local server without cache
+│   └── vendor/                 reproducible recipe for src/vendor/
+├── tests/                      one *.test.js per pure module (tests/store/, tests/viewer/)
 ├── assets/
-│   ├── shirts/t-shirt.png      remera base (negra, fondo transparente)
-│   └── fonts/                  fuentes de los mensajes + su licencia
+│   ├── shirts/t-shirt.png      base T-shirt (black, transparent background)
+│   └── fonts/                  fonts for the messages + their license
 ├── designs/
-│   ├── invaders-design.png     diseños completos
-│   ├── stickers/               imágenes de Mostro para las series
-│   └── characters/             arte fuente de los personajes (mostro, serbero, …)
+│   ├── invaders-design.png     full designs
+│   ├── stickers/               Mostro images for the series
+│   └── characters/             source art of the characters (mostro, serbero, …)
 └── docs/
     ├── SPEC.md
-    └── references/             mockups de ejemplo (t-shirt-1.png, t-shirt-2.png)
+    └── references/             example mockups (t-shirt-1.png, t-shirt-2.png)
 ```
 
-Usa ES modules nativos (`<script type="module">`), sin bundler.
-Los módulos marcados *puro* no tocan el DOM, así que se testean con Node y la tienda los reusa sin cambios.
+It uses native ES modules (`<script type="module">`), with no bundler.
+The modules marked *pure* do not touch the DOM, so they are tested with Node and the store reuses them unchanged.
 
 ---
 
-## 4. Formato de `catalog.json`
+## 4. `catalog.json` format
 
 ```json
 {
@@ -123,9 +123,9 @@ Los módulos marcados *puro* no tocan el DOM, así que se testean con Node y la 
   },
 
   "colors": [
-    { "id": "black",  "name": "Negro",       "hex": "#1a1a1a" },
-    { "id": "white",  "name": "Blanco",      "hex": "#f0f0ec" },
-    { "id": "red",    "name": "Rojo",        "hex": "#c81e28" }
+    { "id": "black",  "name": { "en": "Black", "es": "Negro" },  "hex": "#1a1a1a" },
+    { "id": "white",  "name": { "en": "White", "es": "Blanco" }, "hex": "#f0f0ec" },
+    { "id": "red",    "name": { "en": "Red", "es": "Rojo" },     "hex": "#c81e28" }
   ],
 
   "designs": [
@@ -140,7 +140,7 @@ Los módulos marcados *puro* no tocan el DOM, así que se testean con Node y la 
   "series": [
     {
       "id": "mostro-quotes",
-      "name": "Mostro dice…",
+      "name": { "en": "Mostro says…", "es": "Mostro dice…" },
       "style": {
         "font": "assets/fonts/LuckiestGuy-Regular.ttf",
         "textColor": "auto",
@@ -157,156 +157,158 @@ Los módulos marcados *puro* no tocan el DOM, así que se testean con Node y la 
 }
 ```
 
-### Campos
+Texts the buyer sees can be `{ "en": …, "es": … }` (see §10.8); a text that reads the same in both languages, such as the quotes on the shirts, stays a plain string.
 
-| Campo | Obligatorio | Descripción |
+### Fields
+
+| Field | Required | Description |
 |---|---|---|
-| `base.image` | sí | PNG de la remera con fondo transparente. Se usa su forma (canal alfa) y sus pliegues. |
-| `base.printArea` | sí | Rectángulo de impresión en píxeles de la imagen base. Todo diseño se ubica dentro de este rectángulo. |
-| `base.shading` | no | Ajuste fino del sombreado (ver §5). |
-| `colors[]` | sí | Colores de remera del selector. `id` único y estable, `hex` en formato `#rrggbb`. |
-| `designs[]` | no | Diseños completos: una imagen que ocupa el área de impresión. `id` obligatorio. |
-| `designs[].colors` | no | Colores **recomendados**. Si el color elegido no está en la lista, la tarjeta muestra "no recomendado", pero la remera igual se ve. |
-| `series[]` | no | Grupos de remeras del mismo tipo (imagen + mensaje) que comparten un `style`. |
-| `series[].style` | no | Estilo común de la serie (tabla de abajo). |
-| `series[].items[]` | sí | Una remera por ítem: `image` (obligatorio), `text`, y opcionalmente `id`, `name`, `colors` y `style` (pisa valores del estilo de la serie). |
+| `base.image` | yes | PNG of the T-shirt with a transparent background. Its shape (alpha channel) and its folds are used. |
+| `base.printArea` | yes | Print rectangle, in pixels of the base image. Every design is placed inside this rectangle. |
+| `base.shading` | no | Fine adjustment of the shading (see §5). |
+| `colors[]` | yes | T-shirt colors of the selector. `id` unique and stable, `hex` in `#rrggbb` format. |
+| `designs[]` | no | Full designs: an image that fills the print area. `id` required. |
+| `designs[].colors` | no | **Recommended** colors. If the chosen color is not in the list, the card shows a "not recommended" badge, but the T-shirt is still displayed. |
+| `series[]` | no | Groups of T-shirts of the same type (image + message) that share a `style`. |
+| `series[].style` | no | Common style of the series (table below). |
+| `series[].items[]` | yes | One T-shirt per item: `image` (required), `text`, and optionally `id`, `name`, `colors` and `style` (overrides values of the series style). |
 
-### Estilo de una serie (`style`)
+### Style of a series (`style`)
 
-| Clave | Default | Descripción |
+| Key | Default | Description |
 |---|---|---|
-| `font` | `sans-serif` | Ruta a un archivo de fuente o nombre de una fuente del sistema. |
-| `textColor` | `auto` | `auto` (blanco o negro según el contraste con la remera) o un hex fijo. |
-| `uppercase` | `true` | Pasa el texto a mayúsculas. |
-| `imageWidth` | `0.6` | Ancho de la imagen como fracción del área de impresión. |
-| `textPosition` | `below` | `below` o `above` de la imagen. |
-| `gap` | `24` | Separación en px entre la imagen y el texto. |
-| `maxLines` | `2` | Máximo de líneas del mensaje. |
-| `maxFontSize` / `minFontSize` | `96` / `28` | Rango en el que se ajusta el tamaño de letra. |
-| `lineHeight` | `1.05` | Interlineado, como múltiplo del tamaño de letra. |
+| `font` | `sans-serif` | Path to a font file or name of a system font. |
+| `textColor` | `auto` | `auto` (white or black depending on the contrast with the T-shirt) or a fixed hex. |
+| `uppercase` | `true` | Turns the text into uppercase. |
+| `imageWidth` | `0.6` | Width of the image as a fraction of the print area. |
+| `textPosition` | `below` | `below` or `above` the image. |
+| `gap` | `24` | Gap in px between the image and the text. |
+| `maxLines` | `2` | Maximum number of lines of the message. |
+| `maxFontSize` / `minFontSize` | `96` / `28` | Range in which the font size is adjusted. |
+| `lineHeight` | `1.05` | Line spacing, as a multiple of the font size. |
 
-### Reglas de normalización
+### Normalization rules
 
-- **IDs automáticos:** los ítems de una serie pueden omitir `id`. Se genera como `{serie.id}-{slug(text)}`, por ejemplo `mostro-quotes-love-at-first-sat`. Si no hay texto, se usa el nombre del archivo.
-- **Nombre automático:** si falta `name`, se usa el `text`.
-- **Saltos de línea manuales:** `\n` en `text` fuerza dónde corta la línea.
-- **Herencia del estilo:** defaults del sistema → `series.style` → `item.style`.
-- **Campos desconocidos se ignoran.** Así se pueden agregar `price`, `sizes`, etc. (§10) sin romper nada.
-- **Rutas:** relativas a la raíz del proyecto.
+- **Automatic IDs:** the items of a series may omit `id`. It is generated as `{serie.id}-{slug(text)}`, for example `mostro-quotes-love-at-first-sat`. If there is no text, the file name is used.
+- **Automatic name:** if `name` is missing, the `text` is used.
+- **Manual line breaks:** `\n` in `text` forces where the line breaks.
+- **Style inheritance:** system defaults → `series.style` → `item.style`.
+- **Unknown fields are ignored.** This way `price`, `sizes`, etc. (§10) can be added without breaking anything.
+- **Paths:** relative to the project root.
 
-### Validación (al cargar)
+### Validation (on load)
 
-- Si el JSON está mal formado o falta la remera base, se muestra un error y no se dibuja nada.
-- IDs repetidos, hex inválidos, ítems sin `image` o colores recomendados inexistentes generan un aviso en un banner. Los ítems válidos se muestran igual.
-- Si una imagen o una fuente no carga, esa tarjeta muestra el problema en lugar de romper la galería.
+- If the JSON is malformed or the base T-shirt is missing, an error is shown and nothing is drawn.
+- Repeated IDs, invalid hex values, items without `image` or recommended colors that do not exist produce a warning in a banner. Valid items are still shown.
+- If an image or a font does not load, that card shows the problem instead of breaking the gallery.
 
 ---
 
-## 5. Cómo se pinta la remera de otro color
+## 5. How the T-shirt is painted in another color
 
-La remera base es **negra**, así que no alcanza con multiplicar un color encima (cualquier color multiplicado por negro da negro).
-La técnica fue validada con un prototipo en 6 colores, y conserva bien los pliegues y la caída de la tela.
+The base T-shirt is **black**, so multiplying a color on top is not enough (any color multiplied by black gives black).
+The technique was validated with a prototype in 6 colors, and it keeps the folds and the drape of the fabric well.
 
-**Preparación** (una sola vez al cargar):
+**Preparation** (once, on load):
 
-1. Calcular la luminancia `L` de cada píxel opaco de la base y sus percentiles: p1 = `LO`, p50 = `MED`, p99 = `HI`. En la base actual: LO≈7, MED≈19, HI≈31.
-2. Desenfocar `L` con un *box blur* de radio `blur` (≈ 7 px) para quitar la textura ruidosa del tejido. Los píxeles transparentes se rellenan antes con `MED`, para que el borde de la remera no se oscurezca.
-3. **Mapa de sombras:** `shadowFloor + (1 - shadowFloor) · norm(L, LO, HI)`. Es un gris claro, más oscuro en los pliegues.
-4. **Mapa de brillos:** `highlight · norm(L, MED, HI)`. Es negro, con luz solo donde la tela brilla.
+1. Compute the luminance `L` of each opaque pixel of the base and its percentiles: p1 = `LO`, p50 = `MED`, p99 = `HI`. In the current base: LO≈7, MED≈19, HI≈31.
+2. Blur `L` with a *box blur* of radius `blur` (≈ 7 px) to remove the noisy texture of the weave. Transparent pixels are filled with `MED` beforehand, so the edge of the T-shirt does not get darker.
+3. **Shadow map:** `shadowFloor + (1 - shadowFloor) · norm(L, LO, HI)`. It is a light gray, darker in the folds.
+4. **Highlight map:** `highlight · norm(L, MED, HI)`. It is black, with light only where the fabric shines.
 
-**Pintado** (cada vez que cambia el color):
+**Painting** (every time the color changes):
 
-1. Rellenar con el color elegido.
-2. `multiply` con el mapa de sombras.
-3. `screen` con el mapa de brillos (para que los pliegues se vean también en colores oscuros).
-4. `destination-in` con la base (su alfa recorta la silueta).
-5. Dibujar el diseño según el layout.
+1. Fill with the chosen color.
+2. `multiply` with the shadow map.
+3. `screen` with the highlight map (so the folds are visible in dark colors too).
+4. `destination-in` with the base (its alpha cuts out the silhouette).
+5. Draw the design according to the layout.
 
-Si en el futuro se cambia la remera base (por ejemplo, una blanca de mejor calidad), el algoritmo sigue funcionando porque normaliza por percentiles.
+If the base T-shirt is changed in the future (for example, a better quality white one), the algorithm keeps working because it normalizes by percentiles.
 
 ---
 
 ## 6. Layouts
 
-### `image` (diseños completos)
+### `image` (full designs)
 
-La imagen se escala con *contain* dentro de `printArea`, centrada horizontalmente y alineada arriba, como en las referencias.
+The image is scaled with *contain* inside `printArea`, centered horizontally and aligned to the top, as in the references.
 
 ### `image-text` (series)
 
-- La imagen ocupa `imageWidth × printArea.width`, como máximo el 75 % del alto del área, y va centrada.
-- El texto va debajo o arriba, separado por `gap`.
-- **Ajuste automático:** el tamaño baja de 2 en 2 desde `maxFontSize` hasta que el texto entra en `maxLines` líneas y en el alto disponible. Las líneas se **balancean** (por ejemplo "LOVE AT / FIRST SAT" en vez de "LOVE AT FIRST / SAT"). Si con `minFontSize` igual no entra, se dibuja igual y la tarjeta avisa "texto muy largo".
-- **Color `auto`:** se elige blanco o casi negro, el que tenga más contraste (WCAG) con el color de la remera.
+- The image takes `imageWidth × printArea.width`, at most 75 % of the height of the area, and is centered.
+- The text goes below or above, separated by `gap`.
+- **Automatic fit:** the size goes down in steps of 2 from `maxFontSize` until the text fits in `maxLines` lines and in the available height. The lines are **balanced** (for example "LOVE AT / FIRST SAT" instead of "LOVE AT FIRST / SAT"). If it still does not fit at `minFontSize`, it is drawn anyway and the card shows a "text too long" badge.
+- **`auto` color:** white or almost black is chosen, whichever has more contrast (WCAG) with the T-shirt color.
 
 ---
 
-## 7. Interfaz
+## 7. Interface
 
-- **Selector de color global:** un círculo por cada color del JSON, más un selector de color libre. Al cambiarlo se redibujan todas las tarjetas.
-- **Filtros:** "Todas", "Diseños" y una pestaña por serie.
-- **Galería:** una tarjeta por remera, con su nombre y, si corresponde, las marcas "no recomendado" o "texto muy largo".
-- **Detalle:** al hacer clic se abre la remera a resolución completa (1199×1312), con el selector de color y el botón **Descargar PNG**, que baja `{id}-{color}.png`.
-- **URL compartible:** el estado vive en el hash, por ejemplo `#color=red&shirt=mostro-quotes-love-at-first-sat`.
-- **Responsive:** la grilla se adapta al ancho y queda en 2 columnas en el celular.
-
----
-
-## 8. Calidad y tests
-
-- **Unit tests (`npm test`):** cubren todos los módulos puros: `catalog`, `text`, `layouts`, `color`, `shading` y `state`. La medición de texto se inyecta, así se testea sin canvas.
-- **Cobertura (`npm run coverage`):** objetivo ≥ 80 % en los módulos puros. Los módulos de DOM/canvas (`app`, `ui`, `render`, `shirt`) se verifican en el navegador.
-- **Verificación visual:** se revisan todos los colores, los dos layouts, la descarga y el hash de la URL.
-- **E2E (Playwright):** queda para cuando exista la tienda, porque recién ahí hay un flujo crítico (compra) que lo justifica.
+- **Global color selector:** one circle for each color in the JSON, plus a free color picker. Changing it redraws all the cards.
+- **Filters:** an "all" filter, a "designs" filter and one tab per series.
+- **Gallery:** one card per T-shirt, with its name and, where applicable, the "not recommended" or "text too long" badges.
+- **Detail:** clicking opens the T-shirt at full resolution (1199×1312), with the color selector and a **download PNG** button, which saves `{id}-{color}.png`.
+- **Shareable URL:** the state lives in the hash, for example `#color=red&shirt=mostro-quotes-love-at-first-sat`.
+- **Responsive:** the grid adapts to the width and ends up with 2 columns on a phone.
 
 ---
 
-## 9. Plan de implementación
+## 8. Quality and tests
 
-| Fase | Entregable | Verificación |
+- **Unit tests (`npm test`):** they cover all the pure modules: `catalog`, `text`, `layouts`, `color`, `shading` and `state`. Text measurement is injected, so it is tested without a canvas.
+- **Coverage (`npm run coverage`):** target ≥ 80 % in the pure modules. The DOM/canvas modules (`app`, `ui`, `render`, `shirt`) are verified in the browser.
+- **Visual verification:** all the colors, both layouts, the download and the URL hash are checked.
+- **E2E (Playwright):** left for when the store exists, because only then is there a critical flow (purchase) that justifies it.
+
+---
+
+## 9. Implementation plan
+
+| Phase | Deliverable | Verification |
 |---|---|---|
-| 1 | Módulos puros con tests (TDD) | `npm test` en verde, cobertura ≥ 80 % |
-| 2 | `shirt.js` + `render.js`: color de remera, layouts, fuentes | visual contra el prototipo y las referencias |
-| 3 | UI: galería, filtros, color libre, detalle, descarga, hash, `?debug` | navegador (desktop y móvil) |
-| 4 | Calibrar `printArea` y `shading` | comparación con `docs/references/` |
+| 1 | Pure modules with tests (TDD) | `npm test` green, coverage ≥ 80 % |
+| 2 | `shirt.js` + `render.js`: T-shirt color, layouts, fonts | visual, against the prototype and the references |
+| 3 | UI: gallery, filters, free color, detail, download, hash, `?debug` | browser (desktop and mobile) |
+| 4 | Calibrate `printArea` and `shading` | comparison with `docs/references/` |
 
 ---
 
-## 10. La tienda (`store.mostro.network`)
+## 10. The store (`store.mostro.network`)
 
-Mismo catálogo y mismo render que el visor. Todo corre en el navegador: no hay backend.
+Same catalogue and same render as the viewer. Everything runs in the browser: there is no backend.
 
-### 10.1 Recorrido
+### 10.1 Flow
 
-| Página | Qué hace |
+| Page | What it does |
 |---|---|
-| `index.html` | Colección, una sección por serie. Cada tarjeta muestra la remera en su color por defecto, el nombre, el precio y los colores disponibles. |
-| `producto.html?id=…&color=…&talle=…` | Igual que kinoto.com.ar/item/…: color (círculos), talle (lista) más **Guía de talles** (tabla de `store.sizes`) y precio. **Agregar al carrito** muestra cuántas hay de esa variante, por ejemplo "(1)". **Comprar** la agrega y va al checkout. Debajo, los acordeones de `store.details` y "Te puede interesar". La URL guarda color y talle. |
-| Carrito | El botón aparece arriba a la derecha cuando hay algo, con la cantidad. El panel "Tu carrito" muestra cada línea con color, talle, − cantidad +, precio, total de la línea (si hay más de una) y **Sacar del carrito**. Abajo: subtotal, envío (a coordinar), total, **Checkout** y **Vaciar carrito**. Se guarda en `localStorage` (`mostro-store:cart`) y se sincroniza entre pestañas. |
-| `checkout.html` | Resumen del pedido, **¿Dónde querés recibir tu pedido?** (calle, número, piso, depto, código postal, localidad, provincia), instrucciones (hasta 500 caracteres) e información personal (nombre, apellido, email, teléfono). Los datos se guardan solo en esa pestaña (`sessionStorage`, `mostro-store:checkout`), así sobreviven a una recarga. Se borran al cerrarla, al terminar el pedido o al tocar **Limpiar datos guardados**. A la derecha, el método de pago: Lightning. |
+| `index.html` | Collection, one section per series. Each card shows the T-shirt in its default color, the name, the price and the available colors. |
+| `producto.html?id=…&color=…&talle=…` | Like kinoto.com.ar/item/…: color (circles), size (list) plus **Size guide** (table from `store.sizes`) and price. **Add to cart** shows how many of that variant are in the cart, for example "(1)". **Buy now** adds it and goes to checkout. Below, the accordions from `store.details` and "You may also like". The URL stores color and size. |
+| Cart | The button appears at the top right when the cart is not empty, with the quantity. The "Your cart" panel shows each line with color, size, − quantity +, price, line total (if there is more than one) and **Remove from cart**. At the bottom: subtotal, shipping (to be arranged), total, **Checkout** and **Empty cart**. It is saved in `localStorage` (`mostro-store:cart`) and synchronized between tabs. |
+| `checkout.html` | Order summary, **Where should we deliver your order?** (street, number, floor, apartment, postal code, city, province), instructions (up to 500 characters) and personal information (first name, last name, email, phone). The data is saved only in that tab (`sessionStorage`, `mostro-store:checkout`), so it survives a reload. It is deleted when the tab is closed, when the order is finished or when **Clear saved details** is tapped. On the right, the payment method: Lightning. |
 
-### 10.2 Módulos (`src/store/`)
+### 10.2 Modules (`src/store/`)
 
-| Puros (con tests) | Para qué |
+| Pure (with tests) | What for |
 |---|---|
-| `config.js` | Valida la sección `store` de `catalog.json`. |
-| `products.js` | Remeras publicadas, precio final, colores, relacionadas, secciones. |
-| `cart.js`, `cart-store.js`, `persist.js` | Carrito inmutable, guardado y sincronización; `localStorage` sin excepciones. |
-| `money.js` | Formato por idioma (`$30.000` en español, `ARS 30,000` en inglés) y sats, conversión ARS → sats, cotización de Yadio. |
-| `bolt11.js` | Decodifica facturas: monto, payment hash, vencimiento (con checksum). |
-| `lnurl.js` | LNURL-pay (LUD-06/12/16): pide la factura y verifica el monto exacto. |
-| `payment.js` | Espera el pago (polling), cuenta regresiva, prueba de pago con preimage. |
-| `order.js` | Número de pedido `MS-XXXXXX`, comentario del pago y textos del DM (siempre en español, con el idioma del comprador). |
-| `checkout-form.js` | Campos, validación (devuelve `required`, `tooLong` o `invalid`; el texto lo pone `strings`), provincias, datos guardados. |
-| `query.js` | URL de la página de producto. |
-| `qr.js` | QR con módulos redondeados y el logo de Mostro, basado en el de donate. Tiene ajustes para que decodifique en todas las versiones. |
-| `nostr-order.js` | DM NIP-17 a la tienda: relays de la tienda (kind 10050) y publicación. |
-| `strings.js` | Textos de la tienda: `strings/en.js` y `strings/es.js`, con las mismas claves. |
-| `../i18n.js` | Qué idioma ver (`pickLanguage`) y `localizeJson`, que deja `catalog.json` en un idioma. |
+| `config.js` | Validates the `store` section of `catalog.json`. |
+| `products.js` | Published T-shirts, final price, colors, related items, sections. |
+| `cart.js`, `cart-store.js`, `persist.js` | Immutable cart, saving and synchronization; `localStorage` without exceptions. |
+| `money.js` | Format by language (`$30.000` in Spanish, `ARS 30,000` in English) and sats, ARS → sats conversion, Yadio exchange rate. |
+| `bolt11.js` | Decodes invoices: amount, payment hash, expiry (with checksum). |
+| `lnurl.js` | LNURL-pay (LUD-06/12/16): requests the invoice and verifies the exact amount. |
+| `payment.js` | Waits for the payment (polling), countdown, proof of payment with the preimage. |
+| `order.js` | Order number `MS-XXXXXX`, payment comment and DM texts (always in Spanish, with the buyer's language). |
+| `checkout-form.js` | Fields, validation (returns `required`, `tooLong` or `invalid`; the text comes from `strings`), provinces, saved data. |
+| `query.js` | URL of the product page. |
+| `qr.js` | QR with rounded modules and the Mostro logo, based on the one in donate. It has adjustments so it decodes in all versions. |
+| `nostr-order.js` | NIP-17 DM to the store: the store's relays (kind 10050) and publishing. |
+| `strings.js` | Store texts: `strings/en.js` and `strings/es.js`, with the same keys. |
+| `../i18n.js` | Which language to show (`pickLanguage`) and `localizeJson`, which leaves `catalog.json` in one language. |
 
-Los módulos de DOM son `boot.js`, `cart-ui.js`, `product-card.js`, `home-page.js`, `product-page.js`, `size-guide.js`, `checkout-fields.js`, `checkout-page.js`, `payment-ui.js`, `icons.js` y `lang.js` (idioma de la página, textos fijos y botón EN/ES).
+The DOM modules are `boot.js`, `cart-ui.js`, `product-card.js`, `home-page.js`, `product-page.js`, `size-guide.js`, `checkout-fields.js`, `checkout-page.js`, `payment-ui.js`, `icons.js` and `lang.js` (page language, fixed texts and the EN/ES button).
 
-### 10.3 Campos del catálogo
+### 10.3 Catalogue fields
 
 ```json
 {
@@ -324,47 +326,47 @@ Los módulos de DOM son `boot.js`, `cart-ui.js`, `product-card.js`, `home-page.j
 }
 ```
 
-- **`status`** puede ser `draft` (el default: solo se ve en el visor, con la etiqueta "Borrador") o `published` (está a la venta). Una serie se lo pasa a sus ítems, y cada ítem puede cambiarlo.
-- **`price`** es opcional por remera; si falta se usa `store.price`. La moneda es `store.currency`, y se convierte a sats al pagar.
-- **`sizes`** lleva `width` (ancho de axila a axila) y `length` (largo de hombro a ruedo), en cm, para la guía de talles. Si falta una medida, se muestra "—".
-- **`details`** son los acordeones de la página de producto.
-- **Textos traducidos:** cualquier texto puede ser `{ "en": …, "es": … }` (ver §10.8).
-- Si `lnAddress` o `nostr` son inválidos, las remeras se ven igual pero el checkout queda cerrado.
+- **`status`** can be `draft` (the default: only visible in the viewer, with a draft badge) or `published` (on sale). A series passes it down to its items, and each item can change it.
+- **`price`** is optional per T-shirt; if it is missing, `store.price` is used. The currency is `store.currency`, and it is converted to sats at payment time.
+- **`sizes`** carries `width` (armpit to armpit) and `length` (shoulder to hem), in cm, for the size guide. If a measurement is missing, "—" is shown.
+- **`details`** are the accordions of the product page.
+- **Translated texts:** any text can be `{ "en": …, "es": … }` (see §10.8).
+- If `lnAddress` or `nostr` are invalid, the T-shirts are still displayed but checkout stays closed.
 
-> ⚠️ Los ítems publicados tienen el `id` fijo (`mostro-quotes-love-at-first-sat`, …). Si cambiás un texto, el ID no cambia y los links y los carritos guardados siguen funcionando.
+> ⚠️ Published items have a fixed `id` (`mostro-quotes-love-at-first-sat`, …). If you change a text, the ID does not change, and saved links and carts keep working.
 
-### 10.4 Pago y pedido
+### 10.4 Payment and order
 
-1. **Cotización.** Se consulta `https://api.yadio.io/exrates/BTC` para el precio de 1 BTC en ARS. Los sats se calculan como `⌈ARS × 10⁸ / cotización⌉`.
-2. **Número de pedido.** `MS-` más 6 caracteres en base32 Crockford, sin I, L, O ni U.
-3. **Factura (LNURL-pay).** `GET https://pay.mostro.foundation/.well-known/lnurlp/store`, después `callback?amount=<msat>&comment=Pedido MS-… · store.mostro.network`. El comentario lleva solo el número de pedido, nunca datos personales. La factura se verifica:
-   - el callback tiene que estar en el mismo host que la LN address;
-   - la factura es de mainnet y por **exactamente** el monto pedido;
-   - su fecha tiene una diferencia de 10 minutos como máximo con la hora actual, y vence entre 1 minuto y 24 horas después;
-   - `verify` solo se acepta si está en el mismo origen que el callback.
-4. **Pedido cifrado (NIP-17).** El texto completo (remeras, total, cotización, payment hash, dirección y contacto) va como gift wrap (kind 1059) a `store.nostr.npub`.
-   - Lo firma una clave descartable creada para este checkout: el comprador no necesita Nostr.
-   - Se publica en los relays de DM de la tienda (su kind 10050, si existe) más `store.nostr.relays`.
-   - Hacen falta al menos 2 relays que lo acepten (o 1, si solo hay uno configurado). Si no, no se muestra la factura y el comprador puede reintentar.
-5. **QR.** Mismo estilo que donate, con botones para copiar, abrir la wallet y pagar con WebLN si hay extensión. Muestra la cuenta regresiva del vencimiento.
-6. **Confirmación.** Cada 3 s el navegador consulta `verify` (LUD-21) o, en LNbits, `GET /api/v1/payments/<hash>`. Con WebLN alcanza con `sha256(preimage) == payment hash`.
-   - Si fallan 3 consultas seguidas, la página avisa que no puede confirmar el pago y ofrece **"Ya pagué"**. Vale también si el endpoint respondía antes y dejó de hacerlo.
-   - Al tocarlo, se cierra el pedido y la tienda recibe "⚠️ … el comprador dice que ya pagó, verificá el pago en la billetera".
-7. **Pagado.** Se sacan del carrito las remeras compradas (lo que se haya agregado después, por ejemplo desde otra pestaña, queda), se borran los datos de envío, se muestra el número de pedido y se manda un segundo DM, "✅ Pedido … pagado", en la misma conversación.
+1. **Exchange rate.** `https://api.yadio.io/exrates/BTC` is queried for the price of 1 BTC in ARS. The sats are computed as `⌈ARS × 10⁸ / rate⌉`.
+2. **Order number.** `MS-` plus 6 characters in Crockford base32, without I, L, O or U.
+3. **Invoice (LNURL-pay).** `GET https://pay.mostro.foundation/.well-known/lnurlp/store`, then `callback?amount=<msat>&comment=Pedido MS-… · store.mostro.network`. The comment carries only the order number, never personal data. The invoice is verified:
+   - the callback must be on the same host as the LN address;
+   - the invoice is for mainnet and for **exactly** the requested amount;
+   - its timestamp differs from the current time by at most 10 minutes, and it expires between 1 minute and 24 hours later;
+   - `verify` is accepted only if it is on the same origin as the callback.
+4. **Encrypted order (NIP-17).** The full text (T-shirts, total, exchange rate, payment hash, address and contact) goes as a gift wrap (kind 1059) to `store.nostr.npub`.
+   - It is signed by a throwaway key created for this checkout: the buyer does not need Nostr.
+   - It is published to the store's DM relays (its kind 10050, if it exists) plus `store.nostr.relays`.
+   - At least 2 relays must accept it (or 1, if only one is configured). Otherwise the invoice is not shown and the buyer can retry.
+5. **QR.** Same style as donate, with buttons to copy, open the wallet and pay with WebLN if there is an extension. It shows the expiry countdown.
+6. **Confirmation.** Every 3 s the browser queries `verify` (LUD-21) or, on LNbits, `GET /api/v1/payments/<hash>`. With WebLN, `sha256(preimage) == payment hash` is enough.
+   - If 3 queries in a row fail, the page says it cannot confirm the payment and offers **I've paid**. This also applies if the endpoint used to respond and stopped.
+   - When it is tapped, the order is closed and the store receives "⚠️ … el comprador dice que ya pagó, verificá el pago en la billetera" (in Spanish: "the buyer says they already paid, check the payment in the wallet").
+7. **Paid.** The purchased T-shirts are removed from the cart (anything added afterwards, for example from another tab, stays), the shipping details are deleted, the order number is shown, and a second DM, "✅ Pedido … pagado" (Spanish for "Order … paid"), is sent in the same conversation.
 
-Casos borde:
+Edge cases:
 
-- **Factura vencida.** El comprador genera otra, que es un pedido nuevo. Si la última consulta falló, la página no dice "venció": le pide que no vuelva a pagar si ya pagó.
-- **"Cambiar mis datos".** Cancela la factura. Antes de descartarla se consulta su estado una última vez, por si se pagó justo antes.
-- **Cambio de carrito.** Si cambia el contenido mientras se prepara o se muestra la factura (también desde otra pestaña), se cancela. Cada paso del armado verifica que el intento siga vigente, así nunca se arma una factura para un carrito viejo.
+- **Expired invoice.** The buyer generates another one, which is a new order. If the last query failed, the page does not say the invoice expired: it asks the buyer not to pay again if they already paid.
+- **"Change my details".** It cancels the invoice. Before discarding it, its status is queried one last time, in case it was paid just before.
+- **Cart change.** If the contents change while the invoice is being prepared or shown (also from another tab), it is cancelled. Each step of the preparation checks that the attempt is still current, so an invoice is never built for an old cart.
 
-> La pantalla "¡Pago recibido!" es informativa. La fuente de verdad es la billetera: solo se despachan los pedidos cuyo pago aparece en LNbits con el comentario `Pedido MS-…`.
+> The "Payment received!" screen is informational. The source of truth is the wallet: only orders whose payment appears in LNbits with the comment `Pedido MS-…` are dispatched.
 
-### 10.5 Confirmación automática (ruta de Caddy)
+### 10.5 Automatic confirmation (Caddy route)
 
-LNbits responde `GET /api/v1/payments/<payment_hash>` **sin clave**, y en ese caso solo devuelve `{"paid": true|false}`. Su extensión LNURLp no ofrece LUD-21.
+LNbits answers `GET /api/v1/payments/<payment_hash>` **without a key**, and in that case it returns only `{"paid": true|false}`. Its LNURLp extension does not offer LUD-21.
 
-Desde el 4/11/2026, el Caddy de `pay.mostro.foundation` (servidor `lnbits`, `/etc/caddy/Caddyfile`) deja pasar esa única ruta además de las de LNURL. Solo acepta `GET` con un hash de 64 caracteres hexadecimales:
+Since 2026-11-04, the Caddy of `pay.mostro.foundation` (server `lnbits`, `/etc/caddy/Caddyfile`) lets that single route through, in addition to the LNURL ones. It accepts only `GET` with a hash of 64 hexadecimal characters:
 
 ```caddy
 	@paymentStatus {
@@ -376,57 +378,57 @@ Desde el 4/11/2026, el Caddy de `pay.mostro.foundation` (servidor `lnbits`, `/et
 	}
 ```
 
-Verificaciones del cambio:
+Checks of the change:
 
-- `/.well-known/lnurlp/*` sigue respondiendo.
-- Con un hash inexistente, la ruta devuelve el 404 JSON de LNbits, con `access-control-allow-origin: *`.
-- Con una factura real impaga devuelve `{"paid":false}`, también desde una página de la tienda con su CSP.
-- El resto de `/api` sigue devolviendo el 404 de Caddy.
+- `/.well-known/lnurlp/*` still responds.
+- With a nonexistent hash, the route returns the LNbits JSON 404, with `access-control-allow-origin: *`.
+- With a real unpaid invoice it returns `{"paid":false}`, also from a store page with its CSP.
+- The rest of `/api` still returns the Caddy 404.
 
-El backup quedó en `/etc/caddy/Caddyfile.bak-20261104-store-status`. No hace falta una API propia ni un macaroon: el navegador no maneja ninguna clave.
+The backup is at `/etc/caddy/Caddyfile.bak-20261104-store-status`. No API of our own and no macaroon are needed: the browser handles no key.
 
-### 10.6 Leer los pedidos
+### 10.6 Reading the orders
 
-- **Desarrollo:** la clave de una npub de prueba vive solo en la máquina de quien la creó (`.secrets/` está en `.gitignore`).
-  - Para tener la tuya, corré `node scripts/dev-nostr-key.mjs`. Guarda la clave en `.secrets/store-nostr-dev.txt` e imprime la npub.
-  - Poné esa npub en `store.nostr.npub`, solo en tu branch de pruebas.
-  - Importá `secret_hex` en un cliente con NIP-17 (0xchat, Amethyst, Coracle…) para leer los pedidos de prueba.
-- **Producción:** `store.nostr.npub` es la npub de la tienda: `npub1st0re749d5d02mwnf2c0vcj566p85y5wpnaz65llr8wt49cyp6kqe44n9m`.
-  - Los pedidos se leen entrando con su nsec en un cliente con NIP-17.
-  - Conviene que esa npub publique su kind 10050 con los relays de `store.nostr.relays`. Muchos clientes buscan los DMs solo ahí, y la tienda también publica los pedidos en esa lista.
-- **Conciliar:** el DM "Pedido MS-XXXXXX" con el pago en LNbits que tiene el mismo comentario y el mismo payment hash.
+- **Development:** the key of a test npub lives only on the machine of whoever created it (`.secrets/` is in `.gitignore`).
+  - To get your own, run `node scripts/dev-nostr-key.mjs`. It saves the key in `.secrets/store-nostr-dev.txt` and prints the npub.
+  - Put that npub in `store.nostr.npub`, only in your test branch.
+  - Import `secret_hex` into a client with NIP-17 (0xchat, Amethyst, Coracle…) to read the test orders.
+- **Production:** `store.nostr.npub` is the store's npub: `npub1st0re749d5d02mwnf2c0vcj566p85y5wpnaz65llr8wt49cyp6kqe44n9m`.
+  - The orders are read by signing in with its nsec in a client with NIP-17.
+  - That npub should publish its kind 10050 with the relays of `store.nostr.relays`. Many clients look for DMs only there, and the store also publishes the orders to that list.
+- **Reconcile:** match the "Pedido MS-XXXXXX" DM with the LNbits payment that has the same comment and the same payment hash.
 
-### 10.7 Seguridad y privacidad
+### 10.7 Security and privacy
 
-- **Sin HTML inyectado.** Todo el DOM se arma con `textContent`. Cada página tiene CSP (`script-src 'self'`, sin inline) y `referrer: no-referrer`.
-- **`connect-src` permite solo** `api.yadio.io`, `pay.mostro.foundation` y relays `wss:`. **Si cambia el dominio de la LN address, hay que agregarlo al CSP** de `index.html`, `producto.html` y `checkout.html`.
-- **Pedidos de red acotados.** Todos los pedidos a APIs tienen un timeout de 10 s y no mandan cookies ni referrer. Los relays de la tienda (kind 10050) se limitan a 6, y nunca son `localhost` ni IPs.
-- **Datos de envío.** Se guardan solo en la pestaña (`sessionStorage`), para no perderlos si se recarga la página. Se borran al cerrar la pestaña, al terminar el pedido o con "Limpiar datos guardados". Si la pestaña queda abierta más de 7 días, al recargar no se restauran y se borran. Nunca quedan en `localStorage`.
-- **Texto del DM.** Cada campo va en una sola línea, sin caracteres de control ni de dirección (bidi). Así el comprador no puede falsificar líneas como "✅ pagado".
-- **La billetera manda.** Un DM se puede falsificar, porque cualquiera puede escribirle a la npub. Antes de despachar:
-  1. buscá en LNbits el pago con ese payment hash (y el comentario `Pedido MS-…`);
-  2. verificá que esté cobrado;
-  3. verificá que el monto alcance para las remeras al precio del catálogo, con la cotización de ese momento.
-- **`src/vendor/`.** CI vuelve a armarlo con `scripts/vendor/build.sh` y falla si difiere de lo commiteado.
+- **No injected HTML.** The whole DOM is built with `textContent`. Every page has a CSP (`script-src 'self'`, no inline) and `referrer: no-referrer`.
+- **`connect-src` allows only** `api.yadio.io`, `pay.mostro.foundation` and `wss:` relays. **If the domain of the LN address changes, it must be added to the CSP** of `index.html`, `producto.html` and `checkout.html`.
+- **Bounded network requests.** All requests to APIs have a 10 s timeout and send no cookies or referrer. The store's relays (kind 10050) are limited to 6, and are never `localhost` or IPs.
+- **Shipping details.** They are saved only in the tab (`sessionStorage`), so they are not lost if the page is reloaded. They are deleted when the tab is closed, when the order is finished or with "Clear saved details". If the tab stays open for more than 7 days, they are not restored on reload and are deleted. They are never left in `localStorage`.
+- **DM text.** Each field goes on a single line, without control or direction (bidi) characters. This way the buyer cannot forge lines such as "✅ pagado" ("paid").
+- **The wallet rules.** A DM can be forged, because anyone can write to the npub. Before dispatching:
+  1. look up in LNbits the payment with that payment hash (and the comment `Pedido MS-…`);
+  2. verify that it has been collected;
+  3. verify that the amount covers the T-shirts at the catalogue price, with the exchange rate of that moment.
+- **`src/vendor/`.** CI rebuilds it with `scripts/vendor/build.sh` and fails if it differs from what is committed.
 
-### 10.8 Idiomas
+### 10.8 Languages
 
-- **Cuál se ve.** `pickLanguage` toma la elección guardada (`localStorage`, `mostro-store:lang`). Si no hay, el primer idioma de `navigator.languages` que sea `en` o `es` (`es-AR`, `es_AR` y `es-419` cuentan como `es`). Si no hay ninguno, inglés.
-- **Botón EN/ES.** Está en el header y muestra el otro idioma. Guarda la elección y recarga la página: el carrito (`localStorage`) y los datos del checkout (`sessionStorage`) sobreviven. En el checkout se deshabilita desde que se pide la factura, para que la recarga no la pierda, y sigue así en la confirmación, para no perder el número de pedido de la pantalla. Si el navegador no deja guardar, el botón no aparece.
-- **Textos de la tienda.** `src/store/strings/en.js` y `es.js`. `lang.js` exporta `T`, la tabla del idioma de la página. Un test compara la forma de las tablas (mismas claves, listas del mismo largo, funciones con los mismos argumentos) y que el inglés no tenga español.
-- **Textos fijos del HTML.** Llevan `data-i18n="clave"` para el texto o `data-i18n-attr="atributo:clave"` para atributos (`aria-label`, `content`). El HTML trae el inglés y `<html lang="en">`. `translatePage` cambia los textos y `lang`, y agrega la clase `i18n-ready`. Hasta entonces el CSS los oculta (`visibility: hidden`), así un visitante en español no los ve saltar desde el inglés.
-- **Catálogo.** `localizeJson(catalog, lang)` reemplaza cada `{ "en": …, "es": … }` por el texto del idioma, antes de validar. Si falta una traducción se usa el inglés, y si no, la otra. El visor usa siempre español.
-- **Precios.** Español: `$30.000`. Inglés: `ARS 30,000`, para que no se lean como dólares.
-- **Pedidos.** El DM a la tienda va siempre en español (`Pedido MS-…`, `$30.000`) y agrega `Idioma: inglés` o `Idioma: español`, para contestarle al comprador en su idioma. Los nombres de colores vienen en el idioma del comprador.
-- **Mensajes técnicos** (el "Detalle técnico" de un error: LNURL, factura, Yadio, relays) están en inglés en los dos idiomas.
+- **Which one is shown.** `pickLanguage` takes the saved choice (`localStorage`, `mostro-store:lang`). If there is none, the first language of `navigator.languages` that is `en` or `es` (`es-AR`, `es_AR` and `es-419` count as `es`). If there is none, English.
+- **EN/ES button.** It is in the header and shows the other language. It saves the choice and reloads the page: the cart (`localStorage`) and the checkout data (`sessionStorage`) survive. In checkout it is disabled from the moment the invoice is requested, so the reload does not lose it, and it stays that way on the confirmation screen, so the order number on screen is not lost. If the browser does not allow saving, the button does not appear.
+- **Store texts.** `src/store/strings/en.js` and `es.js`. `lang.js` exports `T`, the table of the page language. A test compares the shape of the tables (same keys, lists of the same length, functions with the same arguments) and checks that the English one has no Spanish.
+- **Fixed HTML texts.** They carry `data-i18n="key"` for the text or `data-i18n-attr="attribute:key"` for attributes (`aria-label`, `content`). The HTML ships in English with `<html lang="en">`. `translatePage` changes the texts and `lang`, and adds the class `i18n-ready`. Until then the CSS hides them (`visibility: hidden`), so a Spanish-speaking visitor does not see them jump from English.
+- **Catalogue.** `localizeJson(catalog, lang)` replaces each `{ "en": …, "es": … }` with the text in that language, before validating. If a translation is missing, English is used, and if that is missing too, the other one. The viewer always uses Spanish.
+- **Prices.** Spanish: `$30.000`. English: `ARS 30,000`, so they are not read as dollars.
+- **Orders.** The DM to the store is always in Spanish (`Pedido MS-…`, `$30.000`) and adds `Idioma: inglés` or `Idioma: español` ("Language: English" or "Language: Spanish"), so the store can answer the buyer in their language. Color names come in the buyer's language.
+- **Technical messages** (the "Technical detail" of an error: LNURL, invoice, Yadio, relays) are in English in both languages.
 
-### 10.9 Pendientes
+### 10.9 Pending
 
-- Medidas reales de cada talle: las de `catalog.json` son aproximadas.
-- Política y costo de envío (hoy dice "a coordinar").
-- Publicar el kind 10050 (relays de DM) desde la npub de la tienda.
-- Mockups pre-generados para SEO y vistas previas al compartir.
-- Endurecimiento opcional:
-  - una segunda fuente de cotización, para detectar un precio de Yadio anómalo;
-  - fijar la pubkey del nodo de la tienda y verificar la firma de la factura;
-  - fijar las GitHub Actions por SHA.
+- Real measurements for each size: the ones in `catalog.json` are approximate.
+- Shipping policy and cost (today it says "To be arranged").
+- Publish the kind 10050 (DM relays) from the store's npub.
+- Pre-generated mockups for SEO and share previews.
+- Optional hardening:
+  - a second exchange-rate source, to detect an anomalous Yadio price;
+  - pin the pubkey of the store's node and verify the invoice signature;
+  - pin the GitHub Actions by SHA.
