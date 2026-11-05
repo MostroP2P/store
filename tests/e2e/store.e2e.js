@@ -35,14 +35,14 @@ test('an English browser gets English; the switch moves to Spanish and remembers
   await page.waitForSelector('.product-card');
   assert.equal(await page.getAttribute('html', 'lang'), 'en');
   assert.equal(await page.textContent('h1'), 'Mostro T-shirts');
-  assert.equal(await page.textContent('.product-card .price-mono'), 'ARS\u00a030,000');
+  assert.equal(await page.textContent('.product-card .price-mono'), 'ARS\u00a060,000');
   assert.deepEqual(await page.locator('.section-title').allTextContents(), ['Designs', 'Mostro says…']);
 
   await Promise.all([page.waitForEvent('load'), page.click('#lang-switch')]);
   await page.waitForSelector('.product-card');
   assert.equal(await page.getAttribute('html', 'lang'), 'es');
   assert.equal(await page.textContent('h1'), 'Remeras Mostro');
-  assert.equal(await page.textContent('.product-card .price-mono'), '$30.000');
+  assert.equal(await page.textContent('.product-card .price-mono'), '$60.000');
 
   await page.goto(`${shop.url}/product.html?id=${INVADERS}`);
   await page.waitForSelector('#product:not([hidden])');
@@ -101,7 +101,7 @@ test('the cart panel: add, change quantities, remove, empty and go to checkout',
   await quantity.fill('5');
   await quantity.press('Enter');
   assert.equal(await page.textContent('#cart-count'), '5');
-  assert.match(await page.textContent('.cart-summary'), /Total: ARS\u00a0150,000/);
+  assert.match(await page.textContent('.cart-summary'), /Total: ARS\u00a0300,000/);
   // An emptied field is not "0": the line keeps its quantity
   await quantity.fill('');
   await quantity.press('Enter');

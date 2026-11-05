@@ -41,11 +41,11 @@ test('every product on sale gets a page of its own, with its preview tags', asyn
   assert.equal(metaContent(page, 'property', 'og:type'), 'product');
   assert.equal(metaContent(page, 'name', 'twitter:card'), 'summary_large_image');
   assert.equal(metaContent(page, 'name', 'description'), 'The Mostros invade the screen, arcade style.');
-  assert.match(page, /id="product-price">ARS 30,000</);
+  assert.match(page, /id="product-price">ARS 60,000</);
   const data = jsonLdOf(page);
   assert.equal(data['@type'], 'Product');
   assert.deepEqual(data.offers, {
-    '@type': 'Offer', price: '30000', priceCurrency: 'ARS', availability: 'https://schema.org/InStock', url: `${SITE_URL}/mostro-invaders.html`,
+    '@type': 'Offer', price: '60000', priceCurrency: 'ARS', availability: 'https://schema.org/InStock', url: `${SITE_URL}/mostro-invaders.html`,
   });
   assert.equal(isGeneratedProductPage(page), true);
   // The generic page stays out of search results; the collection is the site's entry

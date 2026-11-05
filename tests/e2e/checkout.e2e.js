@@ -56,8 +56,8 @@ test('paying with Lightning: the order reaches the store encrypted and the cart 
   await addToCart(page, shop.url, INVADERS, 2);
   await page.goto(`${shop.url}/checkout.html`);
   await page.waitForSelector('#pay-button');
-  assert.equal(await page.textContent('#summary-sats'), '≈ 60,000 sats');
-  assert.match(await page.textContent('#payment-body'), /≈ 60,000 sats.*ARS\u00a060,000 · 1 BTC = ARS\u00a0100,000,000 per Yadio/s);
+  assert.equal(await page.textContent('#summary-sats'), '≈ 120,000 sats');
+  assert.match(await page.textContent('#payment-body'), /≈ 120,000 sats.*ARS\u00a0120,000 · 1 BTC = ARS\u00a0100,000,000 per Yadio/s);
 
   // Paying with an empty form points at the first problem
   await page.click('#pay-button');
@@ -86,7 +86,7 @@ test('paying with Lightning: the order reaches the store encrypted and the cart 
 
   const id = await payAndWaitForInvoice(page);
   assert.equal(await page.isDisabled('#lang-switch'), true);
-  assert.equal(await page.textContent('#payment-status'), `Invoice ready for order ${id}: 60,000 sats.`);
+  assert.equal(await page.textContent('#payment-status'), `Invoice ready for order ${id}: 120,000 sats.`);
   assert.equal(await page.locator('#payment-body svg.qr').count(), 1);
   assert.match(await page.textContent('#payment-body'), /The invoice expires in (9:5\d|10:00)/);
   const [invoice] = shop.get('invoices');
@@ -112,10 +112,10 @@ test('paying with Lightning: the order reaches the store encrypted and the cart 
   const [order, paid] = shop.orders();
   assert.equal(order.subject, `Pedido ${id}`);
   assert.match(order.content, /Pendiente de pago/);
-  assert.match(order.content, /2 × Mostro Invaders — Black, talle L — \$60\.000/);
+  assert.match(order.content, /2 × Mostro Invaders — Black, talle L — \$120\.000/);
   assert.match(order.content, /Ana Pérez/);
   assert.match(order.content, /Idioma: inglés/);
-  assert.match(paid.content, new RegExp(`✅ Pedido ${id} pagado: 60\\.000 sats recibidos\\.`));
+  assert.match(paid.content, new RegExp(`✅ Pedido ${id} pagado: 120\\.000 sats recibidos\\.`));
 }));
 
 test('WebLN: the extension pays, and its preimage proves it', () => withShop({}, async (shop) => {
@@ -201,12 +201,12 @@ test('changing the cart while an invoice is open cancels it', () => withShop({},
   await page.waitForSelector('#pay-button');
   assert.equal(await page.textContent('#pay-hint'), 'Your cart changed: create a new invoice.');
   assert.equal(await page.isDisabled('#lang-switch'), false);
-  assert.equal(await page.textContent('#summary-total'), 'ARS\u00a060,000');
+  assert.equal(await page.textContent('#summary-total'), 'ARS\u00a0120,000');
   // With no invoice open, a cart change just updates the summary
   await page.click('#cart-button');
   await page.click(`button[aria-label="One more ${NAME}"]`);
   await page.click('dialog.cart-panel .icon-button');
-  assert.equal(await page.textContent('#summary-total'), 'ARS\u00a090,000');
+  assert.equal(await page.textContent('#summary-total'), 'ARS\u00a0180,000');
 }));
 
 test('Yadio down, an LN server that refuses and relays that reject: each says what failed', () => withShop({}, async (shop) => {

@@ -33,13 +33,13 @@ const problems = (page) => page.locator('#problems li').allTextContents();
 
 test('every shirt, filtered by group and painted in any color', () => withViewer({}, async (page) => {
   await page.waitForSelector('.card');
-  assert.equal(await visibleCards(page), 9);
+  assert.equal(await visibleCards(page), 10);
   await page.click('#filters .filter:text("Designs")');
   assert.equal(await visibleCards(page), 1);
   await page.click('#filters .filter:text("Mostro says…")');
-  assert.equal(await visibleCards(page), 8);
-  await page.click('#filters .filter:text("All")');
   assert.equal(await visibleCards(page), 9);
+  await page.click('#filters .filter:text("All")');
+  assert.equal(await visibleCards(page), 10);
 
   await page.click('#swatches .swatch[title="White"]');
   assert.match(page.url(), /color=white/);
