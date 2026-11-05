@@ -88,7 +88,7 @@ jobs:
       - name: Collect site files
         run: |
           mkdir _site
-          cp -r *.html robots.txt sitemap.xml css catalog.json src assets designs _site/
+          cp -r *.html favicon.ico apple-touch-icon.png robots.txt sitemap.xml css catalog.json src assets designs _site/
 
       - name: Draw the link preview images
         run: npm run og-images -- _site
