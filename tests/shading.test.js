@@ -58,3 +58,11 @@ test('buildShadingMaps treats transparent pixels as the median tone', () => {
   const { shade } = buildShadingMaps(data, 4, 1, { blur: 0, shadowFloor: 0.5, highlight: 0.2 });
   assert.equal(channel(shade, 3), channel(shade, 1));
 });
+
+test('a shirt with no bright spots gets no highlight', () => {
+  // 98 pixels at one tone and 2 darker ones: the median is also the 99th percentile
+  const tones = [...new Array(98).fill(200), 50, 50];
+  const rgba = new Uint8ClampedArray(tones.flatMap((t) => [t, t, t, 255]));
+  const { highlight } = buildShadingMaps(rgba, 10, 10, { blur: 0, shadowFloor: 0.6, highlight: 0.2 });
+  assert.ok(highlight.every((value, i) => i % 4 === 3 || value === 0));
+});

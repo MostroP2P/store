@@ -20,8 +20,9 @@ const wordsToInt = (words) => words.reduce((value, word) => value * 32 + word, 0
 /** 5-bit words → hex bytes, dropping the padding bits at the end. */
 function wordsToHex(words) {
   const bits = words.map((w) => w.toString(2).padStart(5, '0')).join('');
-  const bytes = bits.slice(0, bits.length - (bits.length % 8)).match(/.{8}/g) ?? [];
-  return bytes.map((byte) => parseInt(byte, 2).toString(16).padStart(2, '0')).join('');
+  return Array.from({ length: Math.floor(bits.length / 8) }, (_, i) => bits.slice(i * 8, i * 8 + 8))
+    .map((byte) => parseInt(byte, 2).toString(16).padStart(2, '0'))
+    .join('');
 }
 
 /** Tagged fields → Map(tag → data words), keeping the first valid one of each tag. */

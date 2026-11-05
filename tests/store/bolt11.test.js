@@ -2,6 +2,24 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { decodeInvoice, hrpAmountMsat } from '../../src/store/bolt11.js';
 
+// Builds bech32 strings with a valid checksum, to reach the checks that come after it (BIP-173)
+const CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+const GENERATOR = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3];
+const polymod = (values) => values.reduce((chk, value) => {
+  const top = chk >>> 25;
+  const next = ((chk & 0x1ffffff) << 5) ^ value;
+  return GENERATOR.reduce((acc, gen, i) => (((top >>> i) & 1) ? acc ^ gen : acc), next);
+}, 1);
+const hrpExpand = (hrp) => [...[...hrp].map((c) => c.charCodeAt(0) >> 5), 0, ...[...hrp].map((c) => c.charCodeAt(0) & 31)];
+function bech32(hrp, words) {
+  const mod = polymod([...hrpExpand(hrp), ...words, 0, 0, 0, 0, 0, 0]) ^ 1;
+  const checksum = [0, 1, 2, 3, 4, 5].map((i) => (mod >>> (5 * (5 - i))) & 31);
+  return `${hrp}1${[...words, ...checksum].map((w) => CHARSET[w]).join('')}`;
+}
+const TIMESTAMP = new Array(7).fill(0);
+const SIGNATURE = new Array(104).fill(0);
+const invoiceWith = (tagged) => bech32('lnbc', [...TIMESTAMP, ...tagged, ...SIGNATURE]);
+
 // Test vectors from BOLT #11 (11-payment-encoding.md, "Examples")
 const SPEC_HASH = '0001020304050607080900010203040506070809000102030405060708090102';
 const SPEC_TIMESTAMP = 1496314658;
@@ -80,4 +98,21 @@ test('rejects mixed-case invoices (BIP-173) but accepts any case for the lightni
   assert.throws(() => decodeInvoice(mixed), /mixed-case/);
   assert.equal(decodeInvoice(`lightning:${COFFEE.toUpperCase()}`).msat, 250_000_000);
   assert.equal(decodeInvoice(`Lightning:${COFFEE}`).msat, 250_000_000);
+});
+
+test('rejects an invoice too short to hold a timestamp and a signature', () => {
+  assert.throws(() => decodeInvoice(bech32('lnbc', new Array(50).fill(0))), /too short/);
+});
+
+test('rejects an invoice without a payment hash', () => {
+  assert.throws(() => decodeInvoice(invoiceWith([])), /without payment hash/);
+});
+
+test('rejects tagged fields cut short, in their header or in their data', () => {
+  assert.throws(() => decodeInvoice(invoiceWith([1, 1])), /truncated tagged field/);
+  assert.throws(() => decodeInvoice(invoiceWith([1, 1, 20, ...new Array(10).fill(0)])), /truncated tagged field/);
+});
+
+test('rejects amounts beyond what JavaScript counts exactly', () => {
+  assert.throws(() => hrpAmountMsat('lnbc1000000'), /amount too large/);
 });

@@ -314,3 +314,35 @@ test('store fields: invalid status or price fall back with a warning', () => {
   assert.equal(product(catalog, 'quotes-love-at-first-sat').price, null);
   assert.equal(messages(problems, 'warning').length, 3);
 });
+
+test('fontFamilyFromFile has no family for a missing font', () => {
+  assert.equal(fontFamilyFromFile(undefined), null);
+  assert.equal(fontFamilyFromFile(null), null);
+});
+
+test('a series item without text takes its id and name from the image file', () => {
+  const raw = validRaw();
+  raw.series[0].items = [{ image: 'designs/stickers/mostro-cool-512.png' }];
+  const { catalog } = normalizeCatalog(raw);
+  const item = product(catalog, 'quotes-mostro-cool-512');
+  assert.equal(item.name, 'mostro-cool-512');
+  assert.equal(item.text, null);
+});
+
+test('the same pair of clashing fonts is reported once', () => {
+  const raw = validRaw();
+  raw.series[0].items = [
+    { image: 'a.png', text: 'A' },
+    { image: 'b.png', text: 'B', style: { font: 'other/LuckiestGuy-Regular.ttf' } },
+    { image: 'c.png', text: 'C', style: { font: 'other/LuckiestGuy-Regular.ttf' } },
+  ];
+  const { problems } = normalizeCatalog(raw);
+  assert.equal(messages(problems, 'warning').filter((m) => m.includes('same name')).length, 1);
+});
+
+test('an item whose text has no letters or digits gets an id from its position', () => {
+  const raw = validRaw();
+  raw.series[0].items = [{ image: 'designs/a.png', text: 'Hola' }, { image: 'designs/b.png', text: '¡¿!' }];
+  const { catalog } = normalizeCatalog(raw);
+  assert.deepEqual(catalog.products.filter((p) => p.groupId === 'quotes').map((p) => p.id), ['quotes-hola', 'quotes-2']);
+});
