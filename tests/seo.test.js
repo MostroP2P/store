@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
   seoFiles, productHtml, headTags, withSeoBlock, sitemapXml, publishedProducts, isGeneratedProductPage,
-  escapeHtml, SITE_URL,
+  escapeHtml, ogImagesNeeded, ogImage, SITE_URL,
 } from '../scripts/seo-pages.mjs';
 import { seoPlan } from '../scripts/seo.mjs';
 
@@ -14,12 +14,21 @@ const catalog = async () => JSON.parse(await read('catalog.json'));
 const metaContent = (html, key, name) => new RegExp(`<meta ${key}="${name}" content="([^"]*)">`).exec(html)?.[1];
 const jsonLdOf = (html) => JSON.parse(/<script type="application\/ld\+json">(.*?)<\/script>/.exec(html)[1]);
 
-test('the committed pages, sitemap and preview images match catalog.json (run `npm run seo` and `npm run og-images`)', async () => {
-  const { changed, stale, missingImages, staleImages } = await seoPlan();
+test('the committed pages and sitemap match catalog.json (run `npm run seo`)', async () => {
+  const { changed, stale } = await seoPlan();
   assert.deepEqual([...changed.keys()], [], 'out of date');
   assert.deepEqual(stale, [], 'pages of products no longer on sale');
-  assert.deepEqual(missingImages, [], 'missing preview images');
-  assert.deepEqual(staleImages, [], 'preview images drawn from an older catalog, design or renderer');
+});
+
+test('every preview image a page points at is one the deploy draws (`npm run og-images`)', async () => {
+  const raw = await catalog();
+  const files = seoFiles(raw, { 'index.html': await read('index.html'), 'product.html': await read('product.html') });
+  const drawn = new Set(ogImagesNeeded(raw).map((name) => `${SITE_URL}/${ogImage(name)}`));
+  const image = /<meta (?:property="og:image"|name="twitter:image") content="([^"]*)">/g;
+  const pointedAt = [...files.values()].flatMap((html) => [...html.matchAll(image)].map((match) => match[1]));
+  assert.equal(pointedAt.length, 2 * (files.size - 1), 'og:image and twitter:image on every page');
+  assert.deepEqual(pointedAt.filter((url) => !drawn.has(url)), []);
+  assert.equal(drawn.size, files.size - 2, 'the store card and one per product page');
 });
 
 test('every product on sale gets a page of its own, with its preview tags', async () => {

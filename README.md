@@ -259,15 +259,15 @@ The viewer (`viewer.html`) shows all the T-shirts in the catalog, drafts include
 
 - **Add a T-shirt to a series:** add `{ "id": "mostro-quotes-…", "image": "designs/stickers/…png", "text": "Tu mensaje" }` to `items`.
 - **Add a whole design:** put the transparent PNG in `designs/` and add it to `designs`.
-- **Put it on sale:** add `"status": "published"` to it, then run `npm run seo` and `npm run og-images` and commit what they write (see below).
+- **Put it on sale:** add `"status": "published"` to it, then run `npm run seo` and commit what it writes (see below).
 - **Change the font of a series:** copy the file to `assets/fonts/` and change `"font"` in the series `style`.
 - **Calibrate the print area:** open `/viewer.html?debug`.
 
 **Link previews and SEO.** Link previews (Telegram, WhatsApp, X, Nostr clients) never run JavaScript, so every T-shirt on sale has a static page of its own, `<id>.html` (for example `mostro-invaders.html`), with its title, description, Open Graph and Twitter tags, and a preview image of that shirt. The store links to those pages, so whatever address a buyer copies shows that shirt when shared.
 
 - `npm run seo` writes the product pages (from `product.html`), the SEO tags of `index.html` and `product.html`, and `sitemap.xml`. Never edit an `<id>.html` by hand.
-- `npm run og-images` draws the preview images (`assets/og/`, 1200 × 630) in Chromium, with the shirt in its default color. It needs `npm ci` and Chromium (see §1).
-- A test fails if the pages, the sitemap or an image are out of date, so CI catches a forgotten step. Each image has a fingerprint of what it shows (name, price, color, design files and the drawing code) in `assets/og/fingerprints.json`: changing the price, for example, makes every image out of date until `npm run og-images` redraws them.
+- The preview images (`assets/og/`, 1200 × 630: the shirt in its default color, its name and its price, and one for the store) are not in the repository: every deploy draws them in Chromium from the catalog it publishes, so a new price or design shows up in the previews with no extra step. To look at them locally, run `npm run og-images` (it needs `npm ci` and Chromium, see §1) and open `assets/og/`.
+- A test fails if the pages or the sitemap are out of date, so CI catches a forgotten `npm run seo`.
 
 The full catalog format is in [docs/SPEC.md](docs/SPEC.md) (§4 and §10).
 
@@ -298,7 +298,7 @@ src/vendor/                                prebuilt third-party libraries (see i
 scripts/serve.py                           local server with no cache
 scripts/vendor/                            reproducible recipe for src/vendor/
 scripts/dev-nostr-key.mjs                  development Nostr key
-scripts/seo.mjs, scripts/og-images.mjs     product pages, SEO tags and sitemap; link preview images
+scripts/seo.mjs, scripts/og-images.mjs     product pages, SEO tags and sitemap; link preview images (drawn at deploy)
 tests/                                     unit tests (node --test)
 tests/e2e/                                 browser tests (playwright-core) and the combined coverage report
 docs/SPEC.md                               full design
@@ -331,9 +331,11 @@ See [src/vendor/README.md](src/vendor/README.md). In short: change the versions 
 
 1. it runs the tests with coverage;
 2. it checks that `src/vendor/` is identical to what `scripts/vendor/` builds;
-3. it publishes the `*.html` pages, `robots.txt`, `sitemap.xml`, `css/`, `catalog.json`, `src/`, `assets/` and `designs/` to GitHub Pages.
+3. it runs the browser tests;
+4. it draws the link preview images (`assets/og/`) from `catalog.json`;
+5. it publishes the `*.html` pages, `robots.txt`, `sitemap.xml`, `css/`, `catalog.json`, `src/`, `assets/` (with those images) and `designs/` to GitHub Pages.
 
-On pull requests only the first two steps run, without publishing.
+On pull requests everything but the publishing runs.
 
 Setup (one time only, already done):
 

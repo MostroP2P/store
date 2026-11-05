@@ -1,5 +1,6 @@
 // Link preview cards (1200×630): one per product on sale, in its default color, and one for the store.
-// scripts/og-images.mjs opens card.html in Chromium and saves window.drawCard(name) as assets/og/<name>.jpg.
+// scripts/og-images.mjs opens card.html in Chromium and saves window.drawCard(name) as assets/og/<name>.jpg
+// in the site the deploy publishes.
 // The shirt is drawn by the store's own renderer, so the preview matches the page.
 
 import { normalizeCatalog } from '../../src/catalog.js';
