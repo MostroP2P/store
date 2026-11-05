@@ -5,6 +5,8 @@
   "description": "The Mostro t-shirt store (store.mostro.network) and its viewer, which previews designs on every shirt colour.",
   "scripts": {
     "start": "python3 scripts/serve.py 8000",
+    "seo": "node scripts/seo.mjs",
+    "og-images": "node scripts/og-images.mjs",
     "test": "node --test",
     "coverage": "node --test --experimental-test-coverage --test-coverage-include=src/**/*.js --test-coverage-exclude=src/vendor/** --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=100",
     "test:e2e": "node -e \"require('node:fs').rmSync('coverage/e2e', { recursive: true, force: true })\" && node --test --test-concurrency=1 'tests/e2e/*.e2e.js'",

@@ -28,7 +28,15 @@ test('returns no product for a missing or unknown id', () => {
   assert.equal(parseProductQuery('?id=nope', PRODUCTS, CONFIG).product, null);
 });
 
-test('productHref builds an encoded product link', () => {
-  assert.equal(productHref({ id: 'love', color: 'red', size: 'M' }), 'product.html?id=love&color=red&size=M');
-  assert.equal(productHref({ id: 'a b&c' }), 'product.html?id=a+b%26c');
+test('productHref links to the page of the product itself, the one link previews read', () => {
+  assert.equal(productHref({ id: 'love', color: 'red', size: 'M' }), 'love.html?color=red&size=M');
+  assert.equal(productHref({ id: 'love' }), 'love.html');
+  assert.equal(productHref({ id: 'a b&c' }), 'a%20b%26c.html');
+});
+
+test('the page of a product names it; product.html takes the id from the query', () => {
+  assert.equal(parseProductQuery('?color=red&size=M', PRODUCTS, CONFIG, 'love').product.id, 'love');
+  // On a product's own page, a stray ?id= does not swap the product
+  assert.equal(parseProductQuery('?id=invaders', PRODUCTS, CONFIG, 'love').product.id, 'love');
+  assert.equal(parseProductQuery('?id=invaders', PRODUCTS, CONFIG, undefined).product.id, 'invaders');
 });

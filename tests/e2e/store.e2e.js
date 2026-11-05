@@ -82,7 +82,7 @@ test('the product page: color, size, size guide and related shirts', () => withS
 
   const related = page.locator('#related .product-card');
   assert.ok(await related.count() > 0);
-  await Promise.all([page.waitForURL(/product\.html\?id=mostro-quotes-/), related.first().click()]);
+  await Promise.all([page.waitForURL(/\/mostro-quotes-[a-z-]+\.html/), related.first().click()]);
   await page.waitForSelector('#product:not([hidden])');
 }));
 
@@ -125,6 +125,27 @@ test('the cart panel: add, change quantities, remove, empty and go to checkout',
   await page.waitForSelector('#summary-lines .summary-line');
 }));
 
+test('every product has a page of its own: the address to share, with its preview', () => withShop({}, async (shop) => {
+  const page = await shop.page('index.html');
+  await page.waitForSelector('.product-card');
+  assert.equal(await page.getAttribute('.product-card', 'href'), `${INVADERS}.html`);
+
+  await page.goto(`${shop.url}/${INVADERS}.html?color=navy&size=XL`);
+  await page.waitForSelector('#product:not([hidden])');
+  assert.equal(await page.textContent('#color-name'), 'Navy blue');
+  assert.equal(await page.inputValue('#size-select'), 'XL');
+  assert.equal(await page.getAttribute('meta[property="og:image"]', 'content'), `https://store.mostro.network/assets/og/${INVADERS}.jpg`);
+  await page.selectOption('#size-select', 'S');
+  assert.match(page.url(), new RegExp(`/${INVADERS}\\.html\\?color=navy&size=S$`));
+
+  // The generic page moves to the product's own address
+  await page.goto(`${shop.url}/product.html?id=${INVADERS}`);
+  await page.waitForSelector('#product:not([hidden])');
+  assert.match(page.url(), new RegExp(`/${INVADERS}\\.html\\?color=black&size=L$`));
+  // The structured data is a data block: the Content-Security-Policy has nothing to block
+  assert.deepEqual(shop.get('consoleErrors').filter((message) => /Content Security Policy/i.test(message)), []);
+}));
+
 test('Buy now adds the shirt and goes straight to the checkout', () => withShop({}, async (shop) => {
   const page = await shop.page(`product.html?id=${INVADERS}&color=white&size=S`);
   await page.waitForSelector('#product:not([hidden])');
@@ -155,7 +176,8 @@ test('a browser that blocks storage is told so, instead of losing the cart', () 
   assert.equal(await page.isHidden('#lang-switch'), true);
   await page.click('#buy-now');
   await page.waitForSelector('#storage-warning:not([hidden])');
-  assert.match(page.url(), /product\.html/);
+  // It stays on the product page instead of opening an empty checkout
+  assert.doesNotMatch(page.url(), /checkout\.html/);
   assert.match(await page.textContent('#storage-warning'), /won’t let us save the cart/);
 }));
 

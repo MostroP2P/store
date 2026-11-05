@@ -108,6 +108,7 @@ async function newPage(shop, path, { clock = false, blockStorage = false, webln 
   const page = await shop.context.newPage();
   page.setDefaultTimeout(ACTION_TIMEOUT_MS);
   page.on('pageerror', (error) => shop.pageErrors.push(error.message));
+  page.on('console', (message) => { if (message.type() === 'error') shop.consoleErrors.push(message.text()); });
   shop.pages.push(page);
   const snapshot = await trackCoverage(shop, page);
   shop.trackers.set(page, snapshot);
@@ -199,7 +200,7 @@ export async function openShop(browser, { locale = 'en-US', store = {}, catalogB
     // Knobs
     yadioDown: false, lnurlError: null, invoiceExpiry: 600, paid: false, statusDown: false, relayAccepts: true,
     // What happened
-    invoices: [], published: [], statusChecks: 0, pages: [], pageErrors: [], trackers: new Map(),
+    invoices: [], published: [], statusChecks: 0, pages: [], pageErrors: [], consoleErrors: [], trackers: new Map(),
   };
   await route(shop);
   return {

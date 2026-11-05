@@ -76,6 +76,8 @@ tshirts/
 ├── product.html                store: one T-shirt (color, size, cart, buy)
 ├── checkout.html               store: summary, shipping details and Lightning payment
 ├── viewer.html                 viewer: all the T-shirts, in any color
+├── <id>.html                   one page per T-shirt on sale, generated from product.html (§10.9)
+├── robots.txt, sitemap.xml     for search engines (the sitemap is generated)
 ├── css/                        base.css (colors and buttons), store.css, viewer.css
 ├── catalog.json                ← the only file you edit: T-shirts, prices, sizes, payment
 ├── package.json                npm shortcuts; playwright-core is the only (development) dependency
@@ -286,7 +288,7 @@ Same catalogue and same render as the viewer. Everything runs in the browser: th
 | Page | What it does |
 |---|---|
 | `index.html` | Collection, one section per series. Each card shows the T-shirt in its default color, the name, the price and the available colors. |
-| `product.html?id=…&color=…&size=…` | Like kinoto.com.ar/item/…: color (circles), size (list) plus **Size guide** (table from `store.sizes`) and price. **Add to cart** shows how many of that variant are in the cart, for example "(1)". **Buy now** adds it and goes to checkout. Below, the accordions from `store.details` and "You may also like". The URL stores color and size. |
+| `<id>.html?color=…&size=…` (or `product.html?id=…`) | Like kinoto.com.ar/item/…: color (circles), size (list) plus **Size guide** (table from `store.sizes`) and price. **Add to cart** shows how many of that variant are in the cart, for example "(1)". **Buy now** adds it and goes to checkout. Below, the accordions from `store.details` and "You may also like". The URL stores color and size. |
 | Cart | The button appears at the top right when the cart is not empty, with the quantity. The "Your cart" panel shows each line with color, size, − quantity +, price, line total (if there is more than one) and **Remove from cart**. At the bottom: subtotal, shipping (to be arranged), total, **Checkout** and **Empty cart**. It is saved in `localStorage` (`mostro-store:cart`) and synchronized between tabs. |
 | `checkout.html` | Order summary, **Where should we deliver your order?** (street, number, floor, apartment, postal code, city, province), instructions (up to 500 characters) and personal information (first name, last name, email, phone). The data is saved only in that tab (`sessionStorage`, `mostro-store:checkout`), so it survives a reload. It is deleted when the tab is closed, when the order is finished or when **Clear saved details** is tapped. On the right, the payment method: Lightning. |
 
@@ -425,12 +427,19 @@ The backup is at `/etc/caddy/Caddyfile.bak-20261104-store-status`. No API of our
 - **Orders.** The DM to the store is always in Spanish (`Pedido MS-…`, `$30.000`) and adds `Idioma: inglés` or `Idioma: español` ("Language: English" or "Language: Spanish"), so the store can answer the buyer in their language. Color names come in the buyer's language.
 - **Technical messages** (the "Technical detail" of an error: LNURL, invoice, Yadio, relays) are in English in both languages.
 
-### 10.9 Pending
+### 10.9 SEO and link previews
+
+- **One page per product.** Link previews (Telegram, WhatsApp, X, Nostr clients) read the HTML and never run JavaScript, so a query string (`product.html?id=…`) cannot give each product its own preview. `npm run seo` (`scripts/seo.mjs`, pure logic in `scripts/seo-pages.mjs`) writes `<id>.html` for every product on sale: `product.html` with `data-product="<id>"`, the product's title, name, description and price in the HTML, and its own tags. `product-page.js` takes the product from `data-product`; `product.html?id=…` still works and moves to `<id>.html?color=…&size=…` with `history.replaceState`, so the address bar always holds the address worth sharing. The store links to those pages (`productHref`).
+- **Tags** (as in MostroP2P/community): description, canonical URL, `theme-color`, Open Graph (`og:type` `product` with `product:price:*`, `og:image` 1200 × 630 with its alt text, `og:locale` `en_US` and `es_AR`), Twitter `summary_large_image` (`@MostroP2P`) and JSON-LD: `Product` with an `Offer` on each product page, `WebSite` with the Mostro P2P publisher on the collection. They live between `<!-- SEO: generated … -->` and `<!-- /SEO -->`; `product.html` itself is `noindex`, since every product has its page. JSON-LD is a data block, so the `script-src 'self'` policy does not block it; catalog text is escaped, and `<` in the JSON is written `\u003c`.
+- **Images.** `npm run og-images` draws `assets/og/<id>.jpg` and `assets/og/store.jpg` (1200 × 630, JPEG, 50–85 KB) in Chromium through `scripts/og/card.html`, with the store's own renderer: the shirt in its default color, the name, the price and the domain. They are committed: a preview shows the default color, whatever color the shared link had.
+- **Search engines.** `robots.txt` allows everything and points at `sitemap.xml` (the collection and every product page). `checkout.html`, `product.html` and `viewer.html` are `noindex`.
+- **Kept in step.** `tests/seo.test.js` fails when a page, the sitemap or an image is out of date, or when a product page was left behind by a product no longer on sale (`npm run seo` deletes it). An id that would take the name of a store page (`index`, `product`, `checkout`, `viewer`, `404`) or is not `[a-z0-9-]` is refused.
+
+### 10.10 Pending
 
 - Real measurements for each size: the ones in `catalog.json` are approximate.
 - Shipping policy and cost (today it says "To be arranged").
 - Publish the kind 10050 (DM relays) from the store's npub.
-- Pre-generated mockups for SEO and share previews.
 - Optional hardening:
   - a second exchange-rate source, to detect an anomalous Yadio price;
   - pin the pubkey of the store's node and verify the invoice signature;
