@@ -87,6 +87,9 @@ function hydrateIcons(root) {
 export async function startPage(run) {
   hydrateIcons(document);
   translatePage(document);
+  // The notice is for scripts that never started. Without the stylesheet it would stay on screen, and
+  // its reload link with it, through a checkout that locks reloads away while an invoice is in flight.
+  document.querySelector('.boot-notice')?.remove();
   mountLanguageSwitch(document.getElementById('lang-switch'));
   const main = document.querySelector('main');
   try {

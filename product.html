@@ -52,6 +52,12 @@
   </header>
 
   <main class="store-main">
+    <!-- Shown by css/store.css only when the page's scripts never started; no script is left to translate it -->
+    <section class="store-message boot-notice">
+      <p lang="en"><strong>The store didn’t finish loading.</strong> Check your connection and reload the page.</p>
+      <p lang="es"><strong>La tienda no terminó de cargar.</strong> Revisá tu conexión y recargá la página.</p>
+      <a class="button-primary" href=""><span lang="en">Reload</span> · <span lang="es">Recargar</span></a>
+    </section>
     <article class="product" id="product" hidden>
       <div class="product-stage product-stage-large">
         <canvas id="product-canvas" role="img"></canvas>

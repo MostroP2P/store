@@ -185,15 +185,16 @@ async function trackCoverage(shop, page) {
 }
 
 /**
- * A store on its own server and browser context. Options: locale ('en-US'), store (overrides of
+ * A store on its own server and browser context. Options: locale ('en-US'), reducedMotion
+ * ('no-preference', or 'reduce' for a buyer who asks the system for less motion), store (overrides of
  * catalog.json → store), catalogBody (the whole catalog.json, as text), files ({ path: body or status }).
  * The returned shop holds the knobs of the outside services and what they received.
  */
-export async function openShop(browser, { locale = 'en-US', store = {}, catalogBody = null, files = {} } = {}) {
+export async function openShop(browser, { locale = 'en-US', reducedMotion = 'no-preference', store = {}, catalogBody = null, files = {} } = {}) {
   const storeKey = generateSecretKey();
   const catalog = catalogBody ?? JSON.stringify(await testCatalog(npubEncode(getPublicKey(storeKey)), store));
   const site = await startSite({ '/catalog.json': catalog, ...files });
-  const context = await browser.newContext({ locale, viewport: { width: 1280, height: 900 } });
+  const context = await browser.newContext({ locale, reducedMotion, viewport: { width: 1280, height: 900 } });
   await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: site.url });
   const shop = {
     site, context, storeKey,

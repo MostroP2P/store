@@ -54,6 +54,12 @@
   </header>
 
   <main class="store-main">
+    <!-- Shown by css/store.css only when the page's scripts never started; no script is left to translate it -->
+    <section class="store-message boot-notice">
+      <p lang="en"><strong>The store didn’t finish loading.</strong> Check your connection and reload the page.</p>
+      <p lang="es"><strong>La tienda no terminó de cargar.</strong> Revisá tu conexión y recargá la página.</p>
+      <a class="button-primary" href=""><span lang="en">Reload</span> · <span lang="es">Recargar</span></a>
+    </section>
     <section class="hero">
       <h1 data-i18n="heroTitle">Mostro T-shirts</h1>
       <p><span data-i18n="heroLeadStart">Pick your T-shirt, pay with Lightning</span> <span aria-hidden="true">⚡</span> <span data-i18n="heroLeadEnd">and we’ll ship it to your door.</span></p>

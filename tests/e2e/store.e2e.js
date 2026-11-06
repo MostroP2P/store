@@ -9,6 +9,8 @@ import { launchBrowser, openShop, saveCoverage, addToCart } from './harness.js';
 const INVADERS = 'mostro-invaders';
 const NAME = 'Mostro Invaders';
 const CATALOG = new URL('../../catalog.json', import.meta.url);
+// The notice waits --boot-notice-delay (css/store.css) before it shows
+const NOTICE_TIMEOUT_MS = 15_000;
 
 let browser;
 before(async () => { browser = await launchBrowser(); });
@@ -198,6 +200,46 @@ test('the store explains when it cannot open', async () => {
   }
   assert.ok(store);
 });
+
+test('a page whose scripts fail to load says so in both languages, and reloading recovers it', () => withShop({}, async (shop) => {
+  // dom.js is imported by every page: when it drops, no module of the page runs
+  let dropping = true;
+  await shop.get('context').route('**/src/dom.js', (route) => (dropping ? route.abort('internetdisconnected') : route.fallback()));
+  const pages = await Promise.all(['index.html', `product.html?id=${INVADERS}`, 'checkout.html'].map((path) => shop.page(path)));
+
+  for (const page of pages) assert.equal(await page.isVisible('.boot-notice'), false, `${page.url()}: not before the wait`);
+  await Promise.all(pages.map((page) => page.waitForSelector('.boot-notice', { state: 'visible', timeout: NOTICE_TIMEOUT_MS })));
+  for (const page of pages) {
+    assert.deepEqual(await page.locator('.boot-notice p').allTextContents(), [
+      'The store didn’t finish loading. Check your connection and reload the page.',
+      'La tienda no terminó de cargar. Revisá tu conexión y recargá la página.',
+    ]);
+  }
+
+  dropping = false;
+  for (const page of pages) {
+    assert.equal(await page.$eval('.boot-notice a', (link) => link.href), page.url(), 'the same page, query included');
+    await Promise.all([page.waitForEvent('load'), page.click('.boot-notice a')]);
+    await page.waitForSelector('html.i18n-ready');
+    assert.equal(await page.locator('.boot-notice').count(), 0);
+  }
+}));
+
+test('the notice also shows to a buyer who asks for reduced motion', () => withShop({ reducedMotion: 'reduce' }, async (shop) => {
+  await shop.get('context').route('**/src/dom.js', (route) => route.abort('internetdisconnected'));
+  const page = await shop.page('index.html');
+  await page.waitForSelector('.boot-notice', { state: 'visible', timeout: NOTICE_TIMEOUT_MS });
+}));
+
+test('a page whose scripts start without its stylesheet does not tell the buyer to reload', () => withShop({}, async (shop) => {
+  // Mid-payment, a reload link would invite the very reload the checkout locks away
+  await shop.get('context').route('**/css/store.css', (route) => route.abort('internetdisconnected'));
+  const pages = await Promise.all(['index.html', `product.html?id=${INVADERS}`, 'checkout.html'].map((path) => shop.page(path)));
+  for (const page of pages) {
+    await page.waitForSelector('html.i18n-ready');
+    assert.equal(await page.locator('.boot-notice').count(), 0, page.url());
+  }
+}));
 
 test('the collection says so when nothing is for sale', async () => {
   const raw = await catalog();

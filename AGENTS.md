@@ -171,7 +171,8 @@ report the real result.
   Never add `'unsafe-inline'`, `'unsafe-eval'` or a wildcard host.
 - **Two catalogues.** A new user-facing string needs an English and a Spanish entry with
   the same key. Static text in the HTML carries `data-i18n="key"` and ships in English.
-  Translatable texts in `catalog.json` are `{ "en": …, "es": … }`. The tests fail if the
+  The one exception is the notice for a page whose scripts never started (`.boot-notice`):
+  no script is left to translate it, so it carries both languages itself. Translatable texts in `catalog.json` are `{ "en": …, "es": … }`. The tests fail if the
   catalogues differ in shape or if Spanish is left in the English one.
 - **Published product ids never change.** They are in links, in saved carts and in the names
   of the product pages.
