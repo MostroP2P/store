@@ -179,9 +179,14 @@ test('the product page: color, size, size guide and related shirts', () => withS
 
   const related = page.locator('#related .product-card');
   assert.ok(await related.count() > 0);
-  const relatedHref = await related.first().getAttribute('href');
-  await Promise.all([page.waitForURL((url) => url.pathname === `/${relatedHref}`), related.first().click()]);
+  // The first related card opens the page of the shirt it names, which is another shirt
+  const firstRelated = related.first();
+  const relatedName = await firstRelated.locator('.product-card-name').textContent();
+  assert.notEqual(relatedName, NAME);
+  const relatedHref = await firstRelated.getAttribute('href');
+  await Promise.all([page.waitForURL((url) => url.pathname === `/${relatedHref}`), firstRelated.click()]);
   await page.waitForSelector('#product:not([hidden])');
+  assert.equal(await page.textContent('#product-name'), relatedName);
 }));
 
 test('the cart panel: add, change quantities, remove, empty and go to checkout', () => withShop({}, async (shop) => {
