@@ -163,7 +163,9 @@ html:not(.i18n-ready) [data-i18n] { visibility: hidden; }
 /* A page whose scripts never started: one module that fails to load (the network changed, the connection
    dropped) stops them all, and no script is left to say so, so the stylesheet does. translatePage marks the
    page i18n-ready first thing; without it, after the wait, the notice covers the page's main. It sits out of
-   the flow, so a page that does start never moves. If this stylesheet is what failed, the notice simply shows. */
+   the flow, so a page that does start never moves. If this stylesheet is what failed, the notice simply shows,
+   until the scripts start and remove it (startPage). The reveal moves nothing, it only waits: it is !important
+   so that the reduced-motion rule at the end, which turns every animation off, leaves it alone. */
 .boot-notice { display: none; }
 html:not(.i18n-ready) .store-main { position: relative; }
 html:not(.i18n-ready) .boot-notice {
@@ -175,7 +177,7 @@ html:not(.i18n-ready) .boot-notice {
   padding-inline: var(--gutter);
   background: var(--bg);
   visibility: hidden;
-  animation: boot-notice-reveal 0s var(--boot-notice-delay) forwards;
+  animation: boot-notice-reveal 0s var(--boot-notice-delay) forwards !important;
 }
 
 @keyframes boot-notice-reveal { to { visibility: visible; } }

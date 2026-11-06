@@ -221,7 +221,23 @@ test('a page whose scripts fail to load says so in both languages, and reloading
     assert.equal(await page.$eval('.boot-notice a', (link) => link.href), page.url(), 'the same page, query included');
     await Promise.all([page.waitForEvent('load'), page.click('.boot-notice a')]);
     await page.waitForSelector('html.i18n-ready');
-    assert.equal(await page.$eval('.boot-notice', (notice) => getComputedStyle(notice).display), 'none');
+    assert.equal(await page.locator('.boot-notice').count(), 0);
+  }
+}));
+
+test('the notice also shows to a buyer who asks for reduced motion', () => withShop({ reducedMotion: 'reduce' }, async (shop) => {
+  await shop.get('context').route('**/src/dom.js', (route) => route.abort('internetdisconnected'));
+  const page = await shop.page('index.html');
+  await page.waitForSelector('.boot-notice', { state: 'visible', timeout: NOTICE_TIMEOUT_MS });
+}));
+
+test('a page whose scripts start without its stylesheet does not tell the buyer to reload', () => withShop({}, async (shop) => {
+  // Mid-payment, a reload link would invite the very reload the checkout locks away
+  await shop.get('context').route('**/css/store.css', (route) => route.abort('internetdisconnected'));
+  const pages = await Promise.all(['index.html', `product.html?id=${INVADERS}`, 'checkout.html'].map((path) => shop.page(path)));
+  for (const page of pages) {
+    await page.waitForSelector('html.i18n-ready');
+    assert.equal(await page.locator('.boot-notice').count(), 0, page.url());
   }
 }));
 
