@@ -37,7 +37,7 @@ function variantChecker(products, config) {
 
 /** Everything a store page needs. Throws with a readable message when the store cannot open. */
 export async function loadStore() {
-  // catalog.json texts come as { "en": …, "es": … }: keep the page language
+  // catalog.json texts come as { "en": …, "es": …, … }: keep the page language
   const raw = localizeJson(await fetchCatalog(), LANG);
   const { catalog } = normalizeCatalog(raw);
   if (!catalog) throw new Error(T.catalogInvalid);

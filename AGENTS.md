@@ -19,12 +19,13 @@ on a pull request is an artifact, and so is a reply to a reviewer. Mostro is wor
 across several languages, and a thread nobody outside one of them can follow is a
 decision taken in private in a public place.
 
-The exceptions are texts written for a Spanish-speaking reader, and only the text
+The exceptions are texts written for a reader of another language, and only the text
 itself:
 
-- the Spanish user-interface catalogue, `src/store/strings/es.js`, which exists to be
-  translated (the English catalogue, `src/store/strings/en.js`, is the source);
-- the `es` values of translated texts in `catalog.json`;
+- the Spanish, French, Italian and Portuguese user-interface catalogues,
+  `src/store/strings/es.js`, `fr.js`, `it.js` and `pt.js`, which exist to be translated
+  (the English catalogue, `src/store/strings/en.js`, is the source);
+- the `es`, `fr`, `it` and `pt` values of translated texts in `catalog.json`;
 - the messages the store receives over Nostr (`src/store/order.js`), which the store
   operator reads in Spanish.
 
@@ -91,7 +92,7 @@ The browser tests are the one exception to "nothing to install": they need `npm 
 | `src/i18n.js` | Which language to show, and `localizeJson` for the catalogue's translated texts |
 | `src/store/` (pure) | `config`, `products`, `cart`, `cart-store`, `persist`, `money`, `bech32`, `bolt11`, `lnurl`, `payment`, `order`, `checkout-form`, `query`, `qr`, `nostr-order`, `strings` |
 | `src/store/` (DOM) | `boot`, `lang`, `home-page`, `product-page`, `product-card`, `cart-ui`, `size-guide`, `checkout-fields`, `checkout-page`, `payment-ui`, `icons` |
-| `src/store/strings/` | The English and Spanish user-interface catalogues |
+| `src/store/strings/` | The user-interface catalogues: English (the source), Spanish, French, Italian and Portuguese |
 | `src/viewer/` | The viewer |
 | `src/vendor/` | Vendored bundles; never edit them by hand |
 | `scripts/serve.py` | The local server, without cache |
@@ -169,11 +170,14 @@ report the real result.
 - **The Content-Security-Policy is a meta tag in each page.** A new API or LN address
   domain goes in `connect-src` of `index.html`, `product.html` and `checkout.html`.
   Never add `'unsafe-inline'`, `'unsafe-eval'` or a wildcard host.
-- **Two catalogues.** A new user-facing string needs an English and a Spanish entry with
-  the same key. Static text in the HTML carries `data-i18n="key"` and ships in English.
-  The one exception is the notice for a page whose scripts never started (`.boot-notice`):
-  no script is left to translate it, so it carries both languages itself. Translatable texts in `catalog.json` are `{ "en": …, "es": … }`. The tests fail if the
-  catalogues differ in shape or if Spanish is left in the English one.
+- **Five catalogues.** The store speaks English, Spanish, French, Italian and Portuguese
+  (`SUPPORTED_LANGS` in `src/i18n.js`). A new user-facing string needs an entry with the
+  same key in every catalogue. Static text in the HTML carries `data-i18n="key"` and ships
+  in English. The one exception is the notice for a page whose scripts never started
+  (`.boot-notice`): no script is left to translate it, so it carries English and Spanish
+  itself. Translatable texts in `catalog.json` are `{ "en": …, "es": …, "fr": …, "it": …,
+  "pt": … }`, every language filled in. The tests fail if the catalogues differ in shape,
+  if Spanish is left in the English one, or if a text in `catalog.json` lacks a language.
 - **Published product ids never change.** They are in links, in saved carts and in the names
   of the product pages.
 - **Product pages are generated.** A link preview never runs JavaScript, so each product on

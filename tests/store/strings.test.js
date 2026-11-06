@@ -7,6 +7,8 @@ import { FIELD_ORDER, REQUIRED_FIELDS, CHECKED_FIELDS } from '../../src/store/ch
 
 const STORE_PAGES = ['index.html', 'product.html', 'checkout.html'];
 const SPANISH_ONLY = /[áéíóúñ¿¡]/i;
+// French sets : ; ! ? apart from the word before them with a no-break space, so they never start a line
+const FRENCH_MARK_WITHOUT_SPACE = /[^\u00a0][:;!?](?=\s|$)/u;
 const SAMPLE_ARGS = ['X', 'X', 'X'];
 
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -76,16 +78,27 @@ test('every checkout field has its label, name and messages', () => {
   });
 });
 
-test('the language switch is labelled in the language it switches to', () => {
-  assert.equal(STRINGS.en.switchLanguage, 'View in English');
-  assert.equal(STRINGS.es.switchLanguage, 'Ver en español');
+test('every language is named in itself, as the language picker lists it', () => {
+  assert.deepEqual(SUPPORTED_LANGS.map((lang) => STRINGS[lang].languageName), [
+    'English', 'Español', 'Français', 'Italiano', 'Português',
+  ]);
 });
 
-test('counts read right in both languages', () => {
+test('French keeps a no-break space before : ; ! and ?', () => {
+  allTexts(STRINGS.fr).forEach((text) => assert.doesNotMatch(text, FRENCH_MARK_WITHOUT_SPACE, text));
+});
+
+test('counts read right in every language', () => {
   assert.equal(STRINGS.en.cartButton(1), 'Open the cart: 1 T-shirt');
   assert.equal(STRINGS.en.cartButton(3), 'Open the cart: 3 T-shirts');
   assert.equal(STRINGS.es.cartButton(1), 'Abrir el carrito: 1 remera');
   assert.equal(STRINGS.es.cartButton(3), 'Abrir el carrito: 3 remeras');
+  assert.equal(STRINGS.fr.cartButton(1), 'Ouvrir le panier\u00a0: 1 T-shirt');
+  assert.equal(STRINGS.fr.cartButton(3), 'Ouvrir le panier\u00a0: 3 T-shirts');
+  assert.equal(STRINGS.it.cartButton(1), 'Apri il carrello: 1 maglietta');
+  assert.equal(STRINGS.it.cartButton(3), 'Apri il carrello: 3 magliette');
+  assert.equal(STRINGS.pt.cartButton(1), 'Abrir o carrinho: 1 camiseta');
+  assert.equal(STRINGS.pt.cartButton(3), 'Abrir o carrinho: 3 camisetas');
   SUPPORTED_LANGS.forEach((lang) => {
     assert.equal(STRINGS[lang].summaryQuantity('Love', 1), 'Love');
     assert.equal(STRINGS[lang].summaryQuantity('Love', 2), 'Love (2)');

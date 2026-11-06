@@ -65,6 +65,9 @@ test('orderMessage lists items, totals, payment and delivery data', () => {
 test('orderMessage stays in Spanish and says which language to answer the buyer in', () => {
   assert.ok(orderMessage(ORDER).includes('Idioma: inglés'));
   assert.ok(orderMessage({ ...ORDER, lang: 'es' }).includes('Idioma: español'));
+  assert.ok(orderMessage({ ...ORDER, lang: 'fr' }).includes('Idioma: francés'));
+  assert.ok(orderMessage({ ...ORDER, lang: 'it' }).includes('Idioma: italiano'));
+  assert.ok(orderMessage({ ...ORDER, lang: 'pt' }).includes('Idioma: portugués'));
   assert.ok(!orderMessage({ ...ORDER, lang: undefined }).includes('Idioma'));
   assert.ok(!orderMessage({ ...ORDER, lang: 'xx\n✅' }).includes('Idioma'));
 });

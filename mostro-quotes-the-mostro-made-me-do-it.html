@@ -21,6 +21,9 @@
   <meta property="og:image:alt" content="The Mostro made me do it T-shirt">
   <meta property="og:locale" content="en_US">
   <meta property="og:locale:alternate" content="es_AR">
+  <meta property="og:locale:alternate" content="fr_FR">
+  <meta property="og:locale:alternate" content="it_IT">
+  <meta property="og:locale:alternate" content="pt_BR">
   <meta property="product:price:amount" content="60000">
   <meta property="product:price:currency" content="ARS">
   <meta name="twitter:card" content="summary_large_image">
@@ -46,7 +49,12 @@
       </a>
       <nav class="store-nav" aria-label="Store" data-i18n-attr="aria-label:storeNav">
         <a class="nav-link" href="index.html" data-i18n="collection">Collection</a>
-        <button type="button" class="nav-link lang-switch" id="lang-switch" hidden></button>
+        <div class="lang-switch" hidden>
+          <button type="button" class="nav-link lang-switch-button" id="lang-switch" aria-expanded="false" aria-controls="lang-list">
+            <span class="lang-switch-code"></span>
+          </button>
+          <ul class="lang-list" id="lang-list" hidden></ul>
+        </div>
         <button type="button" class="cart-button" id="cart-button" hidden>
           <span data-icon="cart"></span>
           <span class="cart-count" id="cart-count">0</span>

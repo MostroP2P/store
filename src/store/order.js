@@ -11,7 +11,9 @@ const STORE_HOST = 'store.mostro.network';
 export const ORDER_ID_PATTERN = /^MS-[0-9A-HJKMNP-TV-Z]{6}$/;
 // Messages to the store are in Spanish; prices as the store writes them ($30.000)
 const STORE_LANG = 'es';
-const LANGUAGE_NAMES = Object.freeze({ en: 'inglés', es: 'español' });
+const LANGUAGE_NAMES = Object.freeze({
+  en: 'inglés', es: 'español', fr: 'francés', it: 'italiano', pt: 'portugués',
+});
 
 const browserRandom = (length) => crypto.getRandomValues(new Uint8Array(length));
 // One line per field: control/format characters (bidi overrides, zero-width…) and line breaks become spaces,

@@ -1,6 +1,6 @@
 // The notice for a store page whose scripts never started. One module that fails to load (the network
 // changed, the connection dropped) stops every module of the page, and the buyer is left with an empty
-// page. No script is left to translate the notice, so the HTML carries it in both languages, and the
+// page. No script is left to translate the notice, so the HTML carries it in English and in Spanish, and the
 // stylesheet shows it (tests/e2e/store.e2e.js drives that in the browser).
 
 import { test } from 'node:test';

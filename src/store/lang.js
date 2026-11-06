@@ -1,13 +1,14 @@
 // Page language (browser): the visitor's choice, else the browser's language, else English (i18n.js).
 // T holds the texts of that language. translatePage() fills the static texts of the HTML (data-i18n) and
-// mountLanguageSwitch() wires the EN/ES button in the header (saves the choice and reloads the page).
+// mountLanguageSwitch() wires the language picker in the header (saves the choice and reloads the page).
 
 import { pickLanguage, SUPPORTED_LANGS } from '../i18n.js';
+import { el } from '../dom.js';
 import { browserStorage, readJson, writeJson } from './persist.js';
 import { STRINGS } from './strings.js';
 
 export const LANG_STORAGE_KEY = 'mostro-store:lang';
-// Static texts stay hidden (CSS) until this class is set, so a Spanish visitor never sees them flip from English
+// Static texts stay hidden (CSS) until this class is set, so a visitor in another language never sees them flip from English
 const READY_CLASS = 'i18n-ready';
 
 const storage = browserStorage('localStorage');
@@ -38,17 +39,42 @@ export function translatePage(doc) {
   doc.documentElement.classList.add(READY_CLASS);
 }
 
-/** #lang-switch: shows the other language ("ES" / "EN"); hidden when the choice could not be saved. */
+/**
+ * The language picker: #lang-switch, a button with the code of the page language ("EN ▾"), opens a list
+ * naming every language in its own name. Only choosing one saves it and reloads the page, so moving through
+ * the list never does. Hidden when the choice could not be saved.
+ */
 export function mountLanguageSwitch(button) {
-  if (!button || !storage) return;
-  const other = SUPPORTED_LANGS.find((lang) => lang !== LANG);
-  const code = other.toUpperCase();
-  button.textContent = code;
-  button.lang = other;
-  button.title = STRINGS[other].switchLanguage;
-  button.setAttribute('aria-label', `${code}: ${STRINGS[other].switchLanguage}`);
-  button.addEventListener('click', () => {
-    if (writeJson(storage, LANG_STORAGE_KEY, other)) window.location.reload();
+  const picker = button?.closest('.lang-switch');
+  if (!picker || !storage) return;
+  const list = picker.querySelector('.lang-list');
+  const setOpen = (open) => {
+    list.hidden = !open;
+    button.setAttribute('aria-expanded', String(open));
+  };
+  // The language already shown, or one the browser would not save, leaves the page as it is
+  const choose = (lang) => {
+    if (lang !== LANG && writeJson(storage, LANG_STORAGE_KEY, lang)) window.location.reload();
+    else setOpen(false);
+  };
+  list.replaceChildren(...SUPPORTED_LANGS.map((lang) => el('li', {}, [el('button', {
+    type: 'button', lang, textContent: STRINGS[lang].languageName,
+    'aria-current': lang === LANG ? 'true' : undefined, onclick: () => choose(lang),
+  })])));
+  button.querySelector('.lang-switch-code').textContent = LANG.toUpperCase();
+  button.setAttribute('aria-label', `${T.language}: ${T.languageName}`);
+  button.addEventListener('click', () => setOpen(list.hidden));
+  // Closed by Escape (the focus goes back to the button), by a click elsewhere and by tabbing out of it
+  picker.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || list.hidden) return;
+    setOpen(false);
+    button.focus();
   });
-  button.hidden = false;
+  document.addEventListener('click', (event) => {
+    if (!picker.contains(event.target)) setOpen(false);
+  });
+  picker.addEventListener('focusout', (event) => {
+    if (!picker.contains(event.relatedTarget)) setOpen(false);
+  });
+  picker.hidden = false;
 }
