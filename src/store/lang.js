@@ -52,9 +52,10 @@ export function mountLanguageSwitch(button) {
     list.hidden = !open;
     button.setAttribute('aria-expanded', String(open));
   };
-  // The language already shown, or one the browser would not save, leaves the page as it is
+  // Leaves the page as it is: a disabled picker (checkout locks it while an invoice is in flight or confirmed,
+  // and a late confirmation can lock it with the list open), the language already shown, or one not saved
   const choose = (lang) => {
-    if (lang !== LANG && writeJson(storage, LANG_STORAGE_KEY, lang)) window.location.reload();
+    if (!button.disabled && lang !== LANG && writeJson(storage, LANG_STORAGE_KEY, lang)) window.location.reload();
     else setOpen(false);
   };
   list.replaceChildren(...SUPPORTED_LANGS.map((lang) => el('li', {}, [el('button', {

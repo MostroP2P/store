@@ -129,6 +129,20 @@ test('the language picker opens a list with every language in its own name, and 
   assert.equal(await page.getAttribute('html', 'lang'), 'en');
 }));
 
+test('a picker disabled while its list is open changes nothing', () => withShop({}, async (shop) => {
+  const page = await shop.page('index.html');
+  await page.waitForSelector('.product-card');
+  await page.click('#lang-switch');
+  await page.focus('#lang-list button[lang="fr"]');
+  // What checkout does when a payment is confirmed late, after "Change my details" unlocked the picker:
+  // a reload now would take the confirmation, and its order number, away
+  await page.evaluate(() => { document.getElementById('lang-switch').disabled = true; });
+  await page.keyboard.press('Enter');
+  assert.equal(await page.getAttribute('#lang-switch', 'aria-expanded'), 'false');
+  assert.equal(await page.getAttribute('html', 'lang'), 'en');
+  assert.equal(await page.evaluate(() => localStorage.getItem('mostro-store:lang')), null);
+}));
+
 test('a choice the browser will not save leaves the page in its language', () => withShop({}, async (shop) => {
   const page = await shop.page('index.html');
   await page.waitForSelector('.product-card');
