@@ -93,7 +93,7 @@
         { "id": "mostro-quotes-hold-my-invoice", "image": "designs/stickers/mostro-escrow-512.png", "text": "Hold my invoice" },
         { "id": "mostro-quotes-somewhere-a-bank-is-crying", "image": "designs/stickers/mostro-laugh-512.png", "text": "Somewhere, a bank is crying" },
         { "id": "mostro-quotes-i-buy-sats-from-strangers-on-the-internet", "image": "designs/stickers/mostro-p2p-512.png", "text": "I buy sats from strangers on the internet", "style": { "maxLines": 3 } },
-        { "id": "mostro-quotes-sex-is-great", "image": "designs/stickers/mostro-celebrate-512.png", "text": "Sex is great, but have you tried a real P2P, no-KYC exchange?", "style": { "maxLines": 3 } },
+        { "id": "mostro-quotes-sex-is-great", "image": "designs/stickers/mostro-celebrate-512.png", "text": "Sex is great, but have you tried a real P2P, no-KYC exchange?", "style": { "maxLines": 5 } },
         { "id": "mostro-quotes-the-mostro-made-me-do-it", "image": "designs/stickers/mostro-money-512.png", "text": "The Mostro made me do it" },
         { "id": "mostro-quotes-mostro-do-it-better", "image": "designs/stickers/mostro-cool-512.png", "text": "Mostro do it better!" }
       ]
