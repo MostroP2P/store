@@ -179,7 +179,8 @@ test('the product page: color, size, size guide and related shirts', () => withS
 
   const related = page.locator('#related .product-card');
   assert.ok(await related.count() > 0);
-  await Promise.all([page.waitForURL(/\/mostro-quotes-[a-z-]+\.html/), related.first().click()]);
+  const relatedHref = await related.first().getAttribute('href');
+  await Promise.all([page.waitForURL((url) => url.pathname === `/${relatedHref}`), related.first().click()]);
   await page.waitForSelector('#product:not([hidden])');
 }));
 

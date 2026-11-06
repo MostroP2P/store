@@ -28,8 +28,8 @@ test('with fewer shirts on sale the store card fills fewer slots, never one with
 
 test('a missing shirt gives its slot to one that is not on the card already, so none shows twice', () => {
   const { products, config } = context();
-  // In catalog order Mostro Invaders comes first, and it already has slot 1
-  const withoutLove = products.filter((product) => product.id !== LOVE);
+  // Of these, Mostro Invaders comes first in catalog order, and it already has slot 1
+  const withoutLove = products.filter((product) => [NODE, 'mostro-invaders', 'mostro-quotes-hold-my-invoice'].includes(product.id));
   assert.deepEqual(storeShirts(withoutLove, config).map(({ slot, product }) => [slot, product.id]), [
     [0, NODE], [1, 'mostro-invaders'], [2, 'mostro-quotes-hold-my-invoice'],
   ]);

@@ -32,14 +32,17 @@ const visibleCards = (page) => page.locator('.card:visible').count();
 const problems = (page) => page.locator('#problems li').allTextContents();
 
 test('every shirt, filtered by group and painted in any color', () => withViewer({}, async (page) => {
+  const raw = await catalog();
+  const designs = raw.designs.length;
+  const quotes = raw.series.find((series) => series.id === 'mostro-quotes').items.length;
   await page.waitForSelector('.card');
-  assert.equal(await visibleCards(page), 10);
+  assert.equal(await visibleCards(page), designs + quotes);
   await page.click('#filters .filter:text("Designs")');
-  assert.equal(await visibleCards(page), 1);
+  assert.equal(await visibleCards(page), designs);
   await page.click('#filters .filter:text("Mostro says…")');
-  assert.equal(await visibleCards(page), 9);
+  assert.equal(await visibleCards(page), quotes);
   await page.click('#filters .filter:text("All")');
-  assert.equal(await visibleCards(page), 10);
+  assert.equal(await visibleCards(page), designs + quotes);
 
   await page.click('#swatches .swatch[title="White"]');
   assert.match(page.url(), /color=white/);
