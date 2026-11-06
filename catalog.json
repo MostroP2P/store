@@ -82,6 +82,90 @@
         "it": "I Mostro invadono lo schermo, in stile arcade.",
         "pt": "Os Mostro invadem a tela, no estilo arcade."
       }
+    },
+    {
+      "id": "fiatality",
+      "name": "Fiatality",
+      "image": "designs/fiatality.png",
+      "colors": ["black", "navy", "white"],
+      "status": "published",
+      "description": {
+        "en": "Mostro versus the bank: a knockout for fiat and a flawless trade.",
+        "es": "Mostro contra el banco: K.O. para el fiat y un trade impecable.",
+        "fr": "Mostro contre la banque : K.-O. pour le fiat et un échange parfait.",
+        "it": "Mostro contro la banca: K.O. per il fiat e uno scambio perfetto.",
+        "pt": "O Mostro contra o banco: nocaute no fiat e uma troca perfeita."
+      }
+    },
+    {
+      "id": "player-2-player",
+      "name": "Player 2 Player",
+      "image": "designs/player-2-player.png",
+      "colors": ["black", "navy", "white"],
+      "status": "published",
+      "description": {
+        "en": "A buyer, a seller and Mostro as the escrow. No bank in the middle.",
+        "es": "Un comprador, un vendedor y Mostro como escrow. Ningún banco en el medio.",
+        "fr": "Un acheteur, un vendeur et Mostro comme séquestre. Aucune banque au milieu.",
+        "it": "Un compratore, un venditore e Mostro a fare da escrow. Nessuna banca in mezzo.",
+        "pt": "Um comprador, um vendedor e o Mostro como escrow. Nenhum banco no meio."
+      }
+    },
+    {
+      "id": "a-wild-kyc-appeared",
+      "name": "A Wild KYC Appeared",
+      "image": "designs/kyc-fight.png",
+      "colors": ["black", "navy", "white"],
+      "status": "published",
+      "description": {
+        "en": "A retro battle against KYC: Mostro uses a hold invoice, and it’s super effective.",
+        "es": "Una batalla retro contra el KYC: Mostro usa una hold invoice y es súper efectiva.",
+        "fr": "Un combat rétro contre le KYC : Mostro utilise une hold invoice, et c’est super efficace.",
+        "it": "Una battaglia retrò contro il KYC: Mostro usa una hold invoice ed è superefficace.",
+        "pt": "Uma batalha retrô contra o KYC: o Mostro usa uma hold invoice e é super efetivo."
+      }
+    },
+    {
+      "id": "choose-your-fighter",
+      "name": "Choose Your Fighter",
+      "image": "designs/choose.png",
+      "colors": ["black", "navy", "white"],
+      "status": "published",
+      "description": {
+        "en": "Mostro, Ortsom, Mortsom or Serbero: pick your fighter. Zero KYC, no custody.",
+        "es": "Mostro, Ortsom, Mortsom o Serbero: elegí tu luchador. Cero KYC, sin custodia.",
+        "fr": "Mostro, Ortsom, Mortsom ou Serbero : choisissez votre combattant. Zéro KYC, personne ne garde vos fonds.",
+        "it": "Mostro, Ortsom, Mortsom o Serbero: scegli il tuo lottatore. Zero KYC, nessuna custodia.",
+        "pt": "Mostro, Ortsom, Mortsom ou Serbero: escolha seu lutador. Zero KYC, sem custódia."
+      }
+    },
+    {
+      "id": "high-scores",
+      "name": "High Scores",
+      "image": "designs/high-scores.png",
+      "colors": ["black", "navy"],
+      "status": "published",
+      "description": {
+        "en": "The arcade high scores: Satoshi on top, the peso at the bottom. Insert bitcoin to continue.",
+        "es": "La tabla de récords: Satoshi arriba, el peso abajo de todo. Insertá bitcoin para continuar.",
+        "fr": "Le tableau des records : Satoshi en tête, le peso tout en bas. Insérez du bitcoin pour continuer.",
+        "it": "La classifica dei record: Satoshi in cima, il peso in fondo. Inserisci bitcoin per continuare.",
+        "pt": "O placar de recordes: Satoshi no topo, o peso lá embaixo. Insira bitcoin para continuar."
+      }
+    },
+    {
+      "id": "final-boss-inflation",
+      "name": "Final Boss: Inflation",
+      "image": "designs/boss.png",
+      "colors": ["black", "navy", "white"],
+      "status": "published",
+      "description": {
+        "en": "The final boss: a central bank that never stops printing pesos. Mostro takes it on with Lightning.",
+        "es": "El jefe final: un banco central que imprime pesos sin parar. Mostro lo enfrenta con Lightning.",
+        "fr": "Le boss final : une banque centrale qui imprime des pesos sans arrêt. Mostro l’affronte avec Lightning.",
+        "it": "Il boss finale: una banca centrale che stampa pesos senza sosta. Mostro lo affronta con Lightning.",
+        "pt": "O chefão final: um banco central que imprime pesos sem parar. O Mostro o enfrenta com Lightning."
+      }
     }
   ],
 
