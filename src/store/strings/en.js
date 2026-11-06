@@ -1,7 +1,10 @@
-// Store texts in English, the default language. Same keys as es.js: tests/store/strings.test.js checks it.
+// Store texts in English, the default language and the source of the others. Every other table has the same
+// keys: tests/store/strings.test.js checks it.
 
 export const EN = {
-  switchLanguage: 'View in English',
+  // The language picker lists every language in its own name; `language` is the picker's label
+  languageName: 'English',
+  language: 'Language',
 
   // Static texts of the pages (data-i18n)
   storeNav: 'Store',

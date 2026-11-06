@@ -3,7 +3,7 @@
 // preview from a static page of its own: <id>.html, made from product.html, with that product's tags and image.
 
 import { normalizeCatalog } from '../src/catalog.js';
-import { localizeJson, DEFAULT_LANG } from '../src/i18n.js';
+import { localizeJson, DEFAULT_LANG, SUPPORTED_LANGS } from '../src/i18n.js';
 import { normalizeStoreConfig } from '../src/store/config.js';
 import { storeProducts } from '../src/store/products.js';
 import { moneyFormat } from '../src/store/money.js';
@@ -18,6 +18,8 @@ const STORE_TITLE = 'Mostro Store · T-shirts';
 const STORE_DESCRIPTION = 'Mostro T-shirts. Pay with Lightning; your details travel encrypted over Nostr.';
 const PRODUCT_DESCRIPTION = 'A Mostro T-shirt. Pay with Lightning; your details travel encrypted over Nostr.';
 const IN_STOCK = 'https://schema.org/InStock';
+// Open Graph locale of each language the store speaks: the region its texts are written for
+const OG_LOCALES = Object.freeze({ en: 'en_US', es: 'es_AR', fr: 'fr_FR', it: 'it_IT', pt: 'pt_BR' });
 // Product pages live next to these, so an id may not take their names; nor the store's preview image's
 const RESERVED_NAMES = Object.freeze(['index', 'product', 'checkout', 'viewer', '404', STORE_IMAGE]);
 // Lowercase words joined by hyphens; never a leading hyphen, which a shell command would read as an option
@@ -67,8 +69,8 @@ export function headTags(page) {
     meta('property', 'og:image:width', OG_IMAGE.width),
     meta('property', 'og:image:height', OG_IMAGE.height),
     meta('property', 'og:image:alt', page.imageAlt),
-    meta('property', 'og:locale', 'en_US'),
-    meta('property', 'og:locale:alternate', 'es_AR'),
+    meta('property', 'og:locale', OG_LOCALES[DEFAULT_LANG]),
+    ...SUPPORTED_LANGS.filter((lang) => lang !== DEFAULT_LANG).map((lang) => meta('property', 'og:locale:alternate', OG_LOCALES[lang])),
     ...(page.extraMeta ?? []).map(([property, content]) => meta('property', property, content)),
     meta('name', 'twitter:card', 'summary_large_image'),
     meta('name', 'twitter:site', TWITTER),
@@ -101,7 +103,7 @@ const storeTags = () => headTags({
     name: SITE_NAME,
     url: `${SITE_URL}/`,
     description: STORE_DESCRIPTION,
-    inLanguage: ['en', 'es'],
+    inLanguage: [...SUPPORTED_LANGS],
     publisher: PUBLISHER,
   },
 });

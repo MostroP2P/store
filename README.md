@@ -7,7 +7,7 @@ It is a static site: no database, server, user accounts or build. Everything is 
 - **Payment** is in bitcoin, over Lightning, to an LN address.
 - **Orders** reach the store account encrypted over Nostr (NIP-17).
 - **The buyer's address** is not stored on any server.
-- **Languages:** English by default, or Spanish if the browser is in Spanish. The **EN/ES** button in the header switches the language.
+- **Languages:** English, Spanish, French, Italian and Portuguese. English by default, or the browser's language when it is one of the others. The language picker in the header switches it.
 
 ## Contents
 
@@ -44,7 +44,7 @@ npm run coverage:all   # both, and the line coverage of every file in src/ (100 
 
 ## 2. How a customer buys
 
-The store shows in **English**, or in **Spanish** if the buyer's browser is in Spanish (the first language in its list that is English or Spanish counts). The **EN/ES** button in the header switches the language and remembers it in that browser. While an invoice is in progress the button is disabled, so a reload does not lose it.
+The store shows in **English**, **Spanish**, **French**, **Italian** or **Portuguese**: the first language in the buyer's browser list that is one of those counts, and English if none is. The language picker in the header (it shows the current language, `EN ▾`, and lists each language in its own name) switches the language and remembers it in that browser. While an invoice is in progress the picker is disabled, so a reload does not lose it.
 
 1. **Collection** (`index.html`): the buyer sees all the T-shirts for sale, grouped by series.
 2. **Product** (`product.html`): the buyer picks the color and the size. "Size guide" shows the measurements table.
@@ -104,7 +104,7 @@ Idioma: español
 Instrucciones: Tocar timbre dos veces
 ```
 
-Messages to the store are always in Spanish, by design. The `Idioma` line says which language the buyer used (`inglés` or `español`), so you can reply in that language. The color name also comes in that language.
+Messages to the store are always in Spanish, by design. The `Idioma` line says which language the buyer used (`inglés`, `español`, `francés`, `italiano` or `portugués`), so you can reply in that language. The color name also comes in that language.
 
 A second message can arrive in the same conversation:
 
@@ -207,7 +207,7 @@ cp /etc/caddy/Caddyfile.bak-20261104-store-status /etc/caddy/Caddyfile && system
     "relays": ["wss://relay.mostro.network", "wss://nos.lol", "wss://relay.damus.io"]
   },
   "details": [
-    { "title": { "en": "Shipping", "es": "Envío" }, "text": { "en": "We ship anywhere in Argentina…", "es": "Enviamos a todo el país…" } }
+    { "title": { "en": "Shipping", "es": "Envío", "fr": "Livraison", "it": "Spedizione", "pt": "Envio" }, "text": { "en": "We ship anywhere in Argentina…", "es": "Enviamos a todo el país…", "fr": "…", "it": "…", "pt": "…" } }
   ]
 }
 ```
@@ -228,19 +228,19 @@ If `lnAddress` or `nostr` are invalid, the T-shirts still show, but nobody can p
 
 **If the LN address changes domain**, add it to the `connect-src` of the `Content-Security-Policy` in `index.html`, `product.html` and `checkout.html`. Otherwise the browser blocks the invoice request.
 
-### Texts in English and Spanish
+### Texts in every language
 
-Every text the buyer sees in `catalog.json` can be given in both languages, as an object with `en` and `es`:
+Every text the buyer sees in `catalog.json` can be given in each language of the store, as an object with `en`, `es`, `fr`, `it` and `pt`:
 
 ```json
-{ "id": "black", "name": { "en": "Black", "es": "Negro" }, "hex": "#1a1a1a" }
+{ "id": "black", "name": { "en": "Black", "es": "Negro", "fr": "Noir", "it": "Nero", "pt": "Preto" }, "hex": "#1a1a1a" }
 ```
 
 - **Where:** color names, `description` and `name` of designs, series and items, and `title` / `text` of `store.details`.
-- **A text that is the same in both languages** can stay as a string, for example the phrases on the T-shirts ("Love at first sat").
-- **If a translation is missing** (or empty), the English one is used, and if that is missing too, the other one.
-- **Only the keys `en` and `es` count.** An object with other keys is not taken as a translation, and the name falls back to the `id`.
-- A test (`tests/i18n.test.js`) opens `catalog.json` in both languages and fails if anything is left in Spanish in the English version.
+- **A text that is the same in every language** can stay as a string, for example the phrases on the T-shirts ("Love at first sat").
+- **If a translation is missing** (or empty), the store shows the English one, and if that is missing too, the first language that has it. Even so, a test (`tests/i18n.test.js`) fails if a translated text in this repository's `catalog.json` lacks a language: write all five.
+- **Only the keys `en`, `es`, `fr`, `it` and `pt` count.** An object with other keys is not taken as a translation, and the name falls back to the `id`.
+- The same test opens `catalog.json` in every language and fails if anything is left in Spanish in the English version.
 - The viewer shows the catalog in English.
 
 ### Fields of each T-shirt
@@ -309,7 +309,7 @@ The repo rules:
 
 - Modules that do not touch the DOM have unit tests at 100 % of lines, branches and functions.
 - The pages, the cart, the checkout and the viewer have browser tests (`tests/e2e/`): they buy, pay with Lightning and with WebLN, decrypt the order the store receives, and go through every error, with no request leaving the machine. Unit and browser tests together cover 100 % of the lines of `src/`.
-- The store texts are in `src/store/strings/en.js` and `src/store/strings/es.js`, with the same keys: a test fails if one language is missing something or if Spanish is left in the English one.
+- The store texts are in `src/store/strings/`: `en.js` (the source), `es.js`, `fr.js`, `it.js` and `pt.js`, with the same keys. A test fails if one language is missing something, if Spanish is left in the English one, or if French loses the no-break space before `:` `;` `!` `?`.
 - Fixed texts in the HTML files carry `data-i18n="key"` (or `data-i18n-attr="aria-label:key"`). The HTML holds the English, and `src/store/lang.js` changes it to the page language.
 
 ### Test the checkout without bothering the store

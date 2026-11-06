@@ -5,11 +5,18 @@ export const YADIO_URL = 'https://api.yadio.io/exrates/BTC';
 const SATS_PER_BTC = 100_000_000;
 // Float noise such as 22357.000000000004 must not cost the buyer an extra sat
 const ROUNDING_EPSILON = 1e-6;
-// es: "$30.000" (Argentine pesos, as the store always wrote them); en: "ARS 30,000", so pesos are not
-// read as dollars. The no-break space keeps the code and the number on one line.
+// es: "$30.000" (Argentine pesos, as the store always wrote them). Every other language names the currency,
+// so pesos are not read as dollars or euros, on the side of the number that language puts it: "ARS 30,000",
+// "30 000 ARS" (fr), "30.000 ARS" (it), "ARS 30.000" (pt, as in Brazil). The no-break space keeps the code
+// and the number on one line.
+const codeFirst = (n, currency) => `${currency}\u00a0${n}`;
+const codeLast = (n, currency) => `${n}\u00a0${currency}`;
 const PRICE_STYLES = Object.freeze({
   es: { locale: 'es-AR', price: (n) => `$${n}`, priceWithCurrency: (n, currency) => `$${n} ${currency}` },
-  en: { locale: 'en-US', price: (n, currency) => `${currency}\u00a0${n}`, priceWithCurrency: (n, currency) => `${currency}\u00a0${n}` },
+  en: { locale: 'en-US', price: codeFirst, priceWithCurrency: codeFirst },
+  fr: { locale: 'fr-FR', price: codeLast, priceWithCurrency: codeLast },
+  it: { locale: 'it-IT', price: codeLast, priceWithCurrency: codeLast },
+  pt: { locale: 'pt-BR', price: codeFirst, priceWithCurrency: codeFirst },
 });
 
 /**

@@ -55,6 +55,16 @@ test('every product on sale gets a page of its own, with its preview tags', asyn
   assert.match(files.get('sitemap.xml'), /<loc>https:\/\/store\.mostro\.network\/mostro-invaders\.html<\/loc>/);
 });
 
+test('link previews and search engines are told every language the store speaks', async () => {
+  const files = seoFiles(await catalog(), { 'index.html': await read('index.html'), 'product.html': await read('product.html') });
+  const alternates = (html) => [...html.matchAll(/<meta property="og:locale:alternate" content="([^"]*)">/g)].map((m) => m[1]);
+  ['index.html', 'product.html', 'mostro-invaders.html'].forEach((name) => {
+    assert.equal(metaContent(files.get(name), 'property', 'og:locale'), 'en_US', name);
+    assert.deepEqual(alternates(files.get(name)), ['es_AR', 'fr_FR', 'it_IT', 'pt_BR'], name);
+  });
+  assert.deepEqual(jsonLdOf(files.get('index.html')).inLanguage, ['en', 'es', 'fr', 'it', 'pt']);
+});
+
 test('catalog text cannot break out of an attribute, an element or the JSON-LD', async () => {
   const template = await read('product.html');
   const product = { id: 'x', name: 'A "quote" </script><b>', description: "It's <b>bold</b> & more", price: 1 };

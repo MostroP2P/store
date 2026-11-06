@@ -32,19 +32,23 @@ async function withShop(options, scenario) {
 
 const catalog = async () => JSON.parse(await readFile(CATALOG, 'utf8'));
 
-test('an English browser gets English; the switch moves to Spanish and remembers it', () => withShop({}, async (shop) => {
+test('an English browser gets English; the picker moves to Spanish and remembers it', () => withShop({}, async (shop) => {
   const page = await shop.page('index.html');
   await page.waitForSelector('.product-card');
   assert.equal(await page.getAttribute('html', 'lang'), 'en');
   assert.equal(await page.textContent('h1'), 'Mostro T-shirts');
   assert.equal(await page.textContent('.product-card .price-mono'), 'ARS\u00a060,000');
   assert.deepEqual(await page.locator('.section-title').allTextContents(), ['Designs', 'Mostro says…']);
+  assert.equal(await page.textContent('.lang-switch-code'), 'EN');
 
-  await Promise.all([page.waitForEvent('load'), page.click('#lang-switch')]);
+  await page.click('#lang-switch');
+  await Promise.all([page.waitForEvent('load'), page.click('#lang-list button[lang="es"]')]);
   await page.waitForSelector('.product-card');
   assert.equal(await page.getAttribute('html', 'lang'), 'es');
   assert.equal(await page.textContent('h1'), 'Remeras Mostro');
   assert.equal(await page.textContent('.product-card .price-mono'), '$60.000');
+  assert.equal(await page.getAttribute('#lang-switch', 'aria-label'), 'Idioma: Español');
+  assert.equal(await page.textContent('.lang-switch-code'), 'ES');
 
   await page.goto(`${shop.url}/product.html?id=${INVADERS}`);
   await page.waitForSelector('#product:not([hidden])');
@@ -57,7 +61,98 @@ test('a Spanish browser gets Spanish from the first visit', () => withShop({ loc
   await page.waitForSelector('.product-card');
   assert.equal(await page.getAttribute('html', 'lang'), 'es');
   assert.equal(await page.title(), 'Mostro Store · Remeras');
-  assert.equal(await page.textContent('#lang-switch'), 'EN');
+  assert.equal(await page.getAttribute('#lang-switch', 'aria-label'), 'Idioma: Español');
+  assert.equal(await page.getAttribute('#lang-list button[lang="es"]', 'aria-current'), 'true');
+}));
+
+// A browser in each of the other languages: its texts, its prices and its color names from catalog.json
+const OTHER_LANGUAGES = [
+  { locale: 'fr-FR', lang: 'fr', title: 'T-shirts Mostro', price: '60\u202f000\u00a0ARS', sections: ['Motifs', 'Mostro dit…'], black: 'Noir' },
+  { locale: 'it-IT', lang: 'it', title: 'Magliette Mostro', price: '60.000\u00a0ARS', sections: ['Grafiche', 'Mostro dice…'], black: 'Nero' },
+  { locale: 'pt-BR', lang: 'pt', title: 'Camisetas Mostro', price: 'ARS\u00a060.000', sections: ['Estampas', 'Mostro diz…'], black: 'Preto' },
+];
+
+OTHER_LANGUAGES.forEach(({ locale, lang, title, price, sections, black }) => {
+  test(`a browser in ${locale} gets the store in that language`, () => withShop({ locale }, async (shop) => {
+    const page = await shop.page('index.html');
+    await page.waitForSelector('.product-card');
+    assert.equal(await page.getAttribute('html', 'lang'), lang);
+    assert.equal(await page.textContent('h1'), title);
+    assert.equal(await page.textContent('.product-card .price-mono'), price);
+    assert.deepEqual(await page.locator('.section-title').allTextContents(), sections);
+    assert.equal(await page.textContent('.lang-switch-code'), lang.toUpperCase());
+
+    await page.goto(`${shop.url}/product.html?id=${INVADERS}`);
+    await page.waitForSelector('#product:not([hidden])');
+    assert.equal(await page.textContent('#color-name'), black);
+  }));
+});
+
+test('the language picker opens a list with every language in its own name, and closes without choosing', () => withShop({}, async (shop) => {
+  const page = await shop.page('index.html');
+  await page.waitForSelector('.product-card');
+  const button = '#lang-switch';
+  const isOpen = async () => (await page.getAttribute(button, 'aria-expanded')) === 'true' && page.isVisible('#lang-list');
+  assert.equal(await page.getAttribute(button, 'aria-label'), 'Language: English');
+  assert.equal(await isOpen(), false);
+
+  await page.click(button);
+  assert.equal(await isOpen(), true);
+  const items = await page.$$eval('#lang-list button', (nodes) => nodes.map((b) => [b.lang, b.textContent, b.getAttribute('aria-current')]));
+  assert.deepEqual(items, [
+    ['en', 'English', 'true'], ['es', 'Español', null], ['fr', 'Français', null], ['it', 'Italiano', null], ['pt', 'Português', null],
+  ]);
+  // Moving through the list with the keyboard changes nothing; Escape closes it and gives the focus back
+  await page.focus('#lang-list button[lang="fr"]');
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Escape');
+  assert.equal(await isOpen(), false);
+  assert.equal(await page.evaluate(() => document.activeElement.id), 'lang-switch');
+  assert.equal(await page.getAttribute('html', 'lang'), 'en');
+
+  // A click elsewhere closes it; so does the button again, and leaving it with the keyboard
+  await page.click(button);
+  await page.click('h1');
+  assert.equal(await isOpen(), false);
+  await page.click(button);
+  await page.click(button);
+  assert.equal(await isOpen(), false);
+  await page.click(button);
+  await page.focus('#lang-list button[lang="pt"]');
+  await page.keyboard.press('Tab');
+  assert.equal(await isOpen(), false);
+
+  // The language already shown just closes the list
+  await page.click(button);
+  await page.click('#lang-list button[lang="en"]');
+  assert.equal(await isOpen(), false);
+  assert.equal(await page.getAttribute('html', 'lang'), 'en');
+}));
+
+test('a picker disabled while its list is open changes nothing', () => withShop({}, async (shop) => {
+  const page = await shop.page('index.html');
+  await page.waitForSelector('.product-card');
+  await page.click('#lang-switch');
+  await page.focus('#lang-list button[lang="fr"]');
+  // What checkout does when a payment is confirmed late, after "Change my details" unlocked the picker:
+  // a reload now would take the confirmation, and its order number, away
+  await page.evaluate(() => { document.getElementById('lang-switch').disabled = true; });
+  await page.keyboard.press('Enter');
+  assert.equal(await page.getAttribute('#lang-switch', 'aria-expanded'), 'false');
+  assert.equal(await page.getAttribute('html', 'lang'), 'en');
+  assert.equal(await page.evaluate(() => localStorage.getItem('mostro-store:lang')), null);
+}));
+
+test('a choice the browser will not save leaves the page in its language', () => withShop({}, async (shop) => {
+  const page = await shop.page('index.html');
+  await page.waitForSelector('.product-card');
+  // Storage that worked when the page started and refuses writes later (full, or revoked)
+  await page.evaluate(() => { Storage.prototype.setItem = () => { throw new Error('QuotaExceededError'); }; });
+  await page.click('#lang-switch');
+  await page.click('#lang-list button[lang="it"]');
+  assert.equal(await page.getAttribute('#lang-switch', 'aria-expanded'), 'false');
+  assert.equal(await page.getAttribute('html', 'lang'), 'en');
+  assert.equal(await page.textContent('h1'), 'Mostro T-shirts');
 }));
 
 test('the product page: color, size, size guide and related shirts', () => withShop({}, async (shop) => {
@@ -201,7 +296,7 @@ test('the store explains when it cannot open', async () => {
   assert.ok(store);
 });
 
-test('a page whose scripts fail to load says so in both languages, and reloading recovers it', () => withShop({}, async (shop) => {
+test('a page whose scripts fail to load says so in English and Spanish, and reloading recovers it', () => withShop({}, async (shop) => {
   // dom.js is imported by every page: when it drops, no module of the page runs
   let dropping = true;
   await shop.get('context').route('**/src/dom.js', (route) => (dropping ? route.abort('internetdisconnected') : route.fallback()));

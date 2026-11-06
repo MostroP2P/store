@@ -21,13 +21,16 @@
   <meta property="og:image:alt" content="Mostro T-shirts">
   <meta property="og:locale" content="en_US">
   <meta property="og:locale:alternate" content="es_AR">
+  <meta property="og:locale:alternate" content="fr_FR">
+  <meta property="og:locale:alternate" content="it_IT">
+  <meta property="og:locale:alternate" content="pt_BR">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@MostroP2P">
   <meta name="twitter:title" content="Mostro Store · T-shirts">
   <meta name="twitter:description" content="Mostro T-shirts. Pay with Lightning; your details travel encrypted over Nostr.">
   <meta name="twitter:image" content="https://store.mostro.network/assets/og/store.jpg">
   <meta name="twitter:image:alt" content="Mostro T-shirts">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Mostro Store","url":"https://store.mostro.network/","description":"Mostro T-shirts. Pay with Lightning; your details travel encrypted over Nostr.","inLanguage":["en","es"],"publisher":{"@type":"Organization","name":"Mostro P2P","url":"https://mostro.network","logo":{"@type":"ImageObject","url":"https://store.mostro.network/assets/mostro-logo.png"},"sameAs":["https://github.com/MostroP2P","https://t.me/MostroP2P"]}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Mostro Store","url":"https://store.mostro.network/","description":"Mostro T-shirts. Pay with Lightning; your details travel encrypted over Nostr.","inLanguage":["en","es","fr","it","pt"],"publisher":{"@type":"Organization","name":"Mostro P2P","url":"https://mostro.network","logo":{"@type":"ImageObject","url":"https://store.mostro.network/assets/mostro-logo.png"},"sameAs":["https://github.com/MostroP2P","https://t.me/MostroP2P"]}}</script>
   <!-- /SEO -->
   <link rel="icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -44,7 +47,12 @@
       </a>
       <nav class="store-nav" aria-label="Store" data-i18n-attr="aria-label:storeNav">
         <a class="nav-link" href="index.html" aria-current="page" data-i18n="collection">Collection</a>
-        <button type="button" class="nav-link lang-switch" id="lang-switch" hidden></button>
+        <div class="lang-switch" hidden>
+          <button type="button" class="nav-link lang-switch-button" id="lang-switch" aria-expanded="false" aria-controls="lang-list">
+            <span class="lang-switch-code"></span>
+          </button>
+          <ul class="lang-list" id="lang-list" hidden></ul>
+        </div>
         <button type="button" class="cart-button" id="cart-button" hidden>
           <span data-icon="cart"></span>
           <span class="cart-count" id="cart-count">0</span>

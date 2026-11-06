@@ -18,24 +18,33 @@
     },
     "details": [
       {
-        "title": { "en": "Shipping", "es": "Envío" },
+        "title": { "en": "Shipping", "es": "Envío", "fr": "Livraison", "it": "Spedizione", "pt": "Envio" },
         "text": {
           "en": "We ship anywhere in Argentina. After you pay, we email you to arrange the delivery.",
-          "es": "Enviamos a todo el país. Después del pago te escribimos por email para coordinar la entrega."
+          "es": "Enviamos a todo el país. Después del pago te escribimos por email para coordinar la entrega.",
+          "fr": "Nous livrons partout en Argentine. Après le paiement, nous vous écrivons par e-mail pour organiser la livraison.",
+          "it": "Spediamo in tutta l’Argentina. Dopo il pagamento ti scriviamo via email per organizzare la consegna.",
+          "pt": "Enviamos para toda a Argentina. Depois do pagamento, mandamos um email para combinar a entrega."
         }
       },
       {
-        "title": { "en": "Paying with Lightning", "es": "Pago con Lightning" },
+        "title": { "en": "Paying with Lightning", "es": "Pago con Lightning", "fr": "Payer avec Lightning", "it": "Pagare con Lightning", "pt": "Pagamento com Lightning" },
         "text": {
           "en": "Pay in sats with any Lightning wallet. The price is set in Argentine pesos and converted to sats at the Yadio rate when you pay.",
-          "es": "Pagás en sats con cualquier wallet Lightning. El precio está en pesos y se convierte a sats con la cotización de Yadio en el momento de pagar."
+          "es": "Pagás en sats con cualquier wallet Lightning. El precio está en pesos y se convierte a sats con la cotización de Yadio en el momento de pagar.",
+          "fr": "Payez en sats avec n’importe quel portefeuille Lightning. Le prix est fixé en pesos argentins et converti en sats au taux de Yadio au moment du paiement.",
+          "it": "Paghi in sats con qualsiasi wallet Lightning. Il prezzo è in pesos argentini e viene convertito in sats al cambio di Yadio nel momento del pagamento.",
+          "pt": "Você paga em sats com qualquer carteira Lightning. O preço é em pesos argentinos e é convertido para sats pela cotação da Yadio no momento do pagamento."
         }
       },
       {
-        "title": { "en": "Privacy", "es": "Privacidad" },
+        "title": { "en": "Privacy", "es": "Privacidad", "fr": "Confidentialité", "it": "Privacy", "pt": "Privacidade" },
         "text": {
           "en": "Your shipping details travel encrypted over Nostr (NIP-17): only the store can read them. No account needed.",
-          "es": "Tus datos de envío viajan cifrados por Nostr (NIP-17): solo la tienda puede leerlos. No hace falta crear una cuenta."
+          "es": "Tus datos de envío viajan cifrados por Nostr (NIP-17): solo la tienda puede leerlos. No hace falta crear una cuenta.",
+          "fr": "Vos données de livraison voyagent chiffrées via Nostr (NIP-17) : seule la boutique peut les lire. Pas besoin de créer un compte.",
+          "it": "I tuoi dati di spedizione viaggiano cifrati su Nostr (NIP-17): solo il negozio può leggerli. Non serve creare un account.",
+          "pt": "Seus dados de envio viajam criptografados pelo Nostr (NIP-17): só a loja pode lê-los. Não precisa criar conta."
         }
       }
     ]
@@ -48,15 +57,15 @@
   },
 
   "colors": [
-    { "id": "black",  "name": { "en": "Black", "es": "Negro" },             "hex": "#1a1a1a" },
-    { "id": "white",  "name": { "en": "White", "es": "Blanco" },            "hex": "#f0f0ec" },
-    { "id": "gray",   "name": { "en": "Gray", "es": "Gris" },               "hex": "#8a8a8a" },
-    { "id": "navy",   "name": { "en": "Navy blue", "es": "Azul marino" },   "hex": "#1b2340" },
-    { "id": "blue",   "name": { "en": "Blue", "es": "Azul" },               "hex": "#1e3ca0" },
-    { "id": "red",    "name": { "en": "Red", "es": "Rojo" },                "hex": "#c81e28" },
-    { "id": "orange", "name": { "en": "Orange", "es": "Naranja" },          "hex": "#f7931a" },
-    { "id": "yellow", "name": { "en": "Yellow", "es": "Amarillo" },         "hex": "#f5cd28" },
-    { "id": "green",  "name": { "en": "Green", "es": "Verde" },             "hex": "#28783c" }
+    { "id": "black",  "name": { "en": "Black", "es": "Negro", "fr": "Noir", "it": "Nero", "pt": "Preto" },                        "hex": "#1a1a1a" },
+    { "id": "white",  "name": { "en": "White", "es": "Blanco", "fr": "Blanc", "it": "Bianco", "pt": "Branco" },                  "hex": "#f0f0ec" },
+    { "id": "gray",   "name": { "en": "Gray", "es": "Gris", "fr": "Gris", "it": "Grigio", "pt": "Cinza" },                       "hex": "#8a8a8a" },
+    { "id": "navy",   "name": { "en": "Navy blue", "es": "Azul marino", "fr": "Bleu marine", "it": "Blu navy", "pt": "Azul-marinho" }, "hex": "#1b2340" },
+    { "id": "blue",   "name": { "en": "Blue", "es": "Azul", "fr": "Bleu", "it": "Blu", "pt": "Azul" },                          "hex": "#1e3ca0" },
+    { "id": "red",    "name": { "en": "Red", "es": "Rojo", "fr": "Rouge", "it": "Rosso", "pt": "Vermelho" },                   "hex": "#c81e28" },
+    { "id": "orange", "name": { "en": "Orange", "es": "Naranja", "fr": "Orange", "it": "Arancione", "pt": "Laranja" },         "hex": "#f7931a" },
+    { "id": "yellow", "name": { "en": "Yellow", "es": "Amarillo", "fr": "Jaune", "it": "Giallo", "pt": "Amarelo" },            "hex": "#f5cd28" },
+    { "id": "green",  "name": { "en": "Green", "es": "Verde", "fr": "Vert", "it": "Verde", "pt": "Verde" },                    "hex": "#28783c" }
   ],
 
   "designs": [
@@ -68,7 +77,10 @@
       "status": "published",
       "description": {
         "en": "The Mostros invade the screen, arcade style.",
-        "es": "Los Mostro invaden la pantalla, en clave arcade."
+        "es": "Los Mostro invaden la pantalla, en clave arcade.",
+        "fr": "Les Mostro envahissent l’écran, façon arcade.",
+        "it": "I Mostro invadono lo schermo, in stile arcade.",
+        "pt": "Os Mostro invadem a tela, no estilo arcade."
       }
     }
   ],
@@ -76,11 +88,14 @@
   "series": [
     {
       "id": "mostro-quotes",
-      "name": { "en": "Mostro says…", "es": "Mostro dice…" },
+      "name": { "en": "Mostro says…", "es": "Mostro dice…", "fr": "Mostro dit…", "it": "Mostro dice…", "pt": "Mostro diz…" },
       "status": "published",
       "description": {
         "en": "A Mostro and a quote, so everyone knows whose side you’re on.",
-        "es": "Un Mostro y una frase, para que se note de qué lado estás."
+        "es": "Un Mostro y una frase, para que se note de qué lado estás.",
+        "fr": "Un Mostro et une phrase, pour qu’on sache de quel côté vous êtes.",
+        "it": "Un Mostro e una frase, perché si capisca da che parte stai.",
+        "pt": "Um Mostro e uma frase, para mostrar de que lado você está."
       },
       "style": {
         "font": "assets/fonts/LuckiestGuy-Regular.ttf",

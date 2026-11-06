@@ -77,8 +77,15 @@ body {
 .nav-link:hover,
 .nav-link[aria-current="page"] { color: var(--accent); }
 
-/* EN / ES: a nav link that is a button */
-.lang-switch {
+/* Language picker: a nav link that is a button, with the code of the page language ("EN") and a chevron,
+   over a list that names every language in its own name */
+.lang-switch { position: relative; }
+.lang-switch[hidden] { display: none; }
+
+.lang-switch-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 6px 2px;
   border: 0;
   background: none;
@@ -86,10 +93,51 @@ body {
   cursor: pointer;
 }
 
-.lang-switch:disabled {
+.lang-switch-button::after {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+}
+
+.lang-switch-button[aria-expanded="true"]::after { transform: translateY(2px) rotate(225deg); }
+
+.lang-switch-button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+.lang-list {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 150px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.lang-list button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lang-list button:hover { background: var(--surface-2); }
+.lang-list button[aria-current="true"] { color: var(--accent); font-weight: 600; }
 
 /* Static texts wait for their translation (lang.js) instead of flipping from English */
 html:not(.i18n-ready) [data-i18n] { visibility: hidden; }
@@ -925,7 +973,7 @@ fieldset:disabled { opacity: 0.6; }
   .field-narrow { grid-column: 1 / -1; }
   .cart-line { grid-template-columns: 72px minmax(0, 1fr); }
   .price-box { margin-left: 0; }
-  /* Brand, Collection, EN/ES and the cart on one line at 360 px */
+  /* Brand, Collection, the language picker and the cart on one line at 360 px */
   .store-header-inner { gap: 10px; }
   .store-brand { gap: 8px; font-size: 1.05rem; white-space: nowrap; }
   .store-nav { gap: 10px; }

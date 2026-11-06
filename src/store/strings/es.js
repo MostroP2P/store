@@ -1,7 +1,8 @@
 // Store texts in Spanish (Argentina). Same keys as en.js: tests/store/strings.test.js checks it.
 
 export const ES = {
-  switchLanguage: 'Ver en español',
+  languageName: 'Español',
+  language: 'Idioma',
 
   // Static texts of the pages (data-i18n)
   storeNav: 'Tienda',
