@@ -53,7 +53,7 @@ With `?debug` in the viewer URL (`http://localhost:8000/viewer.html?debug`) the 
 
 ### Add a full design (like invaders)
 
-1. Copy the PNG with a transparent background to `designs/`.
+1. Copy the PNG with a transparent background to `designs/`, sized to fit the print area (`base.printArea`, 530 × 700 px). The largest drawing (scale 1: the product page and the viewer's PNG download) puts the design inside that rectangle, so a larger file is never seen and only slows the collection down.
 2. Add an entry to `designs`:
    ```json
    { "id": "mostro-invaders", "name": "Mostro Invaders", "image": "designs/invaders-design.png" }
