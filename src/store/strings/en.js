@@ -45,6 +45,9 @@ export const EN = {
   addedToCart: 'Added to cart',
   storageBlocked: 'Your browser won’t let us save the cart, so it wouldn’t reach checkout. Allow storage for this site to buy.',
   productImage: (name, color) => `${name} T-shirt in ${color.toLowerCase()}`,
+  enlargeImage: 'View larger image',
+  zoomImage: 'Zoom',
+  zoomHint: 'Tap the image to zoom in or out.',
 
   // Size guide
   sizeTipsTitle: 'Tips for picking your size',

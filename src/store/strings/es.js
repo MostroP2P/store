@@ -43,6 +43,9 @@ export const ES = {
   addedToCart: 'Agregada al carrito',
   storageBlocked: 'Tu navegador no deja guardar el carrito, así que no llegaría al checkout. Habilitá el almacenamiento de este sitio para comprar.',
   productImage: (name, color) => `Remera ${name} en ${color.toLowerCase()}`,
+  enlargeImage: 'Ver la imagen más grande',
+  zoomImage: 'Zoom',
+  zoomHint: 'Tocá la imagen para acercarla o alejarla.',
 
   // Size guide
   sizeTipsTitle: 'Consejos para elegir tu talle',

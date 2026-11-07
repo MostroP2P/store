@@ -44,6 +44,9 @@ export const FR = {
   addedToCart: 'Ajouté au panier',
   storageBlocked: 'Votre navigateur ne nous laisse pas enregistrer le panier, qui n’arriverait donc pas jusqu’à la commande. Autorisez le stockage pour ce site afin d’acheter.',
   productImage: (name, color) => `T-shirt ${name} en ${color.toLowerCase()}`,
+  enlargeImage: 'Voir l’image en grand',
+  zoomImage: 'Zoom',
+  zoomHint: 'Touchez l’image pour zoomer ou dézoomer.',
 
   // Size guide
   sizeTipsTitle: 'Conseils pour choisir votre taille',

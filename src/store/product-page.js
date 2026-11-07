@@ -6,6 +6,8 @@ import { startPage, drawProduct, colorById } from './boot.js';
 import { mountCart } from './cart-ui.js';
 import { productCard } from './product-card.js';
 import { createSizeGuide } from './size-guide.js';
+import { createImageViewer } from './image-viewer.js';
+import { VIEWER_SCALE } from './zoom.js';
 import { relatedProducts } from './products.js';
 import { parseProductQuery, productHref } from './query.js';
 import { variantQuantity } from './cart.js';
@@ -73,7 +75,21 @@ function fillProduct(view) {
   $('related-section').hidden = $('related').children.length === 0;
 }
 
+/** A tap on the image opens it larger, in the colour picked; the same colour is not drawn twice. */
+function bindViewer(view) {
+  const viewer = createImageViewer();
+  $('product-zoom').addEventListener('click', () => {
+    const { product, colorId } = view.selection;
+    viewer.open({
+      key: colorId,
+      label: T.productImage(product.name, colorById(view.store, colorId).name),
+      draw: (canvas) => drawProduct(view.store, canvas, product, colorId, VIEWER_SCALE),
+    });
+  });
+}
+
 function bindActions(view) {
+  bindViewer(view);
   const variant = () => ({ productId: view.selection.product.id, colorId: view.selection.colorId, size: view.selection.size });
   const guide = createSizeGuide(view.store.config.sizes);
   $('size-guide-button').addEventListener('click', guide.open);

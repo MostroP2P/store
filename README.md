@@ -48,6 +48,7 @@ The store shows in **English**, **Spanish**, **French**, **Italian** or **Portug
 
 1. **Collection** (`index.html`): the buyer sees all the T-shirts for sale, grouped by series.
 2. **Product** (`product.html`): the buyer picks the color and the size. "Size guide" shows the measurements table.
+   - Tapping the image opens it larger; a tap on it zooms in on that spot, to look at the print up close.
    - **Add to cart** adds the T-shirt. The button shows how many of that variant are in the cart, for example "Add to cart (1)".
    - **Buy now** adds it and goes straight to the checkout.
 3. **Cart**: the button at the top right shows the number of T-shirts.

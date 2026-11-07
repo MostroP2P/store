@@ -19,6 +19,8 @@ const SHAPES = Object.freeze({
   plus: [['path', 'M12 5v14M5 12h14']],
   info: [['circle', 12, 12, 9], ['path', 'M12 11v5M12 8h.01']],
   card: [['rect', 3, 5, 18, 14, 2], ['path', 'M3 10h18']],
+  zoomIn: [['circle', 11, 11, 7], ['path', 'M21 21l-5-5M8 11h6M11 8v6']],
+  zoomOut: [['circle', 11, 11, 7], ['path', 'M21 21l-5-5M8 11h6']],
 });
 
 const SHAPE_ATTRIBUTES = {

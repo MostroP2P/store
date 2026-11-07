@@ -1,14 +1,23 @@
-// The store pages in a real browser: language, collection, product page, size guide and cart panel.
+// The store pages in a real browser: language, collection, product page, size guide, image viewer and cart panel.
 // Run with `npm run test:e2e`.
 
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { launchBrowser, openShop, saveCoverage, addToCart } from './harness.js';
+import { VIEWER_SCALE, ZOOM_FACTOR } from '../../src/store/zoom.js';
 
 const INVADERS = 'mostro-invaders';
 const NAME = 'Mostro Invaders';
 const CATALOG = new URL('../../catalog.json', import.meta.url);
+const VIEWER = 'dialog.image-viewer';
+const VIEWER_CANVAS = `${VIEWER} canvas`;
+// A point of the shirt's body, below the print area, in the base image's pixels (scale 1)
+const BODY_POINT = Object.freeze({ x: 600, y: 1000 });
+// The two drawings sample the shirt's shading at different scales: allow a little difference
+const COLOUR_TOLERANCE = 6;
+const POSITION_TOLERANCE = 0.01;
+const PHONE = Object.freeze({ width: 360, height: 740 });
 // The notice waits --boot-notice-delay (css/store.css) before it shows
 const NOTICE_TIMEOUT_MS = 15_000;
 
@@ -31,6 +40,29 @@ async function withShop(options, scenario) {
 }
 
 const catalog = async () => JSON.parse(await readFile(CATALOG, 'utf8'));
+
+const assertNear = (actual, expected, message) => assert.ok(Math.abs(actual - expected) <= POSITION_TOLERANCE, `${message}: ${actual} ≉ ${expected}`);
+
+/** The viewer shows the page's shirt: a point of its body has the same colour in both, each at its own scale. */
+async function assertSameShirt(page) {
+  const pixel = (selector, scale) => page.$eval(selector, (canvas, [x, y]) => [...canvas.getContext('2d').getImageData(x, y, 1, 1).data],
+    [BODY_POINT.x * scale, BODY_POINT.y * scale]);
+  const [onPage, inViewer] = await Promise.all([pixel('#product-canvas', 1), pixel(VIEWER_CANVAS, VIEWER_SCALE)]);
+  assert.ok(onPage[3] > 0, 'the point is on the shirt');
+  onPage.forEach((value, i) => assert.ok(Math.abs(value - inViewer[i]) <= COLOUR_TOLERANCE, `${onPage} vs ${inViewer}`));
+}
+
+/** Where `point` (page coordinates) falls on the viewer's canvas, as fractions of its size. */
+async function fractionUnder(page, point) {
+  const box = await page.locator(VIEWER_CANVAS).boundingBox();
+  return { x: (point.x - box.x) / box.width, y: (point.y - box.y) / box.height };
+}
+
+/** The centre of the viewer's visible stage, scrollbars left out. */
+const stageCentre = (page) => page.$eval('.image-viewer-stage', (stage) => {
+  const box = stage.getBoundingClientRect();
+  return { x: box.left + stage.clientWidth / 2, y: box.top + stage.clientHeight / 2 };
+});
 
 test('an English browser gets English; the picker moves to Spanish and remembers it', () => withShop({}, async (shop) => {
   const page = await shop.page('index.html');
@@ -187,6 +219,147 @@ test('the product page: color, size, size guide and related shirts', () => withS
   await Promise.all([page.waitForURL((url) => url.pathname === `/${relatedHref}`), firstRelated.click()]);
   await page.waitForSelector('#product:not([hidden])');
   assert.equal(await page.textContent('#product-name'), relatedName);
+}));
+
+test('tapping the product image opens it larger, zooms in where it is tapped and closes', () => withShop({}, async (shop) => {
+  const page = await shop.page(`product.html?id=${INVADERS}&color=navy`);
+  await page.waitForSelector('#product:not([hidden])');
+  assert.equal(await page.getAttribute('#product-zoom', 'aria-label'), 'View larger image');
+
+  // The tap is answered at once: the viewer opens with a spinner, and draws after it has painted
+  const answered = await page.evaluate(() => {
+    // As a real tap does: focus the button, then click it
+    const button = document.getElementById('product-zoom');
+    button.focus();
+    button.click();
+    const dialog = document.querySelector('dialog.image-viewer');
+    // Zoom pressed before there is anything to zoom on does nothing
+    document.getElementById('image-viewer-zoom').click();
+    return {
+      open: dialog.open,
+      drawing: dialog.classList.contains('is-drawing'),
+      zoomed: dialog.classList.contains('is-zoomed'),
+      spinner: getComputedStyle(dialog.querySelector('.spinner')).display,
+    };
+  });
+  assert.deepEqual(answered, { open: true, drawing: true, zoomed: false, spinner: 'block' });
+  await page.waitForSelector(`${VIEWER}[open]:not(.is-drawing)`);
+  assert.equal(await page.$eval(`${VIEWER} .spinner`, (spinner) => getComputedStyle(spinner).display), 'none');
+  assert.equal(await page.textContent('#image-viewer-title'), `${NAME} T-shirt in navy blue`);
+  assert.equal(await page.getAttribute(VIEWER_CANVAS, 'aria-label'), `${NAME} T-shirt in navy blue`);
+  assert.equal(await page.textContent(`${VIEWER} .image-viewer-hint`), 'Tap the image to zoom in or out.');
+  // Drawn again, at a higher scale than the page, in the colour the buyer picked
+  const [width, height] = await page.$eval('#product-canvas', (canvas) => [canvas.width, canvas.height]);
+  assert.deepEqual(await page.$eval(VIEWER_CANVAS, (canvas) => [canvas.width, canvas.height]), [width * VIEWER_SCALE, height * VIEWER_SCALE]);
+  await assertSameShirt(page);
+
+  // A tap zooms in and keeps the tapped point under the pointer; another tap zooms back out
+  const fitted = await page.locator(VIEWER_CANVAS).boundingBox();
+  const tap = { x: fitted.x + fitted.width * 0.6, y: fitted.y + fitted.height * 0.55 };
+  await page.mouse.click(tap.x, tap.y);
+  await page.waitForSelector(`${VIEWER}.is-zoomed`);
+  assert.equal(await page.getAttribute('#image-viewer-zoom', 'aria-pressed'), 'true');
+  assertNear((await page.locator(VIEWER_CANVAS).boundingBox()).width / fitted.width, ZOOM_FACTOR, 'zoom');
+  const under = await fractionUnder(page, tap);
+  assertNear(under.x, 0.6, 'x under the pointer');
+  assertNear(under.y, 0.55, 'y under the pointer');
+  await page.mouse.click(tap.x, tap.y);
+  await page.waitForSelector(`${VIEWER}:not(.is-zoomed)`);
+  assert.equal(await page.getAttribute('#image-viewer-zoom', 'aria-pressed'), 'false');
+  assertNear((await page.locator(VIEWER_CANVAS).boundingBox()).width / fitted.width, 1, 'fitted again');
+
+  // The zoom button does the same from the keyboard, on the centre of the image
+  await page.focus('#image-viewer-zoom');
+  await page.keyboard.press('Enter');
+  await page.waitForSelector(`${VIEWER}.is-zoomed`);
+  const centre = await fractionUnder(page, await stageCentre(page));
+  assertNear(centre.x, 0.5, 'x at the centre');
+  assertNear(centre.y, 0.5, 'y at the centre');
+  // ...and the stage takes the focus, so the arrow keys move around the zoomed image
+  const scrolled = () => page.$eval('.image-viewer-stage', (stage) => [stage.scrollLeft, stage.scrollTop]);
+  const before = await scrolled();
+  await page.focus('.image-viewer-stage');
+  await page.keyboard.press('ArrowDown');
+  await page.waitForFunction((top) => document.querySelector('.image-viewer-stage').scrollTop > top, before[1]);
+  await page.focus('#image-viewer-zoom');
+  await page.keyboard.press('Enter');
+  await page.waitForSelector(`${VIEWER}:not(.is-zoomed)`);
+
+  // Escape closes it, gives the focus back to the image, and it opens again as it started
+  await page.click('#image-viewer-zoom');
+  await page.keyboard.press('Escape');
+  await page.waitForSelector(`${VIEWER}:not([open])`, { state: 'attached' });
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'product-zoom');
+  await page.click('#product-zoom');
+  await page.waitForSelector(`${VIEWER}[open]:not(.is-zoomed)`);
+  // So do its close button and a click on the backdrop, but not a drag that only ends there
+  await page.click(`${VIEWER} button[aria-label="Close"]`);
+  await page.waitForSelector(`${VIEWER}:not([open])`, { state: 'attached' });
+  await page.click('#product-zoom');
+  const stage = await page.locator('.image-viewer-stage').boundingBox();
+  await page.mouse.move(stage.x + 10, stage.y + 10);
+  await page.mouse.down();
+  await page.mouse.move(5, 5);
+  await page.mouse.up();
+  assert.equal(await page.$eval(VIEWER, (dialog) => dialog.open), true);
+  await page.mouse.click(5, 5);
+  await page.waitForSelector(`${VIEWER}:not([open])`, { state: 'attached' });
+
+  // The same colour is not drawn again: a mark left on the canvas is still there
+  const mark = () => page.$eval(VIEWER_CANVAS, (canvas) => {
+    const context = canvas.getContext('2d');
+    context.fillStyle = '#ff0000';
+    context.fillRect(0, 0, 1, 1);
+  });
+  const isMarked = () => page.$eval(VIEWER_CANVAS, (canvas) => canvas.getContext('2d').getImageData(0, 0, 1, 1).data[0] === 255);
+  await mark();
+  await page.click('#product-zoom');
+  await page.waitForSelector(`${VIEWER}[open]`);
+  assert.equal(await page.$eval(VIEWER, (dialog) => dialog.classList.contains('is-drawing')), false);
+  assert.equal(await isMarked(), true);
+  await page.keyboard.press('Escape');
+
+  // Another colour is
+  await page.click('label.color-option:has(input[value="white"])');
+  await page.click('#product-zoom');
+  await page.waitForSelector(`${VIEWER}[open]:not(.is-drawing)`);
+  assert.equal(await page.textContent('#image-viewer-title'), `${NAME} T-shirt in white`);
+  assert.equal(await isMarked(), false);
+  await assertSameShirt(page);
+  assert.equal(await page.locator(VIEWER).count(), 1);
+}));
+
+test('on a phone the enlarged image fits the screen, and zooming in lets the buyer move around it', () => withShop({}, async (shop) => {
+  const page = await shop.page(`product.html?id=${INVADERS}`);
+  await page.setViewportSize(PHONE);
+  await page.waitForSelector('#product:not([hidden])');
+  const onPage = await page.locator('#product-canvas').boundingBox();
+
+  await page.click('#product-zoom');
+  await page.waitForSelector(`${VIEWER}[open]:not(.is-drawing)`);
+  const dialog = await page.locator(VIEWER).boundingBox();
+  assert.ok(dialog.x >= 0 && dialog.x + dialog.width <= PHONE.width, 'as wide as the screen at most');
+  assert.ok(dialog.y >= 0 && dialog.y + dialog.height <= PHONE.height, 'as tall as the screen at most');
+  const overflows = () => page.$eval('.image-viewer-stage', (stage) => [stage.scrollWidth > stage.clientWidth, stage.scrollHeight > stage.clientHeight]);
+  assert.deepEqual(await overflows(), [false, false]);
+
+  await page.click('#image-viewer-zoom');
+  await page.waitForSelector(`${VIEWER}.is-zoomed`);
+  assert.deepEqual(await overflows(), [true, true]);
+  // Much larger than the page showed it: the detail the buyer came for
+  assert.ok((await page.locator(VIEWER_CANVAS).boundingBox()).width > 2 * onPage.width);
+  const moved = await page.$eval('.image-viewer-stage', (stage) => {
+    const start = [stage.scrollLeft, stage.scrollTop];
+    stage.scrollBy(100, 100);
+    return stage.scrollLeft > start[0] && stage.scrollTop > start[1];
+  });
+  assert.ok(moved, 'the zoomed image scrolls both ways');
+
+  // Turning the phone starts over with the whole shirt in view
+  await page.setViewportSize({ width: PHONE.height, height: PHONE.width });
+  await page.waitForSelector(`${VIEWER}:not(.is-zoomed)`);
+  assert.equal(await page.getAttribute('#image-viewer-zoom', 'aria-pressed'), 'false');
+  assert.deepEqual(await overflows(), [false, false]);
 }));
 
 test('the cart panel: add, change quantities, remove, empty and go to checkout', () => withShop({}, async (shop) => {

@@ -90,8 +90,8 @@ The browser tests are the one exception to "nothing to install": they need `npm 
 | `src/render.js`, `src/shirt.js`, `src/shading.js`, `src/text.js`, `src/layouts.js`, `src/color.js` | The shirt renderer, shared by the store and the viewer |
 | `src/loader.js`, `src/dom.js` | Loading the catalogue, fonts and images; `el()` / `svgEl()`, the DOM without `innerHTML` |
 | `src/i18n.js` | Which language to show, and `localizeJson` for the catalogue's translated texts |
-| `src/store/` (pure) | `config`, `products`, `cart`, `cart-store`, `persist`, `money`, `bech32`, `bolt11`, `lnurl`, `payment`, `order`, `checkout-form`, `query`, `qr`, `nostr-order`, `strings` |
-| `src/store/` (DOM) | `boot`, `lang`, `home-page`, `product-page`, `product-card`, `cart-ui`, `size-guide`, `checkout-fields`, `checkout-page`, `payment-ui`, `icons` |
+| `src/store/` (pure) | `config`, `products`, `cart`, `cart-store`, `persist`, `money`, `bech32`, `bolt11`, `lnurl`, `payment`, `order`, `checkout-form`, `query`, `zoom`, `qr`, `nostr-order`, `strings` |
+| `src/store/` (DOM) | `boot`, `lang`, `home-page`, `product-page`, `product-card`, `cart-ui`, `size-guide`, `image-viewer`, `checkout-fields`, `checkout-page`, `payment-ui`, `icons` |
 | `src/store/strings/` | The user-interface catalogues: English (the source), Spanish, French, Italian and Portuguese |
 | `src/viewer/` | The viewer |
 | `src/vendor/` | Vendored bundles; never edit them by hand |
