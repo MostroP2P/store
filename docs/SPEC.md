@@ -53,7 +53,7 @@ With `?debug` in the viewer URL (`http://localhost:8000/viewer.html?debug`) the 
 
 ### Add a full design (like invaders)
 
-1. Copy the PNG with a transparent background to `designs/`, sized to fit the print area (`base.printArea`, 530 × 700 px). The largest drawing (scale 1: the product page and the viewer's PNG download) puts the design inside that rectangle, so a larger file is never seen and only slows the collection down.
+1. Copy the PNG with a transparent background to `designs/`, sized to fit the print area (`base.printArea`, 530 × 700 px). The product page and the viewer's PNG download draw at scale 1, which puts the design inside that rectangle. The product page's enlarged image draws at scale 2 (`VIEWER_SCALE` in `src/store/zoom.js`), so a file up to twice that size (1060 × 1400 px) shows its extra detail only there; anything larger is never seen and only slows the collection down.
 2. Add an entry to `designs`:
    ```json
    { "id": "mostro-invaders", "name": "Mostro Invaders", "image": "designs/invaders-design.png" }
@@ -290,7 +290,7 @@ Same catalogue and same render as the viewer. Everything runs in the browser: th
 | Page | What it does |
 |---|---|
 | `index.html` | Collection, one section per series. Each card shows the T-shirt in its default color, the name, the price and the available colors. |
-| `<id>.html?color=…&size=…` (or `product.html?id=…`) | Like kinoto.com.ar/item/…: color (circles), size (list) plus **Size guide** (table from `store.sizes`) and price. **Add to cart** shows how many of that variant are in the cart, for example "(1)". **Buy now** adds it and goes to checkout. Below, the accordions from `store.details` and "You may also like". The URL stores color and size. |
+| `<id>.html?color=…&size=…` (or `product.html?id=…`) | Like kinoto.com.ar/item/…: color (circles), size (list) plus **Size guide** (table from `store.sizes`) and price. **Add to cart** shows how many of that variant are in the cart, for example "(1)". **Buy now** adds it and goes to checkout. Below, the accordions from `store.details` and "You may also like". The URL stores color and size. Tapping the image opens it larger (`image-viewer.js`): it opens at once, with a spinner while it is drawn again at twice the page's scale in the color picked (only when the color changed since the last opening); it fits the screen, and a tap on it (or its zoom button, from the keyboard) zooms in 2.5× keeping that point under the finger, to move around by dragging on a touch screen, scrolling or the arrow keys. Its close button, Escape or a tap outside close it; it opens, and comes back after a turned phone or a resized window, with the whole shirt in view. |
 | Cart | The button appears at the top right when the cart is not empty, with the quantity. The "Your cart" panel shows each line with color, size, − quantity +, price, line total (if there is more than one) and **Remove from cart**. At the bottom: subtotal, shipping (to be arranged), total, **Checkout** and **Empty cart**. It is saved in `localStorage` (`mostro-store:cart`) and synchronized between tabs. |
 | `checkout.html` | Order summary, **Where should we deliver your order?** (street, number, floor, apartment, postal code, city, province), instructions (up to 500 characters) and personal information (first name, last name, email, phone). The data is saved only in that tab (`sessionStorage`, `mostro-store:checkout`), so it survives a reload. It is deleted when the tab is closed, when the order is finished or when **Clear saved details** is tapped. On the right, the payment method: Lightning. |
 
@@ -308,12 +308,13 @@ Same catalogue and same render as the viewer. Everything runs in the browser: th
 | `order.js` | Order number `MS-XXXXXX`, payment comment and DM texts (always in Spanish, with the buyer's language). |
 | `checkout-form.js` | Fields, validation (returns `required`, `tooLong` or `invalid`; the text comes from `strings`), provinces, saved data. |
 | `query.js` | URL of the product page. |
+| `zoom.js` | The enlarged product image: its scale, how far it zooms, and the scroll that keeps the tapped point under the finger. |
 | `qr.js` | QR with rounded modules and the Mostro logo, based on the one in donate. It has adjustments so it decodes in all versions. |
 | `nostr-order.js` | NIP-17 DM to the store: the store's relays (kind 10050) and publishing. |
 | `strings.js` | Store texts: `strings/en.js` (the source), `es.js`, `fr.js`, `it.js` and `pt.js`, with the same keys. |
 | `../i18n.js` | Which language to show (`pickLanguage`) and `localizeJson`, which leaves `catalog.json` in one language. |
 
-The DOM modules are `boot.js`, `cart-ui.js`, `product-card.js`, `home-page.js`, `product-page.js`, `size-guide.js`, `checkout-fields.js`, `checkout-page.js`, `payment-ui.js`, `icons.js` and `lang.js` (page language, fixed texts and the language picker).
+The DOM modules are `boot.js`, `cart-ui.js`, `product-card.js`, `home-page.js`, `product-page.js`, `size-guide.js`, `image-viewer.js`, `checkout-fields.js`, `checkout-page.js`, `payment-ui.js`, `icons.js` and `lang.js` (page language, fixed texts and the language picker).
 
 ### 10.3 Catalogue fields
 

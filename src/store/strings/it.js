@@ -43,6 +43,9 @@ export const IT = {
   addedToCart: 'Aggiunta al carrello',
   storageBlocked: 'Il tuo browser non ci permette di salvare il carrello, quindi non arriverebbe alla cassa. Consenti l’archiviazione per questo sito per acquistare.',
   productImage: (name, color) => `Maglietta ${name} in ${color.toLowerCase()}`,
+  enlargeImage: 'Vedi l’immagine più grande',
+  zoomImage: 'Zoom',
+  zoomHint: 'Tocca l’immagine per ingrandirla o rimpicciolirla.',
 
   // Size guide
   sizeTipsTitle: 'Consigli per scegliere la taglia',

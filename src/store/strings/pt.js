@@ -43,6 +43,9 @@ export const PT = {
   addedToCart: 'Adicionada ao carrinho',
   storageBlocked: 'Seu navegador não deixa salvar o carrinho, então ele não chegaria à finalização da compra. Permita o armazenamento deste site para comprar.',
   productImage: (name, color) => `Camiseta ${name} em ${color.toLowerCase()}`,
+  enlargeImage: 'Ver a imagem maior',
+  zoomImage: 'Zoom',
+  zoomHint: 'Toque na imagem para ampliar ou reduzir.',
 
   // Size guide
   sizeTipsTitle: 'Dicas para escolher seu tamanho',
