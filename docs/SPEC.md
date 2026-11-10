@@ -125,7 +125,7 @@ The modules marked *pure* do not touch the DOM, so they are tested with Node and
 {
   "base": {
     "image": "assets/shirts/t-shirt.png",
-    "printArea": { "x": 335, "y": 195, "width": 530, "height": 700 },
+    "printArea": { "x": 335, "y": 231, "width": 530, "height": 700 },
     "shading": { "blur": 7, "shadowFloor": 0.66, "highlight": 0.16 }
   },
 
